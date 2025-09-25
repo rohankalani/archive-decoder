@@ -24,7 +24,7 @@ type LocationType = 'site' | 'building' | 'block' | 'floor' | 'room';
 
 export default function Management() {
   const { profile, isAdmin, isSuperAdmin } = useAuth()
-  const { sites, buildings, blocks, floors } = useLocations()
+  const { sites, buildings, blocks, floors, rooms } = useLocations()
 
   // Simplified state for the wizard
   const [wizardOpen, setWizardOpen] = useState(false)
@@ -48,6 +48,7 @@ export default function Management() {
   }
 
   const totalFloors = floors.length
+  const totalRooms = rooms.length
 
   return (
     <Layout title="Management Portal" showBackButton>
@@ -61,7 +62,7 @@ export default function Management() {
         </div>
 
         {/* Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <Card className="border-0 bg-gradient-to-br from-primary/5 to-primary/10">
             <CardContent className="p-4">
               <div className="flex items-center space-x-3">
@@ -109,6 +110,18 @@ export default function Management() {
               </div>
             </CardContent>
           </Card>
+
+          <Card className="border-0 bg-gradient-to-br from-secondary/5 to-secondary/10">
+            <CardContent className="p-4">
+              <div className="flex items-center space-x-3">
+                <TreePine className="h-8 w-8 text-secondary-foreground" />
+                <div>
+                  <p className="text-2xl font-bold">{totalRooms}</p>
+                  <p className="text-sm text-muted-foreground">Rooms</p>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
         {/* Quick Actions */}
@@ -142,7 +155,7 @@ export default function Management() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold">Location Hierarchy</h3>
-                <p className="text-muted-foreground">Manage sites, buildings, blocks, and floors</p>
+                <p className="text-muted-foreground">Manage sites, buildings, blocks (optional), floors, and rooms</p>
               </div>
               <Button onClick={() => handleAddLocation('site')}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -157,9 +170,11 @@ export default function Management() {
                   onEditBuilding={(building) => handleEditLocation('building', building)}
                   onEditBlock={(block) => handleEditLocation('block', block)}
                   onEditFloor={(floor) => handleEditLocation('floor', floor)}
+                  onEditRoom={(room) => handleEditLocation('room', room)}
                   onAddBuilding={(siteId) => handleAddLocation('building', siteId)}
                   onAddBlock={(buildingId) => handleAddLocation('block', buildingId)}
-                  onAddFloor={(blockId) => handleAddLocation('floor', blockId)}
+                  onAddFloor={(blockOrBuildingId) => handleAddLocation('floor', blockOrBuildingId)}
+                  onAddRoom={(floorId) => handleAddLocation('room', floorId)}
                 />
               </CardContent>
             </Card>

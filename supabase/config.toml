@@ -1,1 +1,4 @@
 project_id = "xunlqdiappgyokhknvoc"
+
+[functions.generate-sensor-data]
+verify_jwt = false

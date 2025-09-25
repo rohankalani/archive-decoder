@@ -301,7 +301,8 @@ export type Database = {
       floors: {
         Row: {
           area_sqm: number | null
-          block_id: string
+          block_id: string | null
+          building_id: string | null
           created_at: string | null
           floor_number: number
           id: string
@@ -310,7 +311,8 @@ export type Database = {
         }
         Insert: {
           area_sqm?: number | null
-          block_id: string
+          block_id?: string | null
+          building_id?: string | null
           created_at?: string | null
           floor_number: number
           id?: string
@@ -319,7 +321,8 @@ export type Database = {
         }
         Update: {
           area_sqm?: number | null
-          block_id?: string
+          block_id?: string | null
+          building_id?: string | null
           created_at?: string | null
           floor_number?: number
           id?: string

@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useLocations, Site, Building, Block, Floor } from '@/hooks/useLocations'
+import { useLocations, Site, Building, Block, Floor, Room } from '@/hooks/useLocations'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -20,7 +20,7 @@ import {
   BarChart3
 } from 'lucide-react'
 
-type LocationType = 'site' | 'building' | 'block' | 'floor';
+type LocationType = 'site' | 'building' | 'block' | 'floor' | 'room';
 
 export default function Management() {
   const { profile, isAdmin, isSuperAdmin } = useAuth()
@@ -30,19 +30,17 @@ export default function Management() {
   const [wizardOpen, setWizardOpen] = useState(false)
   const [wizardType, setWizardType] = useState<LocationType>('site')
   const [parentId, setParentId] = useState<string>()
-  const [editItem, setEditItem] = useState<Site | Building | Block | Floor | null>(null)
+  const [editItem, setEditItem] = useState<Site | Building | Block | Floor | Room | null>(null)
 
   // Simplified handlers
   const handleAddLocation = (type: LocationType, parentId?: string) => {
-    console.log('handleAddLocation called:', { type, parentId })
     setWizardType(type)
     setParentId(parentId)
     setEditItem(null)
     setWizardOpen(true)
   }
 
-  const handleEditLocation = (type: LocationType, item: Site | Building | Block | Floor) => {
-    console.log('handleEditLocation called:', { type, item })
+  const handleEditLocation = (type: LocationType, item: Site | Building | Block | Floor | Room) => {
     setWizardType(type)
     setEditItem(item)
     setParentId(undefined)

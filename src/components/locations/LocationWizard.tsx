@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useLocations, Site, Building, Block, Floor } from '@/hooks/useLocations'
+import { useLocations, Site, Building, Block, Floor, Room } from '@/hooks/useLocations'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -8,14 +8,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
 import { Plus, Edit } from 'lucide-react'
 
-type LocationType = 'site' | 'building' | 'block' | 'floor'
+type LocationType = 'site' | 'building' | 'block' | 'floor' | 'room'
 
 interface LocationWizardProps {
   isOpen: boolean
   onClose: () => void
   initialType: LocationType
   parentId?: string
-  editItem?: Site | Building | Block | Floor | null
+  editItem?: Site | Building | Block | Floor | Room | null
 }
 
 export function LocationWizard({ isOpen, onClose, initialType, parentId, editItem }: LocationWizardProps) {
@@ -23,22 +23,29 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
     sites, 
     buildings, 
     blocks, 
+    floors,
+    rooms,
     createSite, 
     createBuilding, 
     createBlock, 
     createFloor,
+    createRoom,
     updateSite,
     updateBuilding,
     updateBlock,
     updateFloor,
+    updateRoom,
     getBuildingsBySite,
-    getBlocksByBuilding
+    getBlocksByBuilding,
+    getFloorsByBlock,
+    getRoomsByFloor
   } = useLocations()
 
   const [currentType, setCurrentType] = useState<LocationType>(initialType)
   const [selectedSite, setSelectedSite] = useState<string>('')
   const [selectedBuilding, setSelectedBuilding] = useState<string>('')
   const [selectedBlock, setSelectedBlock] = useState<string>('')
+  const [selectedFloor, setSelectedFloor] = useState<string>('')
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -47,22 +54,16 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
     longitude: '',
     floorCount: 1,
     floorNumber: 1,
-    areaSqm: ''
+    areaSqm: '',
+    roomNumber: '',
+    roomType: '',
+    capacity: ''
   })
 
   const isEditing = !!editItem
 
   // Reset and initialize form when wizard opens/closes or props change
   useEffect(() => {
-    console.log('LocationWizard useEffect triggered:', { 
-      isOpen, 
-      initialType, 
-      parentId, 
-      editItem: !!editItem, 
-      isEditing,
-      currentType 
-    })
-    
     // Always update currentType when initialType changes
     setCurrentType(initialType)
     
@@ -80,7 +81,10 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               longitude: site.longitude?.toString() || '',
               floorCount: 1,
               floorNumber: 1,
-              areaSqm: ''
+              areaSqm: '',
+              roomNumber: '',
+              roomType: '',
+              capacity: ''
             })
             break
           case 'building':
@@ -93,7 +97,10 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               longitude: '',
               floorCount: building.floor_count || 1,
               floorNumber: 1,
-              areaSqm: ''
+              areaSqm: '',
+              roomNumber: '',
+              roomType: '',
+              capacity: ''
             })
             setSelectedSite(building.site_id)
             break
@@ -107,7 +114,10 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               longitude: '',
               floorCount: 1,
               floorNumber: 1,
-              areaSqm: ''
+              areaSqm: '',
+              roomNumber: '',
+              roomType: '',
+              capacity: ''
             })
             setSelectedBuilding(block.building_id)
             // Find the site for this building
@@ -126,14 +136,57 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               longitude: '',
               floorCount: 1,
               floorNumber: floor.floor_number,
-              areaSqm: floor.area_sqm?.toString() || ''
+              areaSqm: floor.area_sqm?.toString() || '',
+              roomNumber: '',
+              roomType: '',
+              capacity: ''
             })
-            setSelectedBlock(floor.block_id)
-            // Find building and site for this block
-            const floorBlock = blocks.find(b => b.id === floor.block_id)
-            if (floorBlock?.building) {
-              setSelectedBuilding(floorBlock.building.id)
-              setSelectedSite(floorBlock.building.site_id)
+            if (floor.block_id) {
+              setSelectedBlock(floor.block_id)
+              const floorBlock = blocks.find(b => b.id === floor.block_id)
+              if (floorBlock?.building) {
+                setSelectedBuilding(floorBlock.building.id)
+                setSelectedSite(floorBlock.building.site_id)
+              }
+            } else if (floor.building_id) {
+              setSelectedBuilding(floor.building_id)
+              const floorBuilding = buildings.find(b => b.id === floor.building_id)
+              if (floorBuilding) {
+                setSelectedSite(floorBuilding.site_id)
+              }
+            }
+            break
+          case 'room':
+            const room = editItem as Room
+            setFormData({
+              name: room.name,
+              description: room.description || '',
+              address: '',
+              latitude: '',
+              longitude: '',
+              floorCount: 1,
+              floorNumber: 1,
+              areaSqm: room.area_sqm?.toString() || '',
+              roomNumber: room.room_number || '',
+              roomType: room.room_type || '',
+              capacity: room.capacity?.toString() || ''
+            })
+            setSelectedFloor(room.floor_id)
+            // Find parent hierarchies
+            const roomFloor = floors.find(f => f.id === room.floor_id)
+            if (roomFloor?.block_id) {
+              setSelectedBlock(roomFloor.block_id)
+              const roomBlock = blocks.find(b => b.id === roomFloor.block_id)
+              if (roomBlock) {
+                setSelectedBuilding(roomBlock.building_id)
+                setSelectedSite(roomBlock.building?.site_id || '')
+              }
+            } else if (roomFloor?.building_id) {
+              setSelectedBuilding(roomFloor.building_id)
+              const roomBuilding = buildings.find(b => b.id === roomFloor.building_id)
+              if (roomBuilding) {
+                setSelectedSite(roomBuilding.site_id)
+              }
             }
             break
         }
@@ -147,11 +200,15 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
           longitude: '',
           floorCount: 1,
           floorNumber: 1,
-          areaSqm: ''
+          areaSqm: '',
+          roomNumber: '',
+          roomType: '',
+          capacity: ''
         })
         setSelectedSite('')
         setSelectedBuilding('')
         setSelectedBlock('')
+        setSelectedFloor('')
         
         // Pre-select parent based on type and parentId
         if (parentId) {
@@ -168,19 +225,45 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               }
               break
             case 'floor':
-              setSelectedBlock(parentId)
-              // Find building and site for this block
-              const block = blocks.find(b => b.id === parentId)
-              if (block?.building) {
-                setSelectedBuilding(block.building.id)
-                setSelectedSite(block.building.site_id)
+              // Check if parentId is a block or building
+              const parentBlock = blocks.find(b => b.id === parentId)
+              if (parentBlock) {
+                setSelectedBlock(parentId)
+                setSelectedBuilding(parentBlock.building_id)
+                setSelectedSite(parentBlock.building?.site_id || '')
+              } else {
+                // Direct to building
+                setSelectedBuilding(parentId)
+                const parentBuilding = buildings.find(b => b.id === parentId)
+                if (parentBuilding) {
+                  setSelectedSite(parentBuilding.site_id)
+                }
+              }
+              break
+            case 'room':
+              setSelectedFloor(parentId)
+              // Find parent hierarchies for the floor
+              const floor = floors.find(f => f.id === parentId)
+              if (floor?.block_id) {
+                setSelectedBlock(floor.block_id)
+                const block = blocks.find(b => b.id === floor.block_id)
+                if (block) {
+                  setSelectedBuilding(block.building_id)
+                  setSelectedSite(block.building?.site_id || '')
+                }
+              } else if (floor?.building_id) {
+                setSelectedBuilding(floor.building_id)
+                const building = buildings.find(b => b.id === floor.building_id)
+                if (building) {
+                  setSelectedSite(building.site_id)
+                }
               }
               break
           }
         }
       }
     }
-  }, [isOpen, initialType, parentId, editItem, isEditing, buildings, blocks])
+  }, [isOpen, initialType, parentId, editItem, isEditing, buildings, blocks, floors])
 
   // Clear form when dialog closes
   useEffect(() => {
@@ -193,11 +276,15 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
         longitude: '',
         floorCount: 1,
         floorNumber: 1,
-        areaSqm: ''
+        areaSqm: '',
+        roomNumber: '',
+        roomType: '',
+        capacity: ''
       })
       setSelectedSite('')
       setSelectedBuilding('')
       setSelectedBlock('')
+      setSelectedFloor('')
     }
   }, [isOpen])
 
@@ -231,11 +318,30 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
             })
             break
           case 'floor':
-            await updateFloor(editItem.id, {
+            // Support both block-based and building-based floors
+            const floorData: any = {
               floor_number: formData.floorNumber,
               name: formData.name,
               area_sqm: formData.areaSqm ? parseFloat(formData.areaSqm) : undefined,
-              block_id: selectedBlock,
+            }
+            
+            if (selectedBlock) {
+              floorData.block_id = selectedBlock
+            } else {
+              floorData.building_id = selectedBuilding
+            }
+            
+            await updateFloor(editItem.id, floorData)
+            break
+          case 'room':
+            await updateRoom(editItem.id, {
+              name: formData.name,
+              description: formData.description,
+              room_number: formData.roomNumber,
+              room_type: formData.roomType,
+              capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
+              area_sqm: formData.areaSqm ? parseFloat(formData.areaSqm) : undefined,
+              floor_id: selectedFloor,
             })
             break
         }
@@ -267,11 +373,30 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
             })
             break
           case 'floor':
-            await createFloor({
+            // Support both block-based and building-based floors
+            const newFloorData: any = {
               floor_number: formData.floorNumber,
               name: formData.name,
               area_sqm: formData.areaSqm ? parseFloat(formData.areaSqm) : undefined,
-              block_id: selectedBlock,
+            }
+            
+            if (selectedBlock) {
+              newFloorData.block_id = selectedBlock
+            } else {
+              newFloorData.building_id = selectedBuilding
+            }
+            
+            await createFloor(newFloorData)
+            break
+          case 'room':
+            await createRoom({
+              name: formData.name,
+              description: formData.description,
+              room_number: formData.roomNumber,
+              room_type: formData.roomType,
+              capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
+              area_sqm: formData.areaSqm ? parseFloat(formData.areaSqm) : undefined,
+              floor_id: selectedFloor,
             })
             break
         }
@@ -293,7 +418,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
       case 'block':
         return !!selectedBuilding
       case 'floor':
-        return !!selectedBlock
+        return selectedBlock || selectedBuilding // Either block or building is required
+      case 'room':
+        return !!selectedFloor
       default:
         return false
     }
@@ -301,10 +428,11 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
 
   const availableBuildings = getBuildingsBySite(selectedSite)
   const availableBlocks = getBlocksByBuilding(selectedBuilding)
+  const availableFloors = selectedBlock ? getFloorsByBlock(selectedBlock) : floors.filter(f => f.building_id === selectedBuilding)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
             {isEditing ? 'Edit' : 'Create'} {currentType.charAt(0).toUpperCase() + currentType.slice(1)}
@@ -315,12 +443,8 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
         </DialogHeader>
 
         <div className="space-y-4">
-          {/* Debug info - remove in production */}
-          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
-            Debug: Type={currentType}, IsEditing={isEditing}, ParentId={parentId}
-          </div>
-          {/* Site Selection for Building/Block/Floor */}
-          {(currentType === 'building' || currentType === 'block' || currentType === 'floor') && !isEditing && (
+          {/* Site Selection for Building/Block/Floor/Room */}
+          {(currentType === 'building' || currentType === 'block' || currentType === 'floor' || currentType === 'room') && !isEditing && (
             <div className="space-y-2">
               <Label htmlFor="site">Site *</Label>
               <Select value={selectedSite} onValueChange={setSelectedSite}>
@@ -338,8 +462,8 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
             </div>
           )}
 
-          {/* Building Selection for Block/Floor */}
-          {(currentType === 'block' || currentType === 'floor') && !isEditing && (
+          {/* Building Selection for Block/Floor/Room */}
+          {(currentType === 'block' || currentType === 'floor' || currentType === 'room') && !isEditing && (
             <div className="space-y-2">
               <Label htmlFor="building">Building *</Label>
               <Select value={selectedBuilding} onValueChange={setSelectedBuilding} disabled={!selectedSite}>
@@ -357,18 +481,37 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
             </div>
           )}
 
-          {/* Block Selection for Floor */}
-          {currentType === 'floor' && !isEditing && (
+          {/* Block Selection for Floor/Room (Optional) */}
+          {(currentType === 'floor' || currentType === 'room') && !isEditing && (
             <div className="space-y-2">
-              <Label htmlFor="block">Block *</Label>
+              <Label htmlFor="block">Block (Optional)</Label>
               <Select value={selectedBlock} onValueChange={setSelectedBlock} disabled={!selectedBuilding}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a block" />
+                  <SelectValue placeholder="Select a block (or skip for direct floor-to-building)" />
                 </SelectTrigger>
                 <SelectContent>
                   {availableBlocks.map((block) => (
                     <SelectItem key={block.id} value={block.id}>
                       {block.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+
+          {/* Floor Selection for Room */}
+          {currentType === 'room' && !isEditing && (
+            <div className="space-y-2">
+              <Label htmlFor="floor">Floor *</Label>
+              <Select value={selectedFloor} onValueChange={setSelectedFloor} disabled={!selectedBuilding}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select a floor" />
+                </SelectTrigger>
+                <SelectContent>
+                  {availableFloors.map((floor) => (
+                    <SelectItem key={floor.id} value={floor.id}>
+                      {floor.name || `Floor ${floor.floor_number}`}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -473,6 +616,63 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
                   onChange={(e) => setFormData(prev => ({ ...prev, areaSqm: e.target.value }))}
                   placeholder="Floor area in square meters"
                 />
+              </div>
+            </>
+          )}
+
+          {/* Room-specific fields */}
+          {currentType === 'room' && (
+            <>
+              <div className="space-y-2">
+                <Label htmlFor="roomNumber">Room Number</Label>
+                <Input
+                  id="roomNumber"
+                  value={formData.roomNumber}
+                  onChange={(e) => setFormData(prev => ({ ...prev, roomNumber: e.target.value }))}
+                  placeholder="e.g., 101, A-205"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="roomType">Room Type</Label>
+                <Select value={formData.roomType} onValueChange={(value) => setFormData(prev => ({ ...prev, roomType: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select room type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="classroom">Classroom</SelectItem>
+                    <SelectItem value="office">Office</SelectItem>
+                    <SelectItem value="lab">Laboratory</SelectItem>
+                    <SelectItem value="auditorium">Auditorium</SelectItem>
+                    <SelectItem value="library">Library</SelectItem>
+                    <SelectItem value="meeting">Meeting Room</SelectItem>
+                    <SelectItem value="storage">Storage</SelectItem>
+                    <SelectItem value="other">Other</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="capacity">Capacity</Label>
+                  <Input
+                    id="capacity"
+                    type="number"
+                    min="1"
+                    value={formData.capacity}
+                    onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
+                    placeholder="Number of people"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="roomAreaSqm">Area (m²)</Label>
+                  <Input
+                    id="roomAreaSqm"
+                    type="number"
+                    step="0.1"
+                    value={formData.areaSqm}
+                    onChange={(e) => setFormData(prev => ({ ...prev, areaSqm: e.target.value }))}
+                    placeholder="Room area"
+                  />
+                </div>
               </div>
             </>
           )}

@@ -1,5 +1,5 @@
 import React from 'react'
-import { Device } from '@/hooks/useDevices'
+import type { Device } from '@/hooks/useDevices'
 import { useLocations } from '@/hooks/useLocations'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
@@ -48,6 +48,8 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
         return <WifiOff className="h-4 w-4 text-destructive" />
       case 'maintenance':
         return <Settings className="h-4 w-4 text-warning" />
+      case 'error':
+        return <WifiOff className="h-4 w-4 text-destructive" />
       default:
         return null
     }
@@ -57,7 +59,8 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
     const variants = {
       online: 'default',
       offline: 'destructive',
-      maintenance: 'secondary'
+      maintenance: 'secondary',
+      error: 'destructive'
     } as const
 
     return (

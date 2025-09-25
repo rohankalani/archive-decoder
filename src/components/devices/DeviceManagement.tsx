@@ -1,5 +1,6 @@
 import React, { useState } from 'react'
-import { useDevices, Device } from '@/hooks/useDevices'
+import { useDevices } from '@/hooks/useDevices'
+import type { Device } from '@/hooks/useDevices'
 import { useLocations } from '@/hooks/useLocations'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'

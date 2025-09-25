@@ -8,6 +8,7 @@ import { Layout } from '@/components/Layout';
 import { useLiveSensorData } from '@/hooks/useLiveSensorData';
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { 
   Search,
   Grid3X3,
@@ -25,6 +26,8 @@ export function DeviceView() {
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [selectedBlock, setSelectedBlock] = useState<string>('all');
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
 
   const { sensorData, loading: sensorLoading } = useLiveSensorData();
   const { devices, loading: devicesLoading } = useDevices();
@@ -293,11 +296,12 @@ export function DeviceView() {
                       const isSmokeDetected = device.pm25 && device.pm25 > 100;
                       const isVOCHigh = device.voc && device.voc > 500;
                       
-                      return (
-                        <Card 
-                          key={device.device_id} 
-                          className="bg-card/95 backdrop-blur border-2 border-border/20 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 group"
-                        >
+                       return (
+                         <Card 
+                           key={device.device_id} 
+                           className="bg-card/95 backdrop-blur border-2 border-border/20 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 group cursor-pointer aspect-[4/3]"
+                           onClick={() => navigate(`/device/${device.device_id}`)}
+                         >
                           <CardHeader className="pb-3">
                             <div className="flex items-start justify-between">
                               <div className="space-y-2">

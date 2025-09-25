@@ -3,7 +3,6 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { 
-  Home, 
   Settings, 
   Building2, 
   LogOut, 
@@ -63,8 +62,8 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
               asChild
             >
               <Link to="/" className="gap-2">
-                <Home className="h-4 w-4" />
-                Dashboard
+                <Building2 className="h-4 w-4" />
+                Buildings
               </Link>
             </Button>
 

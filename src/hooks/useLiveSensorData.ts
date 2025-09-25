@@ -15,7 +15,10 @@ export interface SensorReading {
 export interface LiveSensorData {
   device_id: string
   device_name: string
+  pm03?: number
+  pm1?: number
   pm25?: number
+  pm5?: number
   pm10?: number
   co2?: number
   temperature?: number
@@ -23,6 +26,13 @@ export interface LiveSensorData {
   voc?: number
   hcho?: number
   no2?: number
+  nox?: number
+  pc03?: number
+  pc05?: number
+  pc1?: number
+  pc25?: number
+  pc5?: number
+  pc10?: number
   aqi?: number
   status: 'online' | 'offline' | 'error'
   last_updated: string
@@ -88,7 +98,10 @@ export function useLiveSensorData() {
         return {
           device_id: device.id,
           device_name: device.name,
+          pm03: latestReadings.pm03?.value,
+          pm1: latestReadings.pm1?.value,
           pm25: latestReadings.pm25?.value,
+          pm5: latestReadings.pm5?.value,
           pm10: latestReadings.pm10?.value,
           co2: latestReadings.co2?.value,
           temperature: latestReadings.temperature?.value,
@@ -96,6 +109,13 @@ export function useLiveSensorData() {
           voc: latestReadings.voc?.value,
           hcho: latestReadings.hcho?.value,
           no2: latestReadings.no2?.value,
+          nox: latestReadings.nox?.value,
+          pc03: latestReadings.pc03?.value,
+          pc05: latestReadings.pc05?.value,
+          pc1: latestReadings.pc1?.value,
+          pc25: latestReadings.pc25?.value,
+          pc5: latestReadings.pc5?.value,
+          pc10: latestReadings.pc10?.value,
           aqi,
           status: device.status as 'online' | 'offline' | 'error',
           last_updated: Object.values(latestReadings).reduce((latest, reading) => {

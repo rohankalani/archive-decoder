@@ -5,8 +5,9 @@ import { SettingsProvider } from '@/contexts/SettingsContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Auth from '@/pages/Auth'
-import { Dashboard } from '@/pages/Dashboard'
+import { BuildingView } from '@/pages/BuildingView'
 import { DeviceView } from '@/pages/DeviceView'
+import { DeviceDetail } from '@/pages/DeviceDetail'
 import Management from '@/pages/Management'
 import { Settings } from '@/pages/Settings'
 
@@ -25,7 +26,7 @@ function App() {
               path="/"
               element={
                 <ProtectedRoute>
-                  <Dashboard />
+                  <BuildingView />
                 </ProtectedRoute>
               }
             />
@@ -34,6 +35,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <DeviceView />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/device/:deviceId"
+              element={
+                <ProtectedRoute>
+                  <DeviceDetail />
                 </ProtectedRoute>
               }
             />

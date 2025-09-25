@@ -36,13 +36,29 @@ export interface Block {
 
 export interface Floor {
   id: string
-  block_id: string
+  block_id?: string // Make block_id optional for direct floor-to-building relationship
+  building_id?: string // Add building_id for direct relationship when no blocks
   floor_number: number
   name?: string
   area_sqm?: number
   created_at: string
   updated_at: string
   block?: Block
+  building?: Building
+}
+
+export interface Room {
+  id: string
+  floor_id: string
+  name: string
+  description?: string
+  room_number?: string
+  room_type?: string
+  capacity?: number
+  area_sqm?: number
+  created_at: string
+  updated_at: string
+  floor?: Floor
 }
 
 export function useLocations() {
@@ -50,6 +66,7 @@ export function useLocations() {
   const [buildings, setBuildings] = useState<Building[]>([])
   const [blocks, setBlocks] = useState<Block[]>([])
   const [floors, setFloors] = useState<Floor[]>([])
+  const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
 
   // Fetch all locations
@@ -90,7 +107,7 @@ export function useLocations() {
 
       if (blocksError) throw blocksError
 
-      // Fetch floors with block info
+      // Fetch floors with block and building info
       const { data: floorsData, error: floorsError } = await supabase
         .from('floors')
         .select(`
@@ -107,10 +124,31 @@ export function useLocations() {
 
       if (floorsError) throw floorsError
 
+      // Fetch rooms with floor info
+      const { data: roomsData, error: roomsError } = await supabase
+        .from('rooms')
+        .select(`
+          *,
+          floor:floors(
+            *,
+            block:blocks(
+              *,
+              building:buildings(
+                *,
+                site:sites(*)
+              )
+            )
+          )
+        `)
+        .order('name')
+
+      if (roomsError) throw roomsError
+
       setSites(sitesData || [])
       setBuildings(buildingsData || [])
       setBlocks(blocksData || [])
       setFloors(floorsData || [])
+      setRooms(roomsData || [])
     } catch (error) {
       console.error('Error fetching locations:', error)
       toast.error('Failed to load locations')
@@ -171,10 +209,11 @@ export function useLocations() {
       if (error) throw error
 
       setSites(prev => prev.filter(site => site.id !== id))
-      // Remove dependent buildings, blocks, and floors
+      // Remove dependent buildings, blocks, floors, and rooms
       setBuildings(prev => prev.filter(building => building.site_id !== id))
       setBlocks(prev => prev.filter(block => block.building?.site_id !== id))
       setFloors(prev => prev.filter(floor => floor.block?.building?.site_id !== id))
+      setRooms(prev => prev.filter(room => room.floor?.block?.building?.site_id !== id))
       
       toast.success('Site deleted successfully')
     } catch (error) {
@@ -244,6 +283,7 @@ export function useLocations() {
       setBuildings(prev => prev.filter(building => building.id !== id))
       setBlocks(prev => prev.filter(block => block.building_id !== id))
       setFloors(prev => prev.filter(floor => floor.block?.building_id !== id))
+      setRooms(prev => prev.filter(room => room.floor?.block?.building_id !== id))
       
       toast.success('Building deleted successfully')
     } catch (error) {
@@ -318,6 +358,7 @@ export function useLocations() {
 
       setBlocks(prev => prev.filter(block => block.id !== id))
       setFloors(prev => prev.filter(floor => floor.block_id !== id))
+      setRooms(prev => prev.filter(room => room.floor?.block_id !== id))
       
       toast.success('Block deleted successfully')
     } catch (error) {
@@ -397,10 +438,95 @@ export function useLocations() {
       if (error) throw error
 
       setFloors(prev => prev.filter(floor => floor.id !== id))
+      setRooms(prev => prev.filter(room => room.floor_id !== id))
       toast.success('Floor deleted successfully')
     } catch (error) {
       console.error('Error deleting floor:', error)
       toast.error('Failed to delete floor')
+      throw error
+    }
+  }
+
+  // Room operations
+  const createRoom = async (data: Omit<Room, 'id' | 'created_at' | 'updated_at'>) => {
+    try {
+      const { data: newRoom, error } = await supabase
+        .from('rooms')
+        .insert([data])
+        .select(`
+          *,
+          floor:floors(
+            *,
+            block:blocks(
+              *,
+              building:buildings(
+                *,
+                site:sites(*)
+              )
+            )
+          )
+        `)
+        .single()
+
+      if (error) throw error
+
+      setRooms(prev => [...prev, newRoom])
+      toast.success('Room created successfully')
+      return newRoom
+    } catch (error) {
+      console.error('Error creating room:', error)
+      toast.error('Failed to create room')
+      throw error
+    }
+  }
+
+  const updateRoom = async (id: string, data: Partial<Room>) => {
+    try {
+      const { data: updatedRoom, error } = await supabase
+        .from('rooms')
+        .update(data)
+        .eq('id', id)
+        .select(`
+          *,
+          floor:floors(
+            *,
+            block:blocks(
+              *,
+              building:buildings(
+                *,
+                site:sites(*)
+              )
+            )
+          )
+        `)
+        .single()
+
+      if (error) throw error
+
+      setRooms(prev => prev.map(room => room.id === id ? updatedRoom : room))
+      toast.success('Room updated successfully')
+      return updatedRoom
+    } catch (error) {
+      console.error('Error updating room:', error)
+      toast.error('Failed to update room')
+      throw error
+    }
+  }
+
+  const deleteRoom = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('rooms')
+        .delete()
+        .eq('id', id)
+
+      if (error) throw error
+
+      setRooms(prev => prev.filter(room => room.id !== id))
+      toast.success('Room deleted successfully')
+    } catch (error) {
+      console.error('Error deleting room:', error)
+      toast.error('Failed to delete room')
       throw error
     }
   }
@@ -415,6 +541,12 @@ export function useLocations() {
   const getFloorsByBlock = (blockId: string) => 
     floors.filter(floor => floor.block_id === blockId)
 
+  const getFloorsByBuilding = (buildingId: string) => 
+    floors.filter(floor => floor.building_id === buildingId)
+
+  const getRoomsByFloor = (floorId: string) => 
+    rooms.filter(room => room.floor_id === floorId)
+
   // Load data on mount
   useEffect(() => {
     fetchLocations()
@@ -426,6 +558,7 @@ export function useLocations() {
     buildings,
     blocks,
     floors,
+    rooms,
     loading,
     
     // Operations
@@ -441,11 +574,16 @@ export function useLocations() {
     createFloor,
     updateFloor,
     deleteFloor,
+    createRoom,
+    updateRoom,
+    deleteRoom,
     
     // Utilities
     getBuildingsBySite,
     getBlocksByBuilding,
     getFloorsByBlock,
+    getFloorsByBuilding,
+    getRoomsByFloor,
     fetchLocations,
   }
 }

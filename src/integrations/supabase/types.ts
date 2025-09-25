@@ -375,6 +375,45 @@ export type Database = {
         }
         Relationships: []
       }
+      rooms: {
+        Row: {
+          area_sqm: number | null
+          capacity: number | null
+          created_at: string | null
+          description: string | null
+          floor_id: string
+          id: string
+          name: string
+          room_number: string | null
+          room_type: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          area_sqm?: number | null
+          capacity?: number | null
+          created_at?: string | null
+          description?: string | null
+          floor_id: string
+          id?: string
+          name: string
+          room_number?: string | null
+          room_type?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          area_sqm?: number | null
+          capacity?: number | null
+          created_at?: string | null
+          description?: string | null
+          floor_id?: string
+          id?: string
+          name?: string
+          room_number?: string | null
+          room_type?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       sensor_readings: {
         Row: {
           created_at: string | null

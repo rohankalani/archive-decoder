@@ -8,7 +8,7 @@ import { Layout } from '@/components/Layout';
 import { useLiveSensorData } from '@/hooks/useLiveSensorData';
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
-import { useNavigate, useSearchParams } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { 
   Search,
   Grid3X3,
@@ -26,7 +26,6 @@ export function DeviceView() {
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [selectedBlock, setSelectedBlock] = useState<string>('all');
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
-  const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
   const { sensorData, loading: sensorLoading } = useLiveSensorData();

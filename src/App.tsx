@@ -1,6 +1,7 @@
 import React from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
+import { SettingsProvider } from '@/contexts/SettingsContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Auth from '@/pages/Auth'
@@ -11,6 +12,7 @@ import { Settings } from '@/pages/Settings'
 function App() {
   return (
     <AuthProvider>
+      <SettingsProvider>
       <Router>
         <div className="min-h-screen bg-background">
           <Routes>
@@ -59,6 +61,7 @@ function App() {
           />
         </div>
       </Router>
+      </SettingsProvider>
     </AuthProvider>
   )
 }

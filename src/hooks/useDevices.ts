@@ -32,7 +32,14 @@ export function useDevices() {
         .order('name')
 
       if (error) throw error
-      setDevices(data || [])
+      
+      // Filter out maintenance status and convert to correct types
+      const validDevices = (data || []).map(device => ({
+        ...device,
+        status: device.status === 'maintenance' ? 'offline' : device.status
+      })).filter(device => ['online', 'offline', 'error'].includes(device.status)) as Device[]
+      
+      setDevices(validDevices)
     } catch (error) {
       console.error('Error fetching devices:', error)
       toast.error('Failed to fetch devices')
@@ -57,7 +64,11 @@ export function useDevices() {
 
       if (error) throw error
 
-      setDevices(prev => [...prev, data])
+      const validDevice = {
+        ...data,
+        status: data.status === 'maintenance' ? 'offline' : data.status
+      } as Device
+      setDevices(prev => [...prev, validDevice])
       toast.success('Device created successfully')
       return data
     } catch (error) {
@@ -79,8 +90,12 @@ export function useDevices() {
 
       if (error) throw error
 
+      const validDevice = {
+        ...data,
+        status: data.status === 'maintenance' ? 'offline' : data.status
+      } as Device
       setDevices(prev => prev.map(device => 
-        device.id === id ? { ...device, ...data } : device
+        device.id === id ? { ...device, ...validDevice } : device
       ))
       toast.success('Device updated successfully')
       return data

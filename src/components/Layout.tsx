@@ -8,7 +8,8 @@ import {
   Building2, 
   LogOut, 
   User,
-  ArrowLeft
+  ArrowLeft,
+  Activity
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -64,6 +65,17 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
               <Link to="/" className="gap-2">
                 <Home className="h-4 w-4" />
                 Dashboard
+              </Link>
+            </Button>
+
+            <Button
+              variant={isActive('/devices') ? 'default' : 'ghost'}
+              size="sm"
+              asChild
+            >
+              <Link to="/devices" className="gap-2">
+                <Activity className="h-4 w-4" />
+                Device View
               </Link>
             </Button>
             

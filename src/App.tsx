@@ -6,6 +6,7 @@ import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Auth from '@/pages/Auth'
 import { Dashboard } from '@/pages/Dashboard'
+import { DeviceView } from '@/pages/DeviceView'
 import Management from '@/pages/Management'
 import { Settings } from '@/pages/Settings'
 
@@ -25,6 +26,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Dashboard />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/devices"
+              element={
+                <ProtectedRoute>
+                  <DeviceView />
                 </ProtectedRoute>
               }
             />

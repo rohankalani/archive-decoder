@@ -14,8 +14,7 @@ export interface Device {
   signal_strength?: number
   floor_id: string
   installation_date?: string
-  last_maintenance?: string
-  calibration_date?: string
+  calibration_due_date?: string
   created_at: string
   updated_at: string
 }

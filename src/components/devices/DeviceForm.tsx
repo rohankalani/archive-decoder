@@ -37,12 +37,9 @@ const deviceSchema = z.object({
   serial_number: z.string().optional(),
   firmware_version: z.string().optional(),
   status: z.enum(['online', 'offline', 'maintenance', 'error']),
-  battery_level: z.number().min(0).max(100).optional(),
-  signal_strength: z.number().min(0).max(100).optional(),
   floor_id: z.string().min(1, 'Floor selection is required'),
   installation_date: z.string().optional(),
-  last_maintenance: z.string().optional(),
-  calibration_date: z.string().optional(),
+  calibration_due_date: z.string().optional(),
 })
 
 type DeviceFormData = z.infer<typeof deviceSchema>
@@ -63,27 +60,30 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
       mac_address: device?.mac_address || '',
       serial_number: device?.serial_number || '',
       firmware_version: device?.firmware_version || '',
-    status: device?.status || 'offline',
-      battery_level: device?.battery_level || undefined,
-      signal_strength: device?.signal_strength || undefined,
+      status: device?.status || 'offline',
       floor_id: device?.floor_id || '',
       installation_date: device?.installation_date || '',
-      last_maintenance: device?.last_maintenance || '',
-      calibration_date: device?.calibration_date || '',
+      calibration_due_date: device?.calibration_due_date || '',
     },
   })
 
   const handleSubmit = (data: DeviceFormData) => {
+    // Calculate calibration due date as 3 years after installation date
+    let calibrationDueDate = data.calibration_due_date || null
+    if (data.installation_date && !calibrationDueDate) {
+      const installDate = new Date(data.installation_date)
+      const dueDate = new Date(installDate)
+      dueDate.setFullYear(dueDate.getFullYear() + 3)
+      calibrationDueDate = dueDate.toISOString().split('T')[0]
+    }
+
     const submitData = {
       ...data,
-      battery_level: data.battery_level || null,
-      signal_strength: data.signal_strength || null,
       mac_address: data.mac_address || null,
       serial_number: data.serial_number || null,
       firmware_version: data.firmware_version || null,
       installation_date: data.installation_date || null,
-      last_maintenance: data.last_maintenance || null,
-      calibration_date: data.calibration_date || null,
+      calibration_due_date: calibrationDueDate,
     }
     onSubmit(submitData as any)
   }
@@ -219,49 +219,7 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
-              <FormField
-                control={form.control}
-                name="battery_level"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Battery Level (%)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max="100" 
-                        placeholder="85"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="signal_strength"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Signal Strength (%)</FormLabel>
-                    <FormControl>
-                      <Input 
-                        type="number" 
-                        min="0" 
-                        max="100" 
-                        placeholder="75"
-                        {...field}
-                        onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
+            <div className="grid grid-cols-1 gap-4">
               <FormField
                 control={form.control}
                 name="firmware_version"
@@ -277,7 +235,7 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
               />
             </div>
 
-            <div className="grid grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 gap-4">
               <FormField
                 control={form.control}
                 name="installation_date"
@@ -294,26 +252,16 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
 
               <FormField
                 control={form.control}
-                name="last_maintenance"
+                name="calibration_due_date"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Last Maintenance</FormLabel>
+                    <FormLabel>Calibration Due Date</FormLabel>
                     <FormControl>
-                      <Input type="date" {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-
-              <FormField
-                control={form.control}
-                name="calibration_date"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Calibration Date</FormLabel>
-                    <FormControl>
-                      <Input type="date" {...field} />
+                      <Input 
+                        type="date" 
+                        {...field} 
+                        placeholder="Auto-calculated (3 years from installation)"
+                      />
                     </FormControl>
                     <FormMessage />
                   </FormItem>

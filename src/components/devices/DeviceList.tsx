@@ -109,9 +109,7 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
             <TableHead>Device</TableHead>
             <TableHead>Status</TableHead>
             <TableHead>Location</TableHead>
-            <TableHead>Battery</TableHead>
-            <TableHead>Signal</TableHead>
-            <TableHead>Last Maintenance</TableHead>
+            <TableHead>Calibration Due</TableHead>
             <TableHead className="w-[70px]"></TableHead>
           </TableRow>
         </TableHeader>
@@ -143,29 +141,9 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
                 </div>
               </TableCell>
               <TableCell>
-                {device.battery_level ? (
-                  <div className="flex items-center gap-1">
-                    {getBatteryIcon(device.battery_level)}
-                    <span className="text-sm">{device.battery_level}%</span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">N/A</span>
-                )}
-              </TableCell>
-              <TableCell>
-                {device.signal_strength ? (
-                  <div className="flex items-center gap-1">
-                    <Wifi className="h-4 w-4 text-muted-foreground" />
-                    <span className="text-sm">{device.signal_strength}%</span>
-                  </div>
-                ) : (
-                  <span className="text-sm text-muted-foreground">N/A</span>
-                )}
-              </TableCell>
-              <TableCell>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">
                   <Calendar className="h-3 w-3" />
-                  {formatDate(device.last_maintenance)}
+                  {formatDate(device.calibration_due_date)}
                 </div>
               </TableCell>
               <TableCell>

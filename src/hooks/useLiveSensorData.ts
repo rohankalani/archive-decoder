@@ -21,6 +21,7 @@ export interface LiveSensorData {
   temperature?: number
   humidity?: number
   voc?: number
+  hcho?: number
   no2?: number
   aqi?: number
   status: 'online' | 'offline' | 'error'
@@ -93,6 +94,7 @@ export function useLiveSensorData() {
           temperature: latestReadings.temperature?.value,
           humidity: latestReadings.humidity?.value,
           voc: latestReadings.voc?.value,
+          hcho: latestReadings.hcho?.value,
           no2: latestReadings.no2?.value,
           aqi,
           status: device.status as 'online' | 'offline' | 'error',

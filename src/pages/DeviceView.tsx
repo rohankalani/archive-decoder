@@ -110,11 +110,13 @@ export function DeviceView() {
       return true;
     });
 
-    // Group by location hierarchy
+    // Group by site first, then by building within each site
     const grouped: Record<string, {
       siteName: string;
-      buildingName: string;
-      devices: typeof filtered;
+      buildings: Record<string, {
+        buildingName: string;
+        devices: typeof filtered;
+      }>;
     }> = {};
 
     filtered.forEach(device => {
@@ -126,15 +128,24 @@ export function DeviceView() {
       const floorLocation = getFloorLocation(floor);
       if (!floorLocation) return;
 
-      const key = `${floorLocation.site.id}-${floorLocation.building.id}`;
-      if (!grouped[key]) {
-        grouped[key] = {
+      const siteKey = floorLocation.site.id;
+      const buildingKey = floorLocation.building.id;
+
+      if (!grouped[siteKey]) {
+        grouped[siteKey] = {
           siteName: floorLocation.site.name,
+          buildings: {}
+        };
+      }
+
+      if (!grouped[siteKey].buildings[buildingKey]) {
+        grouped[siteKey].buildings[buildingKey] = {
           buildingName: floorLocation.building.name,
           devices: []
         };
       }
-      grouped[key].devices.push(device);
+
+      grouped[siteKey].buildings[buildingKey].devices.push(device);
     });
 
     return grouped;
@@ -253,116 +264,178 @@ export function DeviceView() {
         </div>
 
         {/* Device Groups */}
-        <div className="space-y-8">
-          {Object.entries(filteredAndGroupedDevices).map(([key, group]) => (
-            <div key={key} className="space-y-4">
-              {/* Location Header */}
-              <div className="space-y-1">
-                <h2 className="text-xl font-semibold text-primary">{group.siteName}</h2>
-                <h3 className="text-lg text-muted-foreground">{group.buildingName}</h3>
+        <div className="space-y-12">
+          {Object.entries(filteredAndGroupedDevices).map(([siteKey, site]) => (
+            <div key={siteKey} className="space-y-8">
+              {/* Site Header */}
+              <div className="border-b border-border pb-4">
+                <h2 className="text-2xl font-bold text-primary">{site.siteName}</h2>
               </div>
 
-              {/* Device Cards */}
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                {group.devices.map((device) => {
-                  const deviceInfo = devices.find(d => d.id === device.device_id);
-                  const floor = deviceInfo ? floors.find(f => f.id === deviceInfo.floor_id) : null;
-                  const floorLocation = floor ? getFloorLocation(floor) : null;
-                  const status = getAqiStatus(device.aqi || 0);
-                  
-                  return (
-                    <Card 
-                      key={device.device_id} 
-                      className={`${status.bgColor} ${status.borderColor} border-2 transition-all hover:shadow-lg`}
-                    >
-                      <CardHeader className="pb-2">
-                        <div className="flex items-start justify-between">
-                          <div className="space-y-1">
-                            <CardTitle className="text-base font-medium">
-                              {device.device_name}
-                            </CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                              {floorLocation?.floor.name || `Floor ${floorLocation?.floor.floor_number}`}
-                            </p>
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <div className={`h-2 w-2 rounded-full ${
-                              device.status === 'online' ? 'bg-success animate-pulse' : 'bg-muted'
-                            }`} />
-                            <span className="text-xs text-muted-foreground capitalize">
-                              {device.status}
-                            </span>
-                          </div>
-                        </div>
-                      </CardHeader>
+              {/* Buildings within Site */}
+              {Object.entries(site.buildings).map(([buildingKey, building]) => (
+                <div key={buildingKey} className="space-y-6">
+                  {/* Building Header */}
+                  <div className="space-y-2">
+                    <h3 className="text-xl font-semibold text-foreground">{building.buildingName}</h3>
+                    <div className="h-px bg-border/50"></div>
+                  </div>
+
+                  {/* Device Cards */}
+                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                    {building.devices.map((device) => {
+                      const deviceInfo = devices.find(d => d.id === device.device_id);
+                      const floor = deviceInfo ? floors.find(f => f.id === deviceInfo.floor_id) : null;
+                      const floorLocation = floor ? getFloorLocation(floor) : null;
+                      const status = getAqiStatus(device.aqi || 0);
                       
-                      <CardContent className="space-y-4">
-                        {/* AQI Display */}
-                        <div className="text-right">
-                          <div className="text-xs text-muted-foreground mb-1">
-                            AQI ({getSensorTypeDisplay(device.aqi || 0)})
-                          </div>
-                          <div className={`text-4xl font-bold text-${status.color}`}>
-                            {device.aqi || '--'}
-                          </div>
-                        </div>
-
-                        {/* Sensor Grid */}
-                        {device.status === 'online' && (
-                          <div className="grid grid-cols-2 gap-3 text-sm">
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1">
-                                <div className="h-2 w-2 rounded-full bg-primary"></div>
-                                <span className="text-muted-foreground">PM2.5</span>
+                      // Check for smoke/vape detection (high PM2.5 values)
+                      const isSmokeDetected = device.pm25 && device.pm25 > 100;
+                      const isVOCHigh = device.voc && device.voc > 500;
+                      
+                      return (
+                        <Card 
+                          key={device.device_id} 
+                          className="bg-card/95 backdrop-blur border-2 border-border/20 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 group"
+                        >
+                          <CardHeader className="pb-3">
+                            <div className="flex items-start justify-between">
+                              <div className="space-y-2">
+                                <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                                  {device.device_name}
+                                </CardTitle>
+                                <p className="text-sm font-medium text-muted-foreground">
+                                  {floorLocation?.floor.name || `Floor ${floorLocation?.floor.floor_number}`}
+                                </p>
                               </div>
-                              <div className="font-medium">
-                                {device.pm25?.toFixed(1) || '--'} <span className="text-xs">μg/m³</span>
+                              <div className="flex items-center gap-3">
+                                {/* Smoke/Vape Indicator */}
+                                {(isSmokeDetected || isVOCHigh) && (
+                                  <div className="flex items-center gap-1 bg-destructive/20 text-destructive px-2 py-1 rounded-full">
+                                    <AlertTriangle className="h-3 w-3" />
+                                    <span className="text-xs font-medium">
+                                      {isSmokeDetected ? 'SMOKE' : 'VOC'}
+                                    </span>
+                                  </div>
+                                )}
+                                
+                                {/* Status Indicator */}
+                                <div className="flex items-center gap-2">
+                                  <div className={`h-2 w-2 rounded-full ${
+                                    device.status === 'online' ? 'bg-success animate-pulse' : 'bg-muted'
+                                  }`} />
+                                  <span className="text-xs font-medium text-muted-foreground capitalize">
+                                    {device.status}
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </CardHeader>
+                          
+                          <CardContent className="space-y-6">
+                            {/* AQI Display */}
+                            <div className="text-center">
+                              <div className="text-sm font-medium text-muted-foreground mb-2">
+                                AQI ({getSensorTypeDisplay(device.aqi || 0)})
+                              </div>
+                              <div className={`text-5xl font-bold ${
+                                status.color === 'success' ? 'text-success' : 
+                                status.color === 'warning' ? 'text-warning' : 'text-destructive'
+                              }`}>
+                                {device.aqi || '--'}
+                              </div>
+                              <div className={`text-sm font-medium mt-1 ${
+                                status.color === 'success' ? 'text-success' : 
+                                status.color === 'warning' ? 'text-warning' : 'text-destructive'
+                              }`}>
+                                {status.label}
                               </div>
                             </div>
 
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1">
-                                <div className="h-2 w-2 rounded-full bg-blue-500"></div>
-                                <span className="text-muted-foreground">CO₂</span>
-                              </div>
-                              <div className="font-medium">
-                                {device.co2 ? Math.round(device.co2) : '--'} <span className="text-xs">ppm</span>
-                              </div>
-                            </div>
+                            {/* Sensor Grid */}
+                            {device.status === 'online' && (
+                              <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">PM2.5</span>
+                                  </div>
+                                  <div className="text-lg font-bold text-foreground">
+                                    {device.pm25?.toFixed(1) || '--'}
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">μg/m³</span>
+                                  </div>
+                                </div>
 
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1">
-                                <div className="h-2 w-2 rounded-full bg-orange-500"></div>
-                                <span className="text-muted-foreground">Temp.</span>
-                              </div>
-                              <div className="font-medium">
-                                {device.temperature?.toFixed(1) || '--'} <span className="text-xs">°C</span>
-                              </div>
-                            </div>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">CO₂</span>
+                                  </div>
+                                  <div className="text-lg font-bold text-foreground">
+                                    {device.co2 ? Math.round(device.co2) : '--'}
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">ppm</span>
+                                  </div>
+                                </div>
 
-                            <div className="space-y-1">
-                              <div className="flex items-center gap-1">
-                                <div className="h-2 w-2 rounded-full bg-cyan-500"></div>
-                                <span className="text-muted-foreground">Humidity</span>
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-3 w-3 rounded-full bg-orange-500"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">Temp</span>
+                                  </div>
+                                  <div className="text-lg font-bold text-foreground">
+                                    {device.temperature?.toFixed(1) || '--'}
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">°C</span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-3 w-3 rounded-full bg-cyan-500"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">Humidity</span>
+                                  </div>
+                                  <div className="text-lg font-bold text-foreground">
+                                    {device.humidity ? Math.round(device.humidity) : '--'}
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">%</span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-3 w-3 rounded-full bg-purple-500"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">VOC</span>
+                                  </div>
+                                  <div className="text-lg font-bold text-foreground">
+                                    {device.voc ? Math.round(device.voc) : '--'}
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">ppb</span>
+                                  </div>
+                                </div>
+
+                                <div className="space-y-2">
+                                  <div className="flex items-center gap-2">
+                                    <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                                    <span className="text-sm font-medium text-muted-foreground">HCHO</span>
+                                  </div>
+                                  <div className="text-lg font-bold text-foreground">
+                                    {device.hcho ? (device.hcho * 1000).toFixed(0) : '--'}
+                                    <span className="text-xs font-normal text-muted-foreground ml-1">μg/m³</span>
+                                  </div>
+                                </div>
                               </div>
-                              <div className="font-medium">
-                                {device.humidity ? Math.round(device.humidity) : '--'} <span className="text-xs">%</span>
-                              </div>
-                            </div>
-                          </div>
-                        )}
-                      </CardContent>
-                    </Card>
-                  );
-                })}
-              </div>
+                            )}
+                          </CardContent>
+                        </Card>
+                      );
+                    })}
+                  </div>
+                </div>
+              ))}
             </div>
           ))}
 
           {Object.keys(filteredAndGroupedDevices).length === 0 && (
-            <Card>
-              <CardContent className="p-8 text-center">
-                <div className="text-muted-foreground">
+            <Card className="bg-card/95 backdrop-blur">
+              <CardContent className="p-12 text-center">
+                <div className="text-lg text-muted-foreground">
                   No devices found matching the current filters.
                 </div>
               </CardContent>

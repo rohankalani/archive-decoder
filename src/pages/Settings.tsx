@@ -6,10 +6,11 @@ import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
+import { Layout } from '@/components/Layout';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
 import { Metric, AqiLevel, Thresholds } from '@/types';
-import { Settings as SettingsIcon, RotateCcw, Save, Palette } from 'lucide-react';
+import { RotateCcw, Save, Palette } from 'lucide-react';
 
 export function Settings() {
   const { thresholds, updateThresholds, resetToDefaults, getQualityColor } = useSettings();
@@ -62,26 +63,26 @@ export function Settings() {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
-            Configure air quality thresholds and system parameters
-          </p>
+    <Layout title="Settings" showBackButton>
+      <div className="space-y-6">
+        {/* Header */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-muted-foreground">
+              Configure air quality thresholds and system parameters
+            </p>
+          </div>
+          <div className="flex gap-2">
+            <Button variant="outline" onClick={handleReset}>
+              <RotateCcw className="h-4 w-4 mr-2" />
+              Reset to Defaults
+            </Button>
+            <Button onClick={handleSave}>
+              <Save className="h-4 w-4 mr-2" />
+              Save Changes
+            </Button>
+          </div>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset}>
-            <RotateCcw className="h-4 w-4 mr-2" />
-            Reset to Defaults
-          </Button>
-          <Button onClick={handleSave}>
-            <Save className="h-4 w-4 mr-2" />
-            Save Changes
-          </Button>
-        </div>
-      </div>
 
       <Tabs defaultValue="thresholds" className="space-y-4">
         <TabsList>
@@ -274,6 +275,7 @@ export function Settings() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </Layout>
   );
 }

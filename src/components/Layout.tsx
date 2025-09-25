@@ -1,101 +1,126 @@
 import React from 'react';
-import { Outlet, Link, useLocation } from 'react-router-dom';
-import { cn } from '@/lib/utils';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet';
+import { useAuth } from '@/contexts/AuthContext';
 import { 
   Home, 
   Settings, 
-  Menu,
-  Wifi,
-  Activity
+  Building2, 
+  LogOut, 
+  User,
+  ArrowLeft
 } from 'lucide-react';
 
-const navigation = [
-  { name: 'Dashboard', href: '/', icon: Home },
-  { name: 'Settings', href: '/settings', icon: Settings },
-];
+interface LayoutProps {
+  children: React.ReactNode;
+  title?: string;
+  showBackButton?: boolean;
+}
 
-export default function Layout() {
+export function Layout({ children, title, showBackButton = false }: LayoutProps) {
+  const { user, signOut } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
-  const NavigationItems = ({ mobile = false }) => (
-    <>
-      {navigation.map((item) => {
-        const isActive = location.pathname === item.href;
-        return (
-          <Link
-            key={item.name}
-            to={item.href}
-            className={cn(
-              'flex items-center gap-3 px-3 py-2 text-sm font-medium rounded-md transition-colors',
-              mobile ? 'text-base py-3' : '',
-              isActive
-                ? 'bg-primary/10 text-primary'
-                : 'text-muted-foreground hover:text-foreground hover:bg-muted'
-            )}
-          >
-            <item.icon className="h-4 w-4" />
-            {item.name}
-          </Link>
-        );
-      })}
-    </>
-  );
+  const handleSignOut = async () => {
+    await signOut();
+    navigate('/auth');
+  };
+
+  const handleBack = () => {
+    navigate('/');
+  };
+
+  const isActive = (path: string) => location.pathname === path;
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Header */}
-      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-14 items-center justify-between">
+      {/* Top Navigation Bar */}
+      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+        <div className="container flex h-16 items-center justify-between">
+          {/* Left side */}
           <div className="flex items-center gap-4">
-            {/* Mobile menu */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="md:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[240px] sm:w-[280px]">
-                <div className="px-2 py-6">
-                  <div className="mb-6">
-                    <div className="flex items-center gap-2 px-3">
-                      <Activity className="h-6 w-6 text-primary" />
-                      <span className="text-lg font-semibold">RosaiQ Air OS</span>
-                    </div>
-                  </div>
-                  <nav className="space-y-1">
-                    <NavigationItems mobile />
-                  </nav>
-                </div>
-              </SheetContent>
-            </Sheet>
-
-            {/* Logo */}
-            <Link to="/" className="flex items-center gap-2">
-              <Activity className="h-6 w-6 text-primary" />
-              <span className="hidden font-bold sm:inline-block">RosaiQ Air OS</span>
-            </Link>
+            {showBackButton && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleBack}
+                className="gap-2"
+              >
+                <ArrowLeft className="h-4 w-4" />
+                Back
+              </Button>
+            )}
+            {title && <h1 className="text-xl font-semibold">{title}</h1>}
           </div>
 
-          {/* Desktop navigation */}
-          <nav className="hidden md:flex items-center gap-1">
-            <NavigationItems />
+          {/* Center - Navigation */}
+          <nav className="flex items-center gap-2">
+            <Button
+              variant={isActive('/') ? 'default' : 'ghost'}
+              size="sm"
+              asChild
+            >
+              <Link to="/" className="gap-2">
+                <Home className="h-4 w-4" />
+                Dashboard
+              </Link>
+            </Button>
+            
+            {user?.user_metadata?.role === 'admin' && (
+              <Button
+                variant={isActive('/management') ? 'default' : 'ghost'}
+                size="sm"
+                asChild
+              >
+                <Link to="/management" className="gap-2">
+                  <Building2 className="h-4 w-4" />
+                  Management
+                </Link>
+              </Button>
+            )}
+            
+            <Button
+              variant={isActive('/settings') ? 'default' : 'ghost'}
+              size="sm"
+              asChild
+            >
+              <Link to="/settings" className="gap-2">
+                <Settings className="h-4 w-4" />
+                Settings
+              </Link>
+            </Button>
           </nav>
 
-          {/* Status indicators */}
+          {/* Right side - User menu */}
           <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Wifi className="h-3 w-3 text-green-500" />
-              <span className="hidden sm:inline">MQTT Connected</span>
+            <div className="flex items-center gap-2 text-sm">
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">
+                {user?.email?.split('@')[0]}
+              </span>
+              {user?.user_metadata?.role === 'admin' && (
+                <span className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">
+                  Admin
+                </span>
+              )}
             </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={handleSignOut}
+              className="gap-2"
+            >
+              <LogOut className="h-4 w-4" />
+              <span className="hidden sm:inline">Sign Out</span>
+            </Button>
           </div>
         </div>
       </header>
 
-      {/* Main content */}
+      {/* Main Content */}
       <main className="container py-6">
-        <Outlet />
+        {children}
       </main>
     </div>
   );

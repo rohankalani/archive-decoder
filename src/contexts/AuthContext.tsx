@@ -40,49 +40,96 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const isSuperAdmin = profile?.role === 'super_admin'
 
   useEffect(() => {
-    // Set up auth state listener FIRST
+    let isMounted = true
+
+    const initializeAuth = async () => {
+      try {
+        // First, get current session
+        const { data: { session }, error: sessionError } = await supabase.auth.getSession()
+        
+        if (!isMounted) return
+
+        if (sessionError) {
+          console.error('Session error:', sessionError)
+          setLoading(false)
+          return
+        }
+
+        setSession(session)
+        setUser(session?.user ?? null)
+
+        // If we have a user, fetch their profile immediately
+        if (session?.user && isMounted) {
+          try {
+            const { data: profileData, error: profileError } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
+
+            if (!isMounted) return
+
+            if (profileError) {
+              console.error('Error fetching profile:', profileError)
+              setProfile(null)
+            } else {
+              setProfile(profileData)
+            }
+          } catch (error) {
+            console.error('Profile fetch error:', error)
+            setProfile(null)
+          }
+        }
+      } catch (error) {
+        console.error('Auth initialization error:', error)
+      } finally {
+        if (isMounted) {
+          setLoading(false)
+        }
+      }
+    }
+
+    // Set up auth state listener
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
+        if (!isMounted) return
+
         setSession(session)
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          // Defer profile fetch to avoid deadlock
-          setTimeout(async () => {
-            try {
-              const { data: profileData, error } = await supabase
-                .from('profiles')
-                .select('*')
-                .eq('id', session.user.id)
-                .single()
+          try {
+            const { data: profileData, error } = await supabase
+              .from('profiles')
+              .select('*')
+              .eq('id', session.user.id)
+              .single()
 
+            if (isMounted) {
               if (error) {
                 console.error('Error fetching profile:', error)
                 setProfile(null)
               } else {
                 setProfile(profileData)
               }
-            } catch (error) {
-              console.error('Profile fetch error:', error)
-              setProfile(null)
             }
-          }, 0)
+          } catch (error) {
+            console.error('Profile fetch error:', error)
+            if (isMounted) setProfile(null)
+          }
         } else {
-          setProfile(null)
+          if (isMounted) setProfile(null)
         }
-        
-        setLoading(false)
       }
     )
 
-    // THEN check for existing session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session)
-      setUser(session?.user ?? null)
-      setLoading(false)
-    })
+    // Initialize auth
+    initializeAuth()
 
-    return () => subscription.unsubscribe()
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
   }, [])
 
   const signIn = async (email: string, password: string) => {

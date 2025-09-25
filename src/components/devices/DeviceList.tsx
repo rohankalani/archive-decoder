@@ -46,8 +46,6 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
         return <Wifi className="h-4 w-4 text-success" />
       case 'offline':
         return <WifiOff className="h-4 w-4 text-destructive" />
-      case 'maintenance':
-        return <Settings className="h-4 w-4 text-warning" />
       case 'error':
         return <WifiOff className="h-4 w-4 text-destructive" />
       default:
@@ -59,7 +57,6 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
     const variants = {
       online: 'default',
       offline: 'destructive',
-      maintenance: 'secondary',
       error: 'destructive'
     } as const
 
@@ -172,13 +169,6 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
                     >
                       <WifiOff className="h-4 w-4 mr-2" />
                       Mark Offline
-                    </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={() => onUpdateStatus(device.id, { status: 'maintenance' })}
-                      disabled={device.status === 'maintenance'}
-                    >
-                      <Settings className="h-4 w-4 mr-2" />
-                      Mark Maintenance
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

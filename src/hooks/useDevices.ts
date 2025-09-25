@@ -9,7 +9,7 @@ export interface Device {
   mac_address?: string
   serial_number?: string
   firmware_version?: string
-  status: 'online' | 'offline' | 'maintenance' | 'error'
+  status: 'online' | 'offline' | 'error'
   battery_level?: number
   signal_strength?: number
   floor_id: string

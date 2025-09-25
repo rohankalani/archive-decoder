@@ -27,7 +27,7 @@ export function DeviceManagement() {
   // Device status counts
   const onlineDevices = devices.filter(d => d.status === 'online').length
   const offlineDevices = devices.filter(d => d.status === 'offline').length
-  const maintenanceDevices = devices.filter(d => d.status === 'maintenance').length
+  const errorDevices = devices.filter(d => d.status === 'error').length
 
   // Unassigned floors (floors without devices)
   const assignedFloorIds = new Set(devices.map(d => d.floor_id))
@@ -110,13 +110,13 @@ export function DeviceManagement() {
           </CardContent>
         </Card>
 
-        <Card className="border-0 bg-gradient-to-br from-warning/5 to-warning/10">
+        <Card className="border-0 bg-gradient-to-br from-destructive/5 to-destructive/10">
           <CardContent className="p-4">
             <div className="flex items-center space-x-3">
-              <Settings className="h-8 w-8 text-warning" />
+              <AlertTriangle className="h-8 w-8 text-destructive" />
               <div>
-                <p className="text-2xl font-bold">{maintenanceDevices}</p>
-                <p className="text-sm text-muted-foreground">Maintenance</p>
+                <p className="text-2xl font-bold">{errorDevices}</p>
+                <p className="text-sm text-muted-foreground">Error</p>
               </div>
             </div>
           </CardContent>
@@ -175,7 +175,7 @@ export function DeviceManagement() {
               <TabsTrigger value="all">All Devices ({devices.length})</TabsTrigger>
               <TabsTrigger value="online">Online ({onlineDevices})</TabsTrigger>
               <TabsTrigger value="offline">Offline ({offlineDevices})</TabsTrigger>
-              <TabsTrigger value="maintenance">Maintenance ({maintenanceDevices})</TabsTrigger>
+              <TabsTrigger value="error">Error ({errorDevices})</TabsTrigger>
             </TabsList>
 
             <TabsContent value="all">
@@ -205,9 +205,9 @@ export function DeviceManagement() {
               />
             </TabsContent>
 
-            <TabsContent value="maintenance">
+            <TabsContent value="error">
               <DeviceList 
-                devices={devices.filter(d => d.status === 'maintenance')}
+                devices={devices.filter(d => d.status === 'error')}
                 onEdit={handleEditDevice}
                 onDelete={deleteDevice}
                 onUpdateStatus={updateDevice}

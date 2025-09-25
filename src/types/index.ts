@@ -1,23 +1,43 @@
-// --- Device & Location Data ---
-
+// Device & Location Data
 export interface Location {
-    id: string;
-    name: string;
-    coordinates: [number, number]; // [lat, lng]
-    address?: string;
+  id: string;
+  name: string;
+  coordinates: [number, number]; // [lat, lng]
+  address?: string;
 }
 
 export interface Device {
-    id: string;
-    name: string;
-    type: 'air-quality' | 'weather' | 'noise' | 'radiation';
-    location: Location;
-    isOnline: boolean;
-    lastSeen: string; // ISO timestamp
-    batteryLevel?: number; // 0-100
-    signalStrength?: number; // dBm
-    version: string;
-    sensors: string[]; // e.g. ['pm25', 'pm10', 'temperature']
+  id: string;
+  name: string;
+  type: 'air-quality';
+  location: Location;
+  isOnline: boolean;
+  lastSeen: string; // ISO timestamp
+  batteryLevel?: number; // 0-100
+  signalStrength?: number; // dBm
+  version: string;
+  sensors: string[]; // ['pm25', 'pm10', 'co2', 'hcho', 'voc', 'nox']
+}
+
+// AQI & Quality Levels - UAE Standards
+export type AqiLevel = 'Good' | 'Moderate' | 'Unhealthy for Sensitive Groups' | 'Unhealthy' | 'Very Unhealthy' | 'Hazardous';
+
+export interface AqiThresholds {
+  good: [number, number];
+  moderate: [number, number];
+  unhealthySensitive: [number, number];
+  unhealthy: [number, number];
+  veryUnhealthy: [number, number];
+  hazardous: [number, number];
+}
+
+export interface ParameterThresholds {
+  pm25: AqiThresholds;
+  pm10: AqiThresholds;
+  hcho: AqiThresholds;
+  co2: AqiThresholds;
+  voc: AqiThresholds;
+  nox: AqiThresholds;
 }
 
 // --- Sensor Data ---

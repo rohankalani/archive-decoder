@@ -239,14 +239,13 @@ export type Database = {
       devices: {
         Row: {
           battery_level: number | null
-          calibration_date: string | null
+          calibration_due_date: string | null
           created_at: string | null
           device_type: string | null
           firmware_version: string | null
           floor_id: string
           id: string
           installation_date: string | null
-          last_maintenance: string | null
           mac_address: string | null
           name: string
           serial_number: string | null
@@ -256,14 +255,13 @@ export type Database = {
         }
         Insert: {
           battery_level?: number | null
-          calibration_date?: string | null
+          calibration_due_date?: string | null
           created_at?: string | null
           device_type?: string | null
           firmware_version?: string | null
           floor_id: string
           id?: string
           installation_date?: string | null
-          last_maintenance?: string | null
           mac_address?: string | null
           name: string
           serial_number?: string | null
@@ -273,14 +271,13 @@ export type Database = {
         }
         Update: {
           battery_level?: number | null
-          calibration_date?: string | null
+          calibration_due_date?: string | null
           created_at?: string | null
           device_type?: string | null
           firmware_version?: string | null
           floor_id?: string
           id?: string
           installation_date?: string | null
-          last_maintenance?: string | null
           mac_address?: string | null
           name?: string
           serial_number?: string | null

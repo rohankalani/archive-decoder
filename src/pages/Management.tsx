@@ -30,18 +30,21 @@ export default function Management() {
   const [wizardOpen, setWizardOpen] = useState(false)
   const [wizardType, setWizardType] = useState<LocationType>('site')
   const [parentId, setParentId] = useState<string>()
+  const [editItem, setEditItem] = useState<Site | Building | Block | Floor | null>(null)
 
   // Simplified handlers
   const handleAddLocation = (type: LocationType, parentId?: string) => {
     setWizardType(type)
     setParentId(parentId)
+    setEditItem(null)
     setWizardOpen(true)
   }
 
   const handleEditLocation = (type: LocationType, item: Site | Building | Block | Floor) => {
-    // For now, we'll use the add wizard for editing too
-    // In the future, you can extend this to support editing
-    console.log('Edit:', type, item)
+    setWizardType(type)
+    setEditItem(item)
+    setParentId(undefined)
+    setWizardOpen(true)
   }
 
   const totalFloors = floors.length
@@ -237,6 +240,7 @@ export default function Management() {
           onClose={() => setWizardOpen(false)}
           initialType={wizardType}
           parentId={parentId}
+          editItem={editItem}
         />
       </div>
     </Layout>

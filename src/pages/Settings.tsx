@@ -8,12 +8,12 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
-import { ParameterThresholds, AqiLevel } from '@/types';
+import { Metric, AqiLevel, Thresholds } from '@/types';
 import { Settings as SettingsIcon, RotateCcw, Save, Palette } from 'lucide-react';
 
 export function Settings() {
   const { thresholds, updateThresholds, resetToDefaults, getQualityColor } = useSettings();
-  const [localThresholds, setLocalThresholds] = useState<ParameterThresholds>(thresholds);
+  const [localThresholds, setLocalThresholds] = useState<Record<Metric, Thresholds>>(thresholds);
   const { toast } = useToast();
 
   const handleSave = () => {
@@ -29,14 +29,13 @@ export function Settings() {
     setLocalThresholds(thresholds);
     toast({
       title: "Settings reset",
-      description: "Air quality thresholds have been reset to UAE defaults.",
+      description: "Air quality thresholds have been reset to defaults.",
     });
   };
 
   const updateThreshold = (
-    parameter: keyof ParameterThresholds,
-    level: keyof ParameterThresholds[keyof ParameterThresholds],
-    index: 0 | 1,
+    parameter: Metric,
+    level: keyof Thresholds,
     value: string
   ) => {
     const numValue = parseFloat(value);
@@ -46,29 +45,20 @@ export function Settings() {
       ...prev,
       [parameter]: {
         ...prev[parameter],
-        [level]: index === 0 
-          ? [numValue, prev[parameter][level][1]]
-          : [prev[parameter][level][0], numValue]
+        [level]: numValue
       }
     }));
   };
 
-  const qualityLevels: { key: keyof ParameterThresholds[keyof ParameterThresholds], label: string, color: AqiLevel }[] = [
-    { key: 'good', label: 'Good', color: 'Good' },
-    { key: 'moderate', label: 'Moderate', color: 'Moderate' },
-    { key: 'unhealthySensitive', label: 'Unhealthy for Sensitive Groups', color: 'Unhealthy for Sensitive Groups' },
-    { key: 'unhealthy', label: 'Unhealthy', color: 'Unhealthy' },
-    { key: 'veryUnhealthy', label: 'Very Unhealthy', color: 'Very Unhealthy' },
-    { key: 'hazardous', label: 'Hazardous', color: 'Hazardous' }
-  ];
+  const qualityLevels: AqiLevel[] = ['Good', 'Moderate', 'Unhealthy for Sensitive Groups', 'Unhealthy', 'Very Unhealthy', 'Hazardous'];
 
-  const parameters: { key: keyof ParameterThresholds, label: string, unit: string, description: string }[] = [
+  const parameters: { key: Metric, label: string, unit: string, description: string }[] = [
     { key: 'pm25', label: 'PM2.5', unit: 'µg/m³', description: 'Fine particulate matter (≤2.5 micrometers)' },
     { key: 'pm10', label: 'PM10', unit: 'µg/m³', description: 'Coarse particulate matter (≤10 micrometers)' },
     { key: 'hcho', label: 'HCHO', unit: 'ppb', description: 'Formaldehyde concentration' },
     { key: 'co2', label: 'CO₂', unit: 'ppm', description: 'Carbon dioxide concentration' },
-    { key: 'voc', label: 'VOC', unit: 'index', description: 'Volatile organic compounds index (0-500)' },
-    { key: 'nox', label: 'NOₓ', unit: 'index', description: 'Nitrogen oxides index (0-500)' }
+    { key: 'voc', label: 'VOC', unit: 'index', description: 'Volatile organic compounds index' },
+    { key: 'nox', label: 'NOₓ', unit: 'index', description: 'Nitrogen oxides index' }
   ];
 
   return (
@@ -84,7 +74,7 @@ export function Settings() {
         <div className="flex gap-2">
           <Button variant="outline" onClick={handleReset}>
             <RotateCcw className="h-4 w-4 mr-2" />
-            Reset to UAE Defaults
+            Reset to Defaults
           </Button>
           <Button onClick={handleSave}>
             <Save className="h-4 w-4 mr-2" />
@@ -113,35 +103,63 @@ export function Settings() {
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-4">
-                    {qualityLevels.map(({ key: levelKey, label: levelLabel, color }) => (
-                      <div key={levelKey} className="flex items-center gap-4">
-                        <div className="flex items-center gap-2 min-w-[200px]">
-                          <div 
-                            className="w-4 h-4 rounded"
-                            style={{ backgroundColor: getQualityColor(color) }}
-                          />
-                          <Label className="text-sm">{levelLabel}</Label>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <Input
-                            type="number"
-                            value={localThresholds[key][levelKey][0]}
-                            onChange={(e) => updateThreshold(key, levelKey, 0, e.target.value)}
-                            className="w-20"
-                            step="0.1"
-                          />
-                          <span className="text-muted-foreground">to</span>
-                          <Input
-                            type="number"
-                            value={localThresholds[key][levelKey][1]}
-                            onChange={(e) => updateThreshold(key, levelKey, 1, e.target.value)}
-                            className="w-20"
-                            step="0.1"
-                          />
-                          <span className="text-sm text-muted-foreground">{unit}</span>
-                        </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 min-w-[100px]">
+                        <div 
+                          className="w-4 h-4 rounded"
+                          style={{ backgroundColor: getQualityColor('Good') }}
+                        />
+                        <Label className="text-sm">Good</Label>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={localThresholds[key]?.good || 0}
+                          onChange={(e) => updateThreshold(key, 'good', e.target.value)}
+                          className="w-20"
+                          step="0.1"
+                        />
+                        <span className="text-sm text-muted-foreground">{unit}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 min-w-[100px]">
+                        <div 
+                          className="w-4 h-4 rounded"
+                          style={{ backgroundColor: getQualityColor('Moderate') }}
+                        />
+                        <Label className="text-sm">Moderate</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={localThresholds[key]?.moderate || 0}
+                          onChange={(e) => updateThreshold(key, 'moderate', e.target.value)}
+                          className="w-20"
+                          step="0.1"
+                        />
+                        <span className="text-sm text-muted-foreground">{unit}</span>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="flex items-center gap-2 min-w-[100px]">
+                        <div 
+                          className="w-4 h-4 rounded"
+                          style={{ backgroundColor: getQualityColor('Unhealthy') }}
+                        />
+                        <Label className="text-sm">Poor</Label>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Input
+                          type="number"
+                          value={localThresholds[key]?.poor || 0}
+                          onChange={(e) => updateThreshold(key, 'poor', e.target.value)}
+                          className="w-20"
+                          step="0.1"
+                        />
+                        <span className="text-sm text-muted-foreground">{unit}</span>
+                      </div>
+                    </div>
                   </div>
                 </CardContent>
               </Card>
@@ -162,26 +180,26 @@ export function Settings() {
             </CardHeader>
             <CardContent>
               <div className="grid gap-4">
-                {qualityLevels.map(({ color, label }) => (
-                  <div key={color} className="flex items-center gap-4">
+                {qualityLevels.map((level) => (
+                  <div key={level} className="flex items-center gap-4">
                     <div 
                       className="w-8 h-8 rounded-md border"
-                      style={{ backgroundColor: getQualityColor(color) }}
+                      style={{ backgroundColor: getQualityColor(level) }}
                     />
                     <div className="flex-1">
-                      <div className="font-medium">{label}</div>
+                      <div className="font-medium">{level}</div>
                       <div className="text-sm text-muted-foreground">
-                        {getQualityColor(color)}
+                        {getQualityColor(level)}
                       </div>
                     </div>
                     <Badge 
                       variant="secondary"
                       style={{ 
-                        backgroundColor: getQualityColor(color),
+                        backgroundColor: getQualityColor(level),
                         color: 'white'
                       }}
                     >
-                      {color}
+                      {level}
                     </Badge>
                   </div>
                 ))}
@@ -194,8 +212,8 @@ export function Settings() {
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
               <CardHeader>
-                <CardTitle>Device Information</CardTitle>
-                <CardDescription>ROSAIQ ULTRADETEKT 03M specifications</CardDescription>
+                <CardTitle>ROSAIQ ULTRADETEKT 03M</CardTitle>
+                <CardDescription>Multi-sensor air quality monitoring device</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
@@ -230,45 +248,26 @@ export function Settings() {
 
             <Card>
               <CardHeader>
-                <CardTitle>UAE Air Quality Standards</CardTitle>
-                <CardDescription>Based on UAE environmental regulations</CardDescription>
+                <CardTitle>Monitoring Locations</CardTitle>
+                <CardDescription>Current deployment sites</CardDescription>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <h4 className="font-medium mb-2">AQI Calculation</h4>
-                  <div className="text-sm text-muted-foreground">
-                    AQI = MAX(PM2.5, PM10, VOC, NOₓ, HCHO)
-                  </div>
+                  <h4 className="font-medium mb-2">Active Sites</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Abu Dhabi Estimada</li>
+                    <li>• Burjeel Hospital</li>
+                    <li>• Dubai Green Building</li>
+                  </ul>
                 </div>
                 <Separator />
                 <div>
-                  <h4 className="font-medium mb-2">Quality Levels</h4>
-                  <div className="space-y-2">
-                    <div className="flex justify-between text-sm">
-                      <span>Good</span>
-                      <span className="text-muted-foreground">0-50 AQI</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Moderate</span>
-                      <span className="text-muted-foreground">51-100 AQI</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Unhealthy (Sensitive)</span>
-                      <span className="text-muted-foreground">101-150 AQI</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Unhealthy</span>
-                      <span className="text-muted-foreground">151-200 AQI</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Very Unhealthy</span>
-                      <span className="text-muted-foreground">201-300 AQI</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span>Hazardous</span>
-                      <span className="text-muted-foreground">301-500 AQI</span>
-                    </div>
-                  </div>
+                  <h4 className="font-medium mb-2">Data Transmission</h4>
+                  <ul className="text-sm text-muted-foreground space-y-1">
+                    <li>• Wi-Fi connectivity</li>
+                    <li>• MQTT protocol</li>
+                    <li>• Real-time updates every 30 seconds</li>
+                  </ul>
                 </div>
               </CardContent>
             </Card>

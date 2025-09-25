@@ -66,7 +66,7 @@ const mockDevices: Device[] = [
     {
         id: 'sim-device-04',
         name: 'Rooftop Weather Station',
-        type: 'weather',
+        type: 'air-quality',
         location: {
             id: 'loc-4',
             name: 'Building B Rooftop',

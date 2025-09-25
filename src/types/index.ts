@@ -1,4 +1,5 @@
-// Device & Location Data
+// --- Device & Location Data ---
+
 export interface Location {
   id: string;
   name: string;
@@ -19,30 +20,9 @@ export interface Device {
   sensors: string[]; // ['pm25', 'pm10', 'co2', 'hcho', 'voc', 'nox']
 }
 
-// AQI & Quality Levels - UAE Standards
-export type AqiLevel = 'Good' | 'Moderate' | 'Unhealthy for Sensitive Groups' | 'Unhealthy' | 'Very Unhealthy' | 'Hazardous';
+// --- Sensor Data - ROSAIQ ULTRADETEKT 03M ---
 
-export interface AqiThresholds {
-  good: [number, number];
-  moderate: [number, number];
-  unhealthySensitive: [number, number];
-  unhealthy: [number, number];
-  veryUnhealthy: [number, number];
-  hazardous: [number, number];
-}
-
-export interface ParameterThresholds {
-  pm25: AqiThresholds;
-  pm10: AqiThresholds;
-  hcho: AqiThresholds;
-  co2: AqiThresholds;
-  voc: AqiThresholds;
-  nox: AqiThresholds;
-}
-
-// --- Sensor Data ---
-
-export type Metric = 'pm25' | 'pm10' | 'pm1' | 'temperature' | 'humidity' | 'pressure' | 'co2' | 'co' | 'no2' | 'o3' | 'so2' | 'noise' | 'radiation' | 'wind_speed' | 'wind_direction' | 'voc' | 'iaqi';
+export type Metric = 'pm03' | 'pm1' | 'pm25' | 'pm5' | 'pm10' | 'co2' | 'hcho' | 'voc' | 'nox' | 'temperature' | 'humidity' | 'pressure' | 'co' | 'no2' | 'o3' | 'so2' | 'noise' | 'radiation' | 'wind_speed' | 'wind_direction' | 'iaqi';
 export type AqiMetric = 'pm25_aqi' | 'pm10_aqi' | 'co_aqi' | 'no2_aqi' | 'o3_aqi' | 'so2_aqi';
 
 export interface SensorReading {
@@ -85,6 +65,15 @@ export interface Thresholds {
 }
 
 export type AqiLevel = 'Good' | 'Moderate' | 'Unhealthy for Sensitive Groups' | 'Unhealthy' | 'Very Unhealthy' | 'Hazardous';
+
+export interface UAEThresholds {
+  good: [number, number];
+  moderate: [number, number]; 
+  unhealthySensitive: [number, number];
+  unhealthy: [number, number];
+  veryUnhealthy: [number, number];
+  hazardous: [number, number];
+}
 
 export type UnitSystem = 'metric' | 'imperial';
 

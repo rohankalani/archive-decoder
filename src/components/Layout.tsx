@@ -18,7 +18,7 @@ interface LayoutProps {
 }
 
 export function Layout({ children, title, showBackButton = false }: LayoutProps) {
-  const { user, signOut } = useAuth();
+  const { user, profile, isAdmin, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -67,7 +67,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
               </Link>
             </Button>
             
-            {user?.user_metadata?.role === 'admin' && (
+            {isAdmin && (
               <Button
                 variant={isActive('/management') ? 'default' : 'ghost'}
                 size="sm"
@@ -99,7 +99,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
               <span className="hidden sm:inline">
                 {user?.email?.split('@')[0]}
               </span>
-              {user?.user_metadata?.role === 'admin' && (
+              {isAdmin && (
                 <span className="rounded-md bg-primary px-2 py-1 text-xs text-primary-foreground">
                   Admin
                 </span>

@@ -14,16 +14,467 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      air_quality_thresholds: {
+        Row: {
+          created_at: string | null
+          good_max: number | null
+          hazardous_min: number | null
+          id: string
+          moderate_max: number | null
+          region: string | null
+          sensor_type: Database["public"]["Enums"]["sensor_type"]
+          unhealthy_max: number | null
+          unhealthy_sensitive_max: number | null
+          unit: string
+          updated_at: string | null
+          very_unhealthy_max: number | null
+        }
+        Insert: {
+          created_at?: string | null
+          good_max?: number | null
+          hazardous_min?: number | null
+          id?: string
+          moderate_max?: number | null
+          region?: string | null
+          sensor_type: Database["public"]["Enums"]["sensor_type"]
+          unhealthy_max?: number | null
+          unhealthy_sensitive_max?: number | null
+          unit: string
+          updated_at?: string | null
+          very_unhealthy_max?: number | null
+        }
+        Update: {
+          created_at?: string | null
+          good_max?: number | null
+          hazardous_min?: number | null
+          id?: string
+          moderate_max?: number | null
+          region?: string | null
+          sensor_type?: Database["public"]["Enums"]["sensor_type"]
+          unhealthy_max?: number | null
+          unhealthy_sensitive_max?: number | null
+          unit?: string
+          updated_at?: string | null
+          very_unhealthy_max?: number | null
+        }
+        Relationships: []
+      }
+      alerts: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          id: string
+          is_resolved: boolean | null
+          message: string
+          resolved_at: string | null
+          resolved_by: string | null
+          sensor_type: Database["public"]["Enums"]["sensor_type"]
+          severity: Database["public"]["Enums"]["alert_severity"]
+          threshold_value: number
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          id?: string
+          is_resolved?: boolean | null
+          message: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sensor_type: Database["public"]["Enums"]["sensor_type"]
+          severity: Database["public"]["Enums"]["alert_severity"]
+          threshold_value: number
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          is_resolved?: boolean | null
+          message?: string
+          resolved_at?: string | null
+          resolved_by?: string | null
+          sensor_type?: Database["public"]["Enums"]["sensor_type"]
+          severity?: Database["public"]["Enums"]["alert_severity"]
+          threshold_value?: number
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "alerts_resolved_by_fkey"
+            columns: ["resolved_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      audit_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          id: string
+          ip_address: unknown | null
+          new_values: Json | null
+          old_values: Json | null
+          record_id: string | null
+          table_name: string
+          user_agent: string | null
+          user_id: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          id?: string
+          ip_address?: unknown | null
+          new_values?: Json | null
+          old_values?: Json | null
+          record_id?: string | null
+          table_name?: string
+          user_agent?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "audit_logs_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      blocks: {
+        Row: {
+          building_id: string
+          created_at: string | null
+          description: string | null
+          id: string
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          building_id: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          building_id?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "blocks_building_id_fkey"
+            columns: ["building_id"]
+            isOneToOne: false
+            referencedRelation: "buildings"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      buildings: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          floor_count: number | null
+          id: string
+          name: string
+          site_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          floor_count?: number | null
+          id?: string
+          name: string
+          site_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          floor_count?: number | null
+          id?: string
+          name?: string
+          site_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "buildings_site_id_fkey"
+            columns: ["site_id"]
+            isOneToOne: false
+            referencedRelation: "sites"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      devices: {
+        Row: {
+          battery_level: number | null
+          calibration_date: string | null
+          created_at: string | null
+          device_type: string | null
+          firmware_version: string | null
+          floor_id: string
+          id: string
+          installation_date: string | null
+          last_maintenance: string | null
+          mac_address: string | null
+          name: string
+          serial_number: string | null
+          signal_strength: number | null
+          status: Database["public"]["Enums"]["device_status"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          battery_level?: number | null
+          calibration_date?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          firmware_version?: string | null
+          floor_id: string
+          id?: string
+          installation_date?: string | null
+          last_maintenance?: string | null
+          mac_address?: string | null
+          name: string
+          serial_number?: string | null
+          signal_strength?: number | null
+          status?: Database["public"]["Enums"]["device_status"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          battery_level?: number | null
+          calibration_date?: string | null
+          created_at?: string | null
+          device_type?: string | null
+          firmware_version?: string | null
+          floor_id?: string
+          id?: string
+          installation_date?: string | null
+          last_maintenance?: string | null
+          mac_address?: string | null
+          name?: string
+          serial_number?: string | null
+          signal_strength?: number | null
+          status?: Database["public"]["Enums"]["device_status"] | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "devices_floor_id_fkey"
+            columns: ["floor_id"]
+            isOneToOne: false
+            referencedRelation: "floors"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      floors: {
+        Row: {
+          area_sqm: number | null
+          block_id: string
+          created_at: string | null
+          floor_number: number
+          id: string
+          name: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          area_sqm?: number | null
+          block_id: string
+          created_at?: string | null
+          floor_number: number
+          id?: string
+          name?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          area_sqm?: number | null
+          block_id?: string
+          created_at?: string | null
+          floor_number?: number
+          id?: string
+          name?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "floors_block_id_fkey"
+            columns: ["block_id"]
+            isOneToOne: false
+            referencedRelation: "blocks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string | null
+          department: string | null
+          email: string
+          first_name: string | null
+          id: string
+          is_active: boolean | null
+          last_name: string | null
+          phone: string | null
+          role: Database["public"]["Enums"]["user_role"] | null
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          department?: string | null
+          email: string
+          first_name?: string | null
+          id: string
+          is_active?: boolean | null
+          last_name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          department?: string | null
+          email?: string
+          first_name?: string | null
+          id?: string
+          is_active?: boolean | null
+          last_name?: string | null
+          phone?: string | null
+          role?: Database["public"]["Enums"]["user_role"] | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      sensor_readings: {
+        Row: {
+          created_at: string | null
+          device_id: string
+          id: string
+          sensor_type: Database["public"]["Enums"]["sensor_type"]
+          timestamp: string | null
+          unit: string
+          value: number
+        }
+        Insert: {
+          created_at?: string | null
+          device_id: string
+          id?: string
+          sensor_type: Database["public"]["Enums"]["sensor_type"]
+          timestamp?: string | null
+          unit: string
+          value: number
+        }
+        Update: {
+          created_at?: string | null
+          device_id?: string
+          id?: string
+          sensor_type?: Database["public"]["Enums"]["sensor_type"]
+          timestamp?: string | null
+          unit?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "sensor_readings_device_id_fkey"
+            columns: ["device_id"]
+            isOneToOne: false
+            referencedRelation: "devices"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      sites: {
+        Row: {
+          address: string
+          created_at: string | null
+          description: string | null
+          id: string
+          latitude: number | null
+          longitude: number | null
+          name: string
+          updated_at: string | null
+        }
+        Insert: {
+          address: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name: string
+          updated_at?: string | null
+        }
+        Update: {
+          address?: string
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          latitude?: number | null
+          longitude?: number | null
+          name?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_user_role: {
+        Args: { user_id: string }
+        Returns: Database["public"]["Enums"]["user_role"]
+      }
+      is_admin_or_super_admin: {
+        Args: { user_id: string }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      alert_severity: "low" | "medium" | "high" | "critical"
+      device_status: "online" | "offline" | "maintenance" | "error"
+      sensor_type:
+        | "temperature"
+        | "humidity"
+        | "pm25"
+        | "pm10"
+        | "co2"
+        | "co"
+        | "no2"
+        | "o3"
+        | "voc"
+        | "pressure"
+      user_role: "super_admin" | "admin" | "viewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +601,22 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      alert_severity: ["low", "medium", "high", "critical"],
+      device_status: ["online", "offline", "maintenance", "error"],
+      sensor_type: [
+        "temperature",
+        "humidity",
+        "pm25",
+        "pm10",
+        "co2",
+        "co",
+        "no2",
+        "o3",
+        "voc",
+        "pressure",
+      ],
+      user_role: ["super_admin", "admin", "viewer"],
+    },
   },
 } as const

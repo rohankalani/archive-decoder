@@ -7,7 +7,8 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Layout } from '@/components/Layout'
 import { LocationTree } from '@/components/locations/LocationTree'
-import { LocationForms } from '@/components/locations/LocationForms'
+import { LocationWizard } from '@/components/locations/LocationWizard'
+import { QuickActions } from '@/components/locations/QuickActions'
 import { 
   Building2, 
   MapPin, 
@@ -19,77 +20,28 @@ import {
   BarChart3
 } from 'lucide-react'
 
+type LocationType = 'site' | 'building' | 'block' | 'floor';
+
 export default function Management() {
   const { profile, isAdmin, isSuperAdmin } = useAuth()
   const { sites, buildings, blocks, floors } = useLocations()
 
-  // Dialog states for site management
-  const [siteDialogOpen, setSiteDialogOpen] = useState(false)
-  const [editingSite, setEditingSite] = useState<Site | null>(null)
+  // Simplified state for the wizard
+  const [wizardOpen, setWizardOpen] = useState(false)
+  const [wizardType, setWizardType] = useState<LocationType>('site')
+  const [parentId, setParentId] = useState<string>()
 
-  // Dialog states for building management
-  const [buildingDialogOpen, setBuildingDialogOpen] = useState(false)
-  const [editingBuilding, setEditingBuilding] = useState<Building | null>(null)
-  const [selectedSiteId, setSelectedSiteId] = useState<string | null>(null)
-
-  // Dialog states for block management
-  const [blockDialogOpen, setBlockDialogOpen] = useState(false)
-  const [editingBlock, setEditingBlock] = useState<Block | null>(null)
-  const [selectedBuildingId, setSelectedBuildingId] = useState<string | null>(null)
-
-  // Dialog states for floor management
-  const [floorDialogOpen, setFloorDialogOpen] = useState(false)
-  const [editingFloor, setEditingFloor] = useState<Floor | null>(null)
-  const [selectedBlockId, setSelectedBlockId] = useState<string | null>(null)
-
-  // Site handlers
-  const handleAddSite = () => {
-    setEditingSite(null)
-    setSiteDialogOpen(true)
+  // Simplified handlers
+  const handleAddLocation = (type: LocationType, parentId?: string) => {
+    setWizardType(type)
+    setParentId(parentId)
+    setWizardOpen(true)
   }
 
-  const handleEditSite = (site: Site) => {
-    setEditingSite(site)
-    setSiteDialogOpen(true)
-  }
-
-  // Building handlers
-  const handleAddBuilding = (siteId: string) => {
-    setSelectedSiteId(siteId)
-    setEditingBuilding(null)
-    setBuildingDialogOpen(true)
-  }
-
-  const handleEditBuilding = (building: Building) => {
-    setEditingBuilding(building)
-    setSelectedSiteId(building.site_id)
-    setBuildingDialogOpen(true)
-  }
-
-  // Block handlers
-  const handleAddBlock = (buildingId: string) => {
-    setSelectedBuildingId(buildingId)
-    setEditingBlock(null)
-    setBlockDialogOpen(true)
-  }
-
-  const handleEditBlock = (block: Block) => {
-    setEditingBlock(block)
-    setSelectedBuildingId(block.building_id)
-    setBlockDialogOpen(true)
-  }
-
-  // Floor handlers
-  const handleAddFloor = (blockId: string) => {
-    setSelectedBlockId(blockId)
-    setEditingFloor(null)
-    setFloorDialogOpen(true)
-  }
-
-  const handleEditFloor = (floor: Floor) => {
-    setEditingFloor(floor)
-    setSelectedBlockId(floor.block_id)
-    setFloorDialogOpen(true)
+  const handleEditLocation = (type: LocationType, item: Site | Building | Block | Floor) => {
+    // For now, we'll use the add wizard for editing too
+    // In the future, you can extend this to support editing
+    console.log('Edit:', type, item)
   }
 
   const totalFloors = floors.length
@@ -156,6 +108,9 @@ export default function Management() {
           </Card>
         </div>
 
+        {/* Quick Actions */}
+        <QuickActions />
+
         {/* Management Tabs */}
         <Tabs defaultValue="locations" className="space-y-6">
           <TabsList className="grid w-full grid-cols-4">
@@ -186,7 +141,7 @@ export default function Management() {
                 <h3 className="text-xl font-semibold">Location Hierarchy</h3>
                 <p className="text-muted-foreground">Manage sites, buildings, blocks, and floors</p>
               </div>
-              <Button onClick={handleAddSite}>
+              <Button onClick={() => handleAddLocation('site')}>
                 <Plus className="h-4 w-4 mr-2" />
                 Add Site
               </Button>
@@ -195,13 +150,13 @@ export default function Management() {
             <Card>
               <CardContent className="p-6">
                 <LocationTree
-                  onEditSite={handleEditSite}
-                  onEditBuilding={handleEditBuilding}
-                  onEditBlock={handleEditBlock}
-                  onEditFloor={handleEditFloor}
-                  onAddBuilding={handleAddBuilding}
-                  onAddBlock={handleAddBlock}
-                  onAddFloor={handleAddFloor}
+                  onEditSite={(site) => handleEditLocation('site', site)}
+                  onEditBuilding={(building) => handleEditLocation('building', building)}
+                  onEditBlock={(block) => handleEditLocation('block', block)}
+                  onEditFloor={(floor) => handleEditLocation('floor', floor)}
+                  onAddBuilding={(siteId) => handleAddLocation('building', siteId)}
+                  onAddBlock={(buildingId) => handleAddLocation('block', buildingId)}
+                  onAddFloor={(blockId) => handleAddLocation('floor', blockId)}
                 />
               </CardContent>
             </Card>
@@ -276,27 +231,12 @@ export default function Management() {
           </TabsContent>
         </Tabs>
 
-        {/* Location Forms */}
-        <LocationForms
-          siteDialogOpen={siteDialogOpen}
-          setSiteDialogOpen={setSiteDialogOpen}
-          editingSite={editingSite}
-          setEditingSite={setEditingSite}
-          buildingDialogOpen={buildingDialogOpen}
-          setBuildingDialogOpen={setBuildingDialogOpen}
-          editingBuilding={editingBuilding}
-          setEditingBuilding={setEditingBuilding}
-          selectedSiteId={selectedSiteId}
-          blockDialogOpen={blockDialogOpen}
-          setBlockDialogOpen={setBlockDialogOpen}
-          editingBlock={editingBlock}
-          setEditingBlock={setEditingBlock}
-          selectedBuildingId={selectedBuildingId}
-          floorDialogOpen={floorDialogOpen}
-          setFloorDialogOpen={setFloorDialogOpen}
-          editingFloor={editingFloor}
-          setEditingFloor={setEditingFloor}
-          selectedBlockId={selectedBlockId}
+        {/* Location Wizard */}
+        <LocationWizard
+          isOpen={wizardOpen}
+          onClose={() => setWizardOpen(false)}
+          initialType={wizardType}
+          parentId={parentId}
         />
       </div>
     </Layout>

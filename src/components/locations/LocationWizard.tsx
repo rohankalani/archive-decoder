@@ -52,11 +52,21 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
 
   const isEditing = !!editItem
 
-  // Reset form when wizard opens/closes
+  // Reset and initialize form when wizard opens/closes or props change
   useEffect(() => {
+    console.log('LocationWizard useEffect triggered:', { 
+      isOpen, 
+      initialType, 
+      parentId, 
+      editItem: !!editItem, 
+      isEditing,
+      currentType 
+    })
+    
+    // Always update currentType when initialType changes
+    setCurrentType(initialType)
+    
     if (isOpen) {
-      setCurrentType(initialType)
-      
       if (isEditing && editItem) {
         // Pre-populate form with existing data
         switch (initialType) {
@@ -172,6 +182,25 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
     }
   }, [isOpen, initialType, parentId, editItem, isEditing, buildings, blocks])
 
+  // Clear form when dialog closes
+  useEffect(() => {
+    if (!isOpen) {
+      setFormData({
+        name: '',
+        description: '',
+        address: '',
+        latitude: '',
+        longitude: '',
+        floorCount: 1,
+        floorNumber: 1,
+        areaSqm: ''
+      })
+      setSelectedSite('')
+      setSelectedBuilding('')
+      setSelectedBlock('')
+    }
+  }, [isOpen])
+
   const handleSubmit = async () => {
     try {
       if (isEditing && editItem) {
@@ -286,6 +315,10 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
         </DialogHeader>
 
         <div className="space-y-4">
+          {/* Debug info - remove in production */}
+          <div className="text-xs text-muted-foreground bg-muted p-2 rounded">
+            Debug: Type={currentType}, IsEditing={isEditing}, ParentId={parentId}
+          </div>
           {/* Site Selection for Building/Block/Floor */}
           {(currentType === 'building' || currentType === 'block' || currentType === 'floor') && !isEditing && (
             <div className="space-y-2">

@@ -34,6 +34,7 @@ export default function Management() {
 
   // Simplified handlers
   const handleAddLocation = (type: LocationType, parentId?: string) => {
+    console.log('handleAddLocation called:', { type, parentId })
     setWizardType(type)
     setParentId(parentId)
     setEditItem(null)
@@ -41,6 +42,7 @@ export default function Management() {
   }
 
   const handleEditLocation = (type: LocationType, item: Site | Building | Block | Floor) => {
+    console.log('handleEditLocation called:', { type, item })
     setWizardType(type)
     setEditItem(item)
     setParentId(undefined)
@@ -236,6 +238,7 @@ export default function Management() {
 
         {/* Location Wizard */}
         <LocationWizard
+          key={`${wizardType}-${editItem?.id || 'new'}-${parentId || 'none'}`}
           isOpen={wizardOpen}
           onClose={() => setWizardOpen(false)}
           initialType={wizardType}

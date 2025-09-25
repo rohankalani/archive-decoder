@@ -1,165 +1,168 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import { RealtimeData, Metric, AqiMetric, AqiLevel } from '../types';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { RealtimeData, SensorReading, Metric } from '@/types';
+import { useDevices } from './DeviceContext';
+import { useSettings } from './SettingsContext';
 
 interface RealtimeDataContextType {
-  realtimeData: Record<string, RealtimeData>;
-  connectionStatus: 'connecting' | 'connected' | 'disconnected';
+  realtimeData: RealtimeData[];
+  getDeviceData: (deviceId: string) => RealtimeData | undefined;
+  isLoading: boolean;
 }
 
 const RealtimeDataContext = createContext<RealtimeDataContextType | undefined>(undefined);
 
-// --- Data Simulator ---
-const DEVICE_IDS = [
-    'sim-device-01', 'sim-device-02', 'sim-device-03',
-    'sim-device-04', 'sim-device-05', 'sim-device-06',
-    'sim-device-07', 'sim-device-08', 'sim-device-09', 'sim-device-10'
-];
+export function RealtimeDataProvider({ children }: { children: ReactNode }) {
+  const [realtimeData, setRealtimeData] = useState<RealtimeData[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const { devices } = useDevices();
+  const { getQualityFromAqi, getMetricQuality } = useSettings();
 
-const generateReading = (metric: Metric | AqiMetric, baseValue: number, variance: number) => {
-    const value = Math.max(0, baseValue + (Math.random() - 0.5) * variance);
-    let unit = '';
-    let quality: AqiLevel | undefined = undefined;
+  // Generate realistic sensor readings for ULTRADETEKT 03M
+  const generateSensorReading = (metric: Metric, timestamp: string): SensorReading => {
+    let value: number;
+    let unit: string;
 
     switch (metric) {
-        case 'pm25':
-        case 'pm10':
-        case 'pm1':
-            unit = 'µg/m³';
-            if (metric === 'pm25') {
-                if (value <= 12) quality = 'Good';
-                else if (value <= 35.4) quality = 'Moderate';
-                else if (value <= 55.4) quality = 'Unhealthy for Sensitive Groups';
-                else if (value <= 150.4) quality = 'Unhealthy';
-                else if (value <= 250.4) quality = 'Very Unhealthy';
-                else quality = 'Hazardous';
-            }
-            break;
-        case 'temperature':
-            unit = '°C';
-            break;
-        case 'humidity':
-            unit = '%';
-            break;
-        case 'pressure':
-            unit = 'hPa';
-            break;
-        case 'co2':
-            unit = 'ppm';
-            break;
-        case 'co':
-        case 'no2':
-        case 'o3':
-        case 'so2':
-            unit = 'ppb';
-            break;
-        case 'noise':
-            unit = 'dB';
-            break;
-        case 'radiation':
-            unit = 'µSv/h';
-            break;
-        case 'wind_speed':
-            unit = 'm/s';
-            break;
-        case 'wind_direction':
-            unit = '°';
-            break;
-        case 'voc':
-            unit = 'ppb';
-            break;
-        case 'iaqi':
-            unit = '';
-            if (value <= 50) quality = 'Good';
-            else if (value <= 100) quality = 'Moderate';
-            else if (value <= 150) quality = 'Unhealthy for Sensitive Groups';
-            else if (value <= 200) quality = 'Unhealthy';
-            else if (value <= 300) quality = 'Very Unhealthy';
-            else quality = 'Hazardous';
-            break;
+      case 'pm03':
+        value = Math.random() * 50000 + 10000; // particles/ft³
+        unit = '#/ft³';
+        break;
+      case 'pm1':
+        value = Math.random() * 30000 + 5000; // particles/ft³
+        unit = '#/ft³';
+        break;
+      case 'pm25':
+        value = Math.random() * 150 + 5; // µg/m³
+        unit = 'µg/m³';
+        break;
+      case 'pm5':
+        value = Math.random() * 100 + 5; // µg/m³
+        unit = 'µg/m³';
+        break;
+      case 'pm10':
+        value = Math.random() * 200 + 10; // µg/m³
+        unit = 'µg/m³';
+        break;
+      case 'co2':
+        value = Math.random() * 2000 + 400; // ppm
+        unit = 'ppm';
+        break;
+      case 'hcho':
+        value = Math.random() * 200 + 10; // ppb
+        unit = 'ppb';
+        break;
+      case 'voc':
+        value = Math.random() * 500 + 50; // index 0-500
+        unit = 'index';
+        break;
+      case 'nox':
+        value = Math.random() * 300 + 20; // index 0-500
+        unit = 'index';
+        break;
+      case 'temperature':
+        value = Math.random() * 15 + 20; // 20-35°C
+        unit = '°C';
+        break;
+      case 'humidity':
+        value = Math.random() * 40 + 30; // 30-70%
+        unit = '%';
+        break;
+      default:
+        value = 0;
+        unit = '';
     }
 
-    return {
-        metric,
-        value: Math.round(value * 10) / 10,
-        unit,
-        quality,
-        timestamp: new Date().toISOString()
-    };
-};
-
-const generateRealtimeData = (deviceId: string): RealtimeData => {
-    const readings = [
-        generateReading('pm25', 15, 20),
-        generateReading('pm10', 25, 30),
-        generateReading('pm1', 10, 15),
-        generateReading('temperature', 22, 10),
-        generateReading('humidity', 55, 20),
-        generateReading('pressure', 1013, 20),
-        generateReading('co2', 400, 200),
-        generateReading('co', 0.5, 1),
-        generateReading('no2', 20, 40),
-        generateReading('o3', 30, 50),
-        generateReading('so2', 5, 10),
-        generateReading('noise', 45, 20),
-        generateReading('radiation', 0.1, 0.05),
-        generateReading('wind_speed', 3, 5),
-        generateReading('wind_direction', 180, 360),
-        generateReading('voc', 50, 100),
-        generateReading('iaqi', 75, 50)
-    ];
+    const quality = getMetricQuality(metric, value);
 
     return {
-        deviceId,
-        timestamp: new Date().toISOString(),
-        readings
+      metric,
+      value: Math.round(value * 100) / 100,
+      unit,
+      quality: quality as any,
+      timestamp
     };
-};
+  };
 
-export const RealtimeDataProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [realtimeData, setRealtimeData] = useState<Record<string, RealtimeData>>({});
-    const [connectionStatus, setConnectionStatus] = useState<'connecting' | 'connected' | 'disconnected'>('connecting');
+  // Generate realtime data for all online devices
+  const generateRealtimeData = (): RealtimeData[] => {
+    const timestamp = new Date().toISOString();
+    
+    return devices
+      .filter(device => device.isOnline)
+      .map(device => {
+        const readings: SensorReading[] = [
+          generateSensorReading('pm03', timestamp),
+          generateSensorReading('pm1', timestamp),
+          generateSensorReading('pm25', timestamp),
+          generateSensorReading('pm5', timestamp),
+          generateSensorReading('pm10', timestamp),
+          generateSensorReading('co2', timestamp),
+          generateSensorReading('hcho', timestamp),
+          generateSensorReading('voc', timestamp),
+          generateSensorReading('nox', timestamp),
+          generateSensorReading('temperature', timestamp),
+          generateSensorReading('humidity', timestamp)
+        ];
 
-    useEffect(() => {
-        // Simulate connection
-        const connectionTimer = setTimeout(() => {
-            setConnectionStatus('connected');
-        }, 1000);
+        // Calculate AQI based on key pollutants (simplified)
+        const pm25Reading = readings.find(r => r.metric === 'pm25');
+        const co2Reading = readings.find(r => r.metric === 'co2');
+        const vocReading = readings.find(r => r.metric === 'voc');
+        
+        let aqi = 50; // Default good AQI
+        if (pm25Reading && pm25Reading.value > 35) aqi = Math.min(150, 50 + pm25Reading.value);
+        if (co2Reading && co2Reading.value > 1000) aqi = Math.max(aqi, Math.min(200, 100 + (co2Reading.value - 1000) / 50));
+        if (vocReading && vocReading.value > 200) aqi = Math.max(aqi, Math.min(300, 150 + (vocReading.value - 200) / 10));
 
-        // Generate initial data
-        const initialData: Record<string, RealtimeData> = {};
-        DEVICE_IDS.forEach(deviceId => {
-            initialData[deviceId] = generateRealtimeData(deviceId);
-        });
-        setRealtimeData(initialData);
+        const level = getQualityFromAqi(aqi);
 
-        // Set up real-time updates
-        const updateInterval = setInterval(() => {
-            if (Math.random() > 0.7) { // 30% chance to update data each interval
-                const updatedData: Record<string, RealtimeData> = {};
-                DEVICE_IDS.forEach(deviceId => {
-                    updatedData[deviceId] = generateRealtimeData(deviceId);
-                });
-                setRealtimeData(updatedData);
-            }
-        }, 3000); // Update every 3 seconds
-
-        return () => {
-            clearTimeout(connectionTimer);
-            clearInterval(updateInterval);
+        return {
+          deviceId: device.id,
+          timestamp,
+          readings,
+          aqi: Math.round(aqi),
+          overallQuality: level
         };
-    }, []);
+      });
+  };
 
-    return (
-        <RealtimeDataContext.Provider value={{ realtimeData, connectionStatus }}>
-            {children}
-        </RealtimeDataContext.Provider>
-    );
-};
+  // Initialize and update realtime data
+  useEffect(() => {
+    setIsLoading(true);
+    
+    // Initial data generation
+    const initialData = generateRealtimeData();
+    setRealtimeData(initialData);
+    setIsLoading(false);
 
-export const useRealtimeData = () => {
-    const context = useContext(RealtimeDataContext);
-    if (context === undefined) {
-        throw new Error('useRealtimeData must be used within a RealtimeDataProvider');
-    }
-    return context;
-};
+    // Update data every 30 seconds (typical MQTT interval)
+    const interval = setInterval(() => {
+      const newData = generateRealtimeData();
+      setRealtimeData(newData);
+    }, 30000);
+
+    return () => clearInterval(interval);
+  }, [devices, getQualityFromAqi, getMetricQuality]);
+
+  const getDeviceData = (deviceId: string): RealtimeData | undefined => {
+    return realtimeData.find(data => data.deviceId === deviceId);
+  };
+
+  return (
+    <RealtimeDataContext.Provider value={{
+      realtimeData,
+      getDeviceData,
+      isLoading
+    }}>
+      {children}
+    </RealtimeDataContext.Provider>
+  );
+}
+
+export function useRealtimeData() {
+  const context = useContext(RealtimeDataContext);
+  if (context === undefined) {
+    throw new Error('useRealtimeData must be used within a RealtimeDataProvider');
+  }
+  return context;
+}

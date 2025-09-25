@@ -1,224 +1,169 @@
-import React, { createContext, useContext, useState, ReactNode } from 'react';
-import { Device } from '../types';
+import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+import { Device, Location } from '@/types';
+
+// Three specific locations as requested
+const LOCATIONS: Location[] = [
+  {
+    id: 'abu-dhabi-estimada',
+    name: 'Abu Dhabi Estimada',
+    coordinates: [24.4539, 54.3773],
+    address: 'Abu Dhabi, UAE'
+  },
+  {
+    id: 'burjeel',
+    name: 'Burjeel Hospital',
+    coordinates: [24.4539, 54.3773],
+    address: 'Abu Dhabi, UAE'
+  },
+  {
+    id: 'dubai-green-building',
+    name: 'Dubai Green Building',
+    coordinates: [25.2048, 55.2708],
+    address: 'Dubai, UAE'
+  }
+];
+
+// Mock devices for the three locations
+const MOCK_DEVICES: Device[] = [
+  {
+    id: 'device-001',
+    name: 'ULTRADETEKT 03M - Floor 1',
+    type: 'air-quality',
+    location: LOCATIONS[0],
+    isOnline: true,
+    lastSeen: new Date().toISOString(),
+    batteryLevel: 85,
+    signalStrength: -45,
+    version: '1.2.3',
+    sensors: ['pm03', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'hcho', 'voc', 'nox']
+  },
+  {
+    id: 'device-002',
+    name: 'ULTRADETEKT 03M - Reception',
+    type: 'air-quality',
+    location: LOCATIONS[0],
+    isOnline: true,
+    lastSeen: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
+    batteryLevel: 92,
+    signalStrength: -38,
+    version: '1.2.3',
+    sensors: ['pm03', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'hcho', 'voc', 'nox']
+  },
+  {
+    id: 'device-003',
+    name: 'ULTRADETEKT 03M - Ward A',
+    type: 'air-quality',
+    location: LOCATIONS[1],
+    isOnline: true,
+    lastSeen: new Date(Date.now() - 120000).toISOString(), // 2 minutes ago
+    batteryLevel: 78,
+    signalStrength: -52,
+    version: '1.2.3',
+    sensors: ['pm03', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'hcho', 'voc', 'nox']
+  },
+  {
+    id: 'device-004',
+    name: 'ULTRADETEKT 03M - ICU',
+    type: 'air-quality',
+    location: LOCATIONS[1],
+    isOnline: false,
+    lastSeen: new Date(Date.now() - 1800000).toISOString(), // 30 minutes ago
+    batteryLevel: 15,
+    signalStrength: -68,
+    version: '1.2.3',
+    sensors: ['pm03', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'hcho', 'voc', 'nox']
+  },
+  {
+    id: 'device-005',
+    name: 'ULTRADETEKT 03M - Lobby',
+    type: 'air-quality',
+    location: LOCATIONS[2],
+    isOnline: true,
+    lastSeen: new Date().toISOString(),
+    batteryLevel: 95,
+    signalStrength: -35,
+    version: '1.2.3',
+    sensors: ['pm03', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'hcho', 'voc', 'nox']
+  },
+  {
+    id: 'device-006',
+    name: 'ULTRADETEKT 03M - Office Area',
+    type: 'air-quality',
+    location: LOCATIONS[2],
+    isOnline: true,
+    lastSeen: new Date(Date.now() - 600000).toISOString(), // 10 minutes ago
+    batteryLevel: 67,
+    signalStrength: -49,
+    version: '1.2.3',
+    sensors: ['pm03', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'hcho', 'voc', 'nox']
+  }
+];
 
 interface DeviceContextType {
-    devices: Device[];
-    updateDevice: (deviceId: string, updates: Partial<Device>) => void;
-    addDevice: (device: Device) => void;
-    removeDevice: (deviceId: string) => void;
+  devices: Device[];
+  locations: Location[];
+  getDevicesByLocation: (locationId: string) => Device[];
+  getDeviceById: (deviceId: string) => Device | undefined;
+  updateDeviceStatus: (deviceId: string, isOnline: boolean) => void;
 }
 
 const DeviceContext = createContext<DeviceContextType | undefined>(undefined);
 
-// Mock device data
-const mockDevices: Device[] = [
-    {
-        id: 'sim-device-01',
-        name: 'Main Campus Sensor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-1',
-            name: 'Main Campus Building A',
-            coordinates: [40.7128, -74.0060],
-            address: '123 Main St, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date().toISOString(),
-        batteryLevel: 87,
-        signalStrength: -65,
-        version: '2.1.3',
-        sensors: ['pm25', 'pm10', 'pm1', 'temperature', 'humidity', 'pressure']
-    },
-    {
-        id: 'sim-device-02',
-        name: 'Parking Lot Monitor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-2',
-            name: 'Parking Lot North',
-            coordinates: [40.7589, -73.9851],
-            address: '456 Park Ave, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date(Date.now() - 300000).toISOString(), // 5 minutes ago
-        batteryLevel: 92,
-        signalStrength: -58,
-        version: '2.1.3',
-        sensors: ['pm25', 'pm10', 'temperature', 'humidity', 'co2']
-    },
-    {
-        id: 'sim-device-03',
-        name: 'Garden Area Sensor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-3',
-            name: 'Garden Area West',
-            coordinates: [40.7505, -73.9934],
-            address: '789 Garden Rd, New York, NY'
-        },
-        isOnline: false,
-        lastSeen: new Date(Date.now() - 3600000).toISOString(), // 1 hour ago
-        batteryLevel: 23,
-        signalStrength: -89,
-        version: '2.0.8',
-        sensors: ['pm25', 'pm10', 'temperature', 'humidity', 'no2', 'o3']
-    },
-    {
-        id: 'sim-device-04',
-        name: 'Rooftop Weather Station',
-        type: 'air-quality',
-        location: {
-            id: 'loc-4',
-            name: 'Building B Rooftop',
-            coordinates: [40.7614, -73.9776],
-            address: '321 Sky Dr, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date().toISOString(),
-        batteryLevel: 78,
-        signalStrength: -52,
-        version: '1.8.4',
-        sensors: ['temperature', 'humidity', 'pressure', 'wind_speed', 'wind_direction']
-    },
-    {
-        id: 'sim-device-05',
-        name: 'Street Level Monitor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-5',
-            name: 'Street Level East',
-            coordinates: [40.7282, -73.7949],
-            address: '654 Street Blvd, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date(Date.now() - 180000).toISOString(), // 3 minutes ago
-        batteryLevel: 95,
-        signalStrength: -61,
-        version: '2.1.3',
-        sensors: ['pm25', 'pm10', 'co', 'no2', 'noise']
-    },
-    {
-        id: 'sim-device-06',
-        name: 'Industrial Zone Sensor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-6',
-            name: 'Industrial Zone South',
-            coordinates: [40.6892, -74.0445],
-            address: '987 Industrial Way, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date().toISOString(),
-        batteryLevel: 84,
-        signalStrength: -67,
-        version: '2.1.3',
-        sensors: ['pm25', 'pm10', 'co', 'so2', 'voc', 'radiation']
-    },
-    {
-        id: 'sim-device-07',
-        name: 'Residential Area Monitor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-7',
-            name: 'Residential Block 12',
-            coordinates: [40.7831, -73.9712],
-            address: '159 Home St, New York, NY'
-        },
-        isOnline: false,
-        lastSeen: new Date(Date.now() - 7200000).toISOString(), // 2 hours ago
-        batteryLevel: 12,
-        signalStrength: -95,
-        version: '2.0.8',
-        sensors: ['pm25', 'pm10', 'temperature', 'humidity', 'co2']
-    },
-    {
-        id: 'sim-device-08',
-        name: 'Harbor Monitor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-8',
-            name: 'Harbor Front',
-            coordinates: [40.7074, -74.0113],
-            address: '753 Harbor Dr, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date().toISOString(),
-        batteryLevel: 89,
-        signalStrength: -55,
-        version: '2.1.3',
-        sensors: ['pm25', 'pm10', 'humidity', 'pressure', 'wind_speed', 'wind_direction']
-    },
-    {
-        id: 'sim-device-09',
-        name: 'University Campus Sensor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-9',
-            name: 'University Campus Central',
-            coordinates: [40.8176, -73.9482],
-            address: '852 Campus Ave, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date(Date.now() - 120000).toISOString(), // 2 minutes ago
-        batteryLevel: 91,
-        signalStrength: -59,
-        version: '2.1.3',
-        sensors: ['pm25', 'pm10', 'pm1', 'co2', 'voc', 'noise']
-    },
-    {
-        id: 'sim-device-10',
-        name: 'Airport Perimeter Monitor',
-        type: 'air-quality',
-        location: {
-            id: 'loc-10',
-            name: 'Airport Perimeter Zone',
-            coordinates: [40.6413, -73.7781],
-            address: '741 Airport Rd, New York, NY'
-        },
-        isOnline: true,
-        lastSeen: new Date().toISOString(),
-        batteryLevel: 76,
-        signalStrength: -63,
-        version: '2.1.3',
-        sensors: ['pm25', 'pm10', 'co', 'no2', 'o3', 'noise']
-    }
-];
+export function DeviceProvider({ children }: { children: ReactNode }) {
+  const [devices, setDevices] = useState<Device[]>(MOCK_DEVICES);
 
-export const DeviceProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-    const [devices, setDevices] = useState<Device[]>(mockDevices);
+  // Simulate device status updates
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setDevices(prevDevices => 
+        prevDevices.map(device => ({
+          ...device,
+          lastSeen: device.isOnline ? new Date().toISOString() : device.lastSeen,
+          signalStrength: device.isOnline ? 
+            Math.floor(Math.random() * 30) - 70 : // -70 to -40 dBm
+            device.signalStrength
+        }))
+      );
+    }, 30000); // Update every 30 seconds
 
-    const updateDevice = (deviceId: string, updates: Partial<Device>) => {
-        setDevices(prev => 
-            prev.map(device => 
-                device.id === deviceId ? { ...device, ...updates } : device
-            )
-        );
-    };
+    return () => clearInterval(interval);
+  }, []);
 
-    const addDevice = (device: Device) => {
-        setDevices(prev => [...prev, device]);
-    };
+  const getDevicesByLocation = (locationId: string): Device[] => {
+    return devices.filter(device => device.location.id === locationId);
+  };
 
-    const removeDevice = (deviceId: string) => {
-        setDevices(prev => prev.filter(device => device.id !== deviceId));
-    };
+  const getDeviceById = (deviceId: string): Device | undefined => {
+    return devices.find(device => device.id === deviceId);
+  };
 
-    return (
-        <DeviceContext.Provider value={{
-            devices,
-            updateDevice,
-            addDevice,
-            removeDevice
-        }}>
-            {children}
-        </DeviceContext.Provider>
+  const updateDeviceStatus = (deviceId: string, isOnline: boolean) => {
+    setDevices(prevDevices =>
+      prevDevices.map(device =>
+        device.id === deviceId
+          ? { ...device, isOnline, lastSeen: new Date().toISOString() }
+          : device
+      )
     );
-};
+  };
 
-export const useDevices = () => {
-    const context = useContext(DeviceContext);
-    if (context === undefined) {
-        throw new Error('useDevices must be used within a DeviceProvider');
-    }
-    return context;
-};
+  return (
+    <DeviceContext.Provider value={{
+      devices,
+      locations: LOCATIONS,
+      getDevicesByLocation,
+      getDeviceById,
+      updateDeviceStatus
+    }}>
+      {children}
+    </DeviceContext.Provider>
+  );
+}
+
+export function useDevices() {
+  const context = useContext(DeviceContext);
+  if (context === undefined) {
+    throw new Error('useDevices must be used within a DeviceProvider');
+  }
+  return context;
+}

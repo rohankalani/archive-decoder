@@ -34,9 +34,11 @@ export interface SensorReading {
 }
 
 export interface RealtimeData {
-    deviceId: string;
-    timestamp: string; // ISO timestamp
-    readings: SensorReading[];
+  deviceId: string;
+  timestamp: string; // ISO timestamp
+  readings: SensorReading[];
+  aqi: number;
+  overallQuality: AqiLevel;
 }
 
 export interface HistoricalDataPoint {

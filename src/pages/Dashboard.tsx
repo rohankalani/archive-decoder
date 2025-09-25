@@ -1,161 +1,341 @@
-import React, { useMemo } from 'react';
-import { useRealtimeData } from '../contexts/RealtimeDataContext';
-import { useDevices } from '../contexts/DeviceContext';
-import { useSettings } from '../contexts/SettingsContext';
-import DeviceCard from '../components/DeviceCard';
-import { Activity, Wifi, WifiOff, AlertTriangle, TrendingUp } from 'lucide-react';
+import React, { useState } from 'react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell
+} from 'recharts';
+import {
+  MapPin,
+  Activity,
+  Wifi,
+  WifiOff,
+  Battery,
+  Signal,
+  Gauge,
+  TrendingUp,
+  TrendingDown,
+  AlertTriangle
+} from 'lucide-react';
+import { useDevices } from '@/contexts/DeviceContext';
+import { useRealtimeData } from '@/contexts/RealtimeDataContext';
+import { useSettings } from '@/contexts/SettingsContext';
+import { AqiLevel } from '@/types';
+import { format } from 'date-fns';
 
-const Dashboard: React.FC = () => {
-    const { realtimeData, connectionStatus } = useRealtimeData();
-    const { devices, updateDevice } = useDevices();
-    const { getQualityFromAqi } = useSettings();
+export function Dashboard() {
+  const { devices, locations } = useDevices();
+  const { realtimeData, getDeviceData, isLoading } = useRealtimeData();
+  const { getQualityColor } = useSettings();
+  const [selectedLocation, setSelectedLocation] = useState<string>('all');
 
-    const stats = useMemo(() => {
-        const onlineDevices = devices.filter(d => d.isOnline).length;
-        const offlineDevices = devices.length - onlineDevices;
-        
-        // Calculate average IAQI across all devices
-        const iaqiValues = Object.values(realtimeData)
-            .map(data => data.readings.find(r => r.metric === 'iaqi')?.value)
-            .filter((value): value is number => value !== undefined);
-        
-        const averageIaqi = iaqiValues.length > 0 
-            ? Math.round(iaqiValues.reduce((sum, val) => sum + val, 0) / iaqiValues.length)
-            : 0;
+  // Filter devices by selected location
+  const filteredDevices = selectedLocation === 'all' 
+    ? devices 
+    : devices.filter(device => device.location.id === selectedLocation);
 
-        const averageQuality = getQualityFromAqi(averageIaqi);
-
-        // Count active alerts (simulated)
-        const activeAlerts = devices.filter(d => !d.isOnline || (d.batteryLevel && d.batteryLevel < 20)).length;
-
-        return {
-            onlineDevices,
-            offlineDevices,
-            totalDevices: devices.length,
-            averageIaqi,
-            averageQuality,
-            activeAlerts
-        };
-    }, [devices, realtimeData, getQualityFromAqi]);
-
-    const getQualityColor = (quality: string) => {
-        switch (quality) {
-            case 'Good': return 'text-green-400';
-            case 'Moderate': return 'text-yellow-400';
-            case 'Unhealthy for Sensitive Groups': return 'text-orange-400';
-            case 'Unhealthy': return 'text-red-400';
-            case 'Very Unhealthy': return 'text-red-500';
-            case 'Hazardous': return 'text-purple-400';
-            default: return 'text-slate-400';
-        }
-    };
-
-    const getQualityBgColor = (quality: string) => {
-        switch (quality) {
-            case 'Good': return 'bg-green-900/20 border-green-500/30';
-            case 'Moderate': return 'bg-yellow-900/20 border-yellow-500/30';
-            case 'Unhealthy for Sensitive Groups': return 'bg-orange-900/20 border-orange-500/30';
-            case 'Unhealthy': return 'bg-red-900/20 border-red-500/30';
-            case 'Very Unhealthy': return 'bg-red-900/30 border-red-500/40';
-            case 'Hazardous': return 'bg-purple-900/20 border-purple-500/30';
-            default: return 'bg-slate-900/20 border-slate-500/30';
-        }
-    };
-
-    return (
-        <div className="space-y-6">
-            {/* Header */}
-            <div className="flex items-center justify-between">
-                <div>
-                    <h1 className="text-3xl font-bold text-white">Air Quality Dashboard</h1>
-                    <p className="text-slate-400 mt-1">Real-time monitoring of your LoRaWAN sensor network</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                    <div className={`w-3 h-3 rounded-full ${
-                        connectionStatus === 'connected' ? 'bg-green-400 animate-pulse' : 
-                        connectionStatus === 'connecting' ? 'bg-yellow-400 animate-pulse' : 'bg-red-400'
-                    }`}></div>
-                    <span className="text-sm text-slate-300 capitalize">{connectionStatus}</span>
-                </div>
-            </div>
-
-            {/* Stats Overview */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                {/* Device Status */}
-                <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-slate-400 text-sm">Device Status</p>
-                            <div className="flex items-center space-x-4 mt-2">
-                                <div className="flex items-center space-x-2">
-                                    <Wifi className="w-4 h-4 text-green-400" />
-                                    <span className="text-white font-semibold">{stats.onlineDevices}</span>
-                                </div>
-                                <div className="flex items-center space-x-2">
-                                    <WifiOff className="w-4 h-4 text-red-400" />
-                                    <span className="text-white font-semibold">{stats.offlineDevices}</span>
-                                </div>
-                            </div>
-                        </div>
-                        <Activity className="w-8 h-8 text-blue-400" />
-                    </div>
-                </div>
-
-                {/* Average Air Quality */}
-                <div className={`rounded-lg border p-6 ${getQualityBgColor(stats.averageQuality)}`}>
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-slate-400 text-sm">Average IAQI</p>
-                            <p className="text-2xl font-bold text-white mt-1">{stats.averageIaqi}</p>
-                            <p className={`text-sm mt-1 ${getQualityColor(stats.averageQuality)}`}>
-                                {stats.averageQuality}
-                            </p>
-                        </div>
-                        <TrendingUp className="w-8 h-8 text-blue-400" />
-                    </div>
-                </div>
-
-                {/* Active Alerts */}
-                <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-slate-400 text-sm">Active Alerts</p>
-                            <p className="text-2xl font-bold text-white mt-1">{stats.activeAlerts}</p>
-                            <p className="text-sm text-red-400 mt-1">Requires Attention</p>
-                        </div>
-                        <AlertTriangle className="w-8 h-8 text-red-400" />
-                    </div>
-                </div>
-
-                {/* Total Devices */}
-                <div className="bg-slate-800 rounded-lg border border-slate-700 p-6">
-                    <div className="flex items-center justify-between">
-                        <div>
-                            <p className="text-slate-400 text-sm">Total Devices</p>
-                            <p className="text-2xl font-bold text-white mt-1">{stats.totalDevices}</p>
-                            <p className="text-sm text-slate-400 mt-1">Network Sensors</p>
-                        </div>
-                        <Activity className="w-8 h-8 text-slate-400" />
-                    </div>
-                </div>
-            </div>
-
-            {/* Device Grid */}
-            <div>
-                <h2 className="text-xl font-semibold text-white mb-4">Device Network</h2>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {devices.map((device) => (
-                        <DeviceCard
-                            key={device.id}
-                            device={device}
-                            realtimeData={realtimeData[device.id]}
-                            onEdit={updateDevice}
-                        />
-                    ))}
-                </div>
-            </div>
-        </div>
+  // Get location stats
+  const locationStats = locations.map(location => {
+    const locationDevices = devices.filter(d => d.location.id === location.id);
+    const onlineDevices = locationDevices.filter(d => d.isOnline);
+    const locationData = realtimeData.filter(data => 
+      locationDevices.some(device => device.id === data.deviceId)
     );
-};
+    
+    const avgAqi = locationData.length > 0 
+      ? Math.round(locationData.reduce((sum, data) => sum + data.aqi, 0) / locationData.length)
+      : 0;
+    
+    const worstQuality = locationData.reduce((worst: AqiLevel, data) => {
+      const levels: AqiLevel[] = ['Good', 'Moderate', 'Unhealthy for Sensitive Groups', 'Unhealthy', 'Very Unhealthy', 'Hazardous'];
+      return levels.indexOf(data.overallQuality) > levels.indexOf(worst) ? data.overallQuality : worst;
+    }, 'Good');
 
-export default Dashboard;
+    return {
+      location,
+      totalDevices: locationDevices.length,
+      onlineDevices: onlineDevices.length,
+      avgAqi,
+      quality: worstQuality
+    };
+  });
+
+  // Prepare chart data
+  const aqiChartData = realtimeData.map(data => {
+    const device = devices.find(d => d.id === data.deviceId);
+    return {
+      name: device?.name.split(' - ')[1] || device?.name || 'Unknown',
+      location: device?.location.name || 'Unknown',
+      aqi: data.aqi,
+      quality: data.overallQuality,
+      fill: getQualityColor(data.overallQuality)
+    };
+  });
+
+  // Quality distribution for pie chart
+  const qualityDistribution = realtimeData.reduce((acc, data) => {
+    acc[data.overallQuality] = (acc[data.overallQuality] || 0) + 1;
+    return acc;
+  }, {} as Record<AqiLevel, number>);
+
+  const pieData = Object.entries(qualityDistribution).map(([quality, count]) => ({
+    name: quality,
+    value: count,
+    fill: getQualityColor(quality as AqiLevel)
+  }));
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="text-center">
+          <Activity className="h-8 w-8 animate-spin mx-auto mb-2" />
+          <p className="text-sm text-muted-foreground">Loading air quality data...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight">Air Quality Dashboard</h1>
+          <p className="text-muted-foreground">
+            Real-time monitoring via MQTT • {realtimeData.length} devices active
+          </p>
+        </div>
+        <Select value={selectedLocation} onValueChange={setSelectedLocation}>
+          <SelectTrigger className="w-[240px]">
+            <SelectValue placeholder="Select location" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Locations</SelectItem>
+            {locations.map(location => (
+              <SelectItem key={location.id} value={location.id}>
+                {location.name}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Location Overview Cards */}
+      <div className="grid gap-4 md:grid-cols-3">
+        {locationStats.map(({ location, totalDevices, onlineDevices, avgAqi, quality }) => (
+          <Card key={location.id}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium">{location.name}</CardTitle>
+              <MapPin className="h-4 w-4 text-muted-foreground" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-2xl font-bold">{avgAqi}</span>
+                  <Badge 
+                    variant="secondary" 
+                    style={{ backgroundColor: getQualityColor(quality), color: 'white' }}
+                  >
+                    {quality}
+                  </Badge>
+                </div>
+                <div className="flex items-center justify-between text-xs text-muted-foreground">
+                  <span>{onlineDevices}/{totalDevices} devices online</span>
+                  <span>{location.address}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Charts Section */}
+      <Tabs defaultValue="aqi-overview" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="aqi-overview">AQI Overview</TabsTrigger>
+          <TabsTrigger value="quality-distribution">Quality Distribution</TabsTrigger>
+          <TabsTrigger value="device-status">Device Status</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="aqi-overview" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Current AQI by Device</CardTitle>
+              <CardDescription>Real-time air quality index readings</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <BarChart data={aqiChartData}>
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis 
+                    dataKey="name" 
+                    angle={-45}
+                    textAnchor="end"
+                    height={80}
+                    fontSize={12}
+                  />
+                  <YAxis />
+                  <Tooltip 
+                    formatter={(value: number, name: string, props: any) => [
+                      `${value} AQI`,
+                      `${props.payload.quality}`
+                    ]}
+                    labelFormatter={(label: string, payload: any) => 
+                      payload?.[0]?.payload.location ? 
+                      `${label} (${payload[0].payload.location})` : 
+                      label
+                    }
+                  />
+                  <Bar dataKey="aqi" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="quality-distribution" className="space-y-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Air Quality Distribution</CardTitle>
+              <CardDescription>Distribution of air quality levels across all devices</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <ResponsiveContainer width="100%" height={400}>
+                <PieChart>
+                  <Pie
+                    data={pieData}
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={120}
+                    dataKey="value"
+                    label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
+                  >
+                    {pieData.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={entry.fill} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="device-status" className="space-y-4">
+          <div className="grid gap-4">
+            {filteredDevices.map(device => {
+              const deviceData = getDeviceData(device.id);
+              const isOnline = device.isOnline;
+              const lastSeen = new Date(device.lastSeen);
+              const timeSinceLastSeen = Math.floor((Date.now() - lastSeen.getTime()) / 60000);
+
+              return (
+                <Card key={device.id}>
+                  <CardHeader>
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <CardTitle className="text-lg">{device.name}</CardTitle>
+                        <CardDescription className="flex items-center gap-2">
+                          <MapPin className="h-3 w-3" />
+                          {device.location.name}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {isOnline ? (
+                          <Badge variant="default" className="bg-green-500">
+                            <Wifi className="h-3 w-3 mr-1" />
+                            Online
+                          </Badge>
+                        ) : (
+                          <Badge variant="destructive">
+                            <WifiOff className="h-3 w-3 mr-1" />
+                            Offline
+                          </Badge>
+                        )}
+                        {deviceData && (
+                          <Badge 
+                            variant="secondary"
+                            style={{ 
+                              backgroundColor: getQualityColor(deviceData.overallQuality),
+                              color: 'white'
+                            }}
+                          >
+                            AQI {deviceData.aqi}
+                          </Badge>
+                        )}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+                      {/* Device Status */}
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-2 text-sm">
+                          <Battery className="h-4 w-4" />
+                          <span>Battery: {device.batteryLevel}%</span>
+                        </div>
+                        <div className="flex items-center gap-2 text-sm">
+                          <Signal className="h-4 w-4" />
+                          <span>Signal: {device.signalStrength} dBm</span>
+                        </div>
+                        <div className="text-xs text-muted-foreground">
+                          Last seen: {timeSinceLastSeen < 1 ? 'Just now' : `${timeSinceLastSeen}m ago`}
+                        </div>
+                      </div>
+
+                      {/* Key Readings */}
+                      {deviceData && (
+                        <>
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium">PM2.5</div>
+                            <div className="text-lg font-bold">
+                              {deviceData.readings.find(r => r.metric === 'pm25')?.value.toFixed(1)} µg/m³
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {deviceData.readings.find(r => r.metric === 'pm25')?.quality}
+                            </div>
+                          </div>
+                          
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium">CO₂</div>
+                            <div className="text-lg font-bold">
+                              {deviceData.readings.find(r => r.metric === 'co2')?.value.toFixed(0)} ppm
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {deviceData.readings.find(r => r.metric === 'co2')?.quality}
+                            </div>
+                          </div>
+
+                          <div className="space-y-1">
+                            <div className="text-sm font-medium">VOC</div>
+                            <div className="text-lg font-bold">
+                              {deviceData.readings.find(r => r.metric === 'voc')?.value.toFixed(0)}
+                            </div>
+                            <div className="text-xs text-muted-foreground">
+                              {deviceData.readings.find(r => r.metric === 'voc')?.quality}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </CardContent>
+                </Card>
+              );
+            })}
+          </div>
+        </TabsContent>
+      </Tabs>
+    </div>
+  );
+}

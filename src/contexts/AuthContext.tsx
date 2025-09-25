@@ -65,7 +65,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
               .from('profiles')
               .select('*')
               .eq('id', session.user.id)
-              .single()
+              .maybeSingle()
 
             if (!isMounted) return
 
@@ -98,25 +98,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(session?.user ?? null)
         
         if (session?.user) {
-          try {
-            const { data: profileData, error } = await supabase
-              .from('profiles')
-              .select('*')
-              .eq('id', session.user.id)
-              .single()
+          // Use setTimeout to avoid potential deadlocks
+          setTimeout(async () => {
+            if (!isMounted) return
+            try {
+              const { data: profileData, error } = await supabase
+                .from('profiles')
+                .select('*')
+                .eq('id', session.user.id)
+                .maybeSingle()
 
-            if (isMounted) {
-              if (error) {
-                console.error('Error fetching profile:', error)
-                setProfile(null)
-              } else {
-                setProfile(profileData)
+              if (isMounted) {
+                if (error) {
+                  console.error('Error fetching profile:', error)
+                  setProfile(null)
+                } else {
+                  setProfile(profileData)
+                }
               }
+            } catch (error) {
+              console.error('Profile fetch error:', error)
+              if (isMounted) setProfile(null)
             }
-          } catch (error) {
-            console.error('Profile fetch error:', error)
-            if (isMounted) setProfile(null)
-          }
+          }, 100)
         } else {
           if (isMounted) setProfile(null)
         }

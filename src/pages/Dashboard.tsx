@@ -1,9 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Layout } from '@/components/Layout';
 import { useAuth } from '@/contexts/AuthContext';
+import { useLiveSensorData } from '@/hooks/useLiveSensorData';
+import { useDevices } from '@/hooks/useDevices';
 import { Link } from 'react-router-dom';
 import { 
   Building2, 
@@ -13,35 +15,29 @@ import {
   ThermometerSun,
   AlertTriangle,
   CheckCircle,
-  Circle
+  Circle,
+  Activity,
+  Loader2
 } from 'lucide-react';
 
 export function Dashboard() {
   const { user } = useAuth();
-  const [mockData, setMockData] = useState({
-    pm25: 15.2,
-    pm10: 22.8,
-    co2: 420,
-    temperature: 24.5,
-    humidity: 45,
-    aqi: 85
-  });
+  const { sensorData, loading: sensorLoading, overallStats } = useLiveSensorData();
+  const { devices, loading: devicesLoading } = useDevices();
 
-  // Simulate real-time data updates
-  useEffect(() => {
-    const interval = setInterval(() => {
-      setMockData(prev => ({
-        pm25: prev.pm25 + (Math.random() - 0.5) * 2,
-        pm10: prev.pm10 + (Math.random() - 0.5) * 3,
-        co2: prev.co2 + (Math.random() - 0.5) * 10,
-        temperature: prev.temperature + (Math.random() - 0.5) * 1,
-        humidity: prev.humidity + (Math.random() - 0.5) * 5,
-        aqi: Math.max(0, prev.aqi + (Math.random() - 0.5) * 10)
-      }));
-    }, 5000);
-
-    return () => clearInterval(interval);
-  }, []);
+  // Loading state
+  if (sensorLoading || devicesLoading) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center gap-2">
+            <Loader2 className="h-6 w-6 animate-spin" />
+            <span>Loading dashboard data...</span>
+          </div>
+        </div>
+      </Layout>
+    );
+  }
 
   const getAqiStatus = (aqi: number) => {
     if (aqi <= 50) return { label: 'Good', color: 'bg-success', icon: CheckCircle };
@@ -49,16 +45,36 @@ export function Dashboard() {
     return { label: 'Unhealthy', color: 'bg-danger', icon: AlertTriangle };
   };
 
-  const status = getAqiStatus(mockData.aqi);
+  // Use real data or fallback to defaults
+  const currentData = overallStats || {
+    aqi: 0,
+    temperature: 0,
+    humidity: 0,
+    co2: 0,
+    pm25: 0,
+    pm10: 0,
+    onlineDevices: 0,
+    totalDevices: devices.length
+  };
+
+  const status = getAqiStatus(currentData.aqi);
   const StatusIcon = status.icon;
 
   return (
     <Layout>
       <div className="grid gap-6">
         {/* Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Air Quality Dashboard</h1>
-          <p className="text-muted-foreground">Real-time environmental monitoring</p>
+        <div className="flex items-center justify-between">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-bold tracking-tight">Air Quality Dashboard</h1>
+            <p className="text-muted-foreground">
+              Real-time environmental monitoring • {currentData.onlineDevices}/{currentData.totalDevices} devices online
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <Activity className="h-5 w-5 text-success animate-pulse" />
+            <span className="text-sm font-medium">Live Data</span>
+          </div>
         </div>
 
         {/* Current Status Overview */}
@@ -71,10 +87,12 @@ export function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-3xl font-bold">{Math.round(mockData.aqi)}</div>
+                  <div className="text-3xl font-bold">{currentData.aqi || '--'}</div>
                   <div className="flex items-center gap-2 mt-2">
                     <StatusIcon className="h-4 w-4" />
-                    <span className="text-sm text-muted-foreground">{status.label}</span>
+                    <span className="text-sm text-muted-foreground">
+                      {currentData.aqi > 0 ? status.label : 'No data'}
+                    </span>
                   </div>
                 </div>
                 <div className={`rounded-full p-4 ${status.color}/20`}>
@@ -90,7 +108,9 @@ export function Dashboard() {
               <CardTitle className="text-sm font-medium">PM2.5</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockData.pm25.toFixed(1)}</div>
+              <div className="text-2xl font-bold">
+                {currentData.pm25 ? currentData.pm25.toFixed(1) : '--'}
+              </div>
               <p className="text-xs text-muted-foreground">µg/m³</p>
             </CardContent>
           </Card>
@@ -101,7 +121,9 @@ export function Dashboard() {
               <CardTitle className="text-sm font-medium">PM10</CardTitle>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{mockData.pm10.toFixed(1)}</div>
+              <div className="text-2xl font-bold">
+                {currentData.pm10 ? currentData.pm10.toFixed(1) : '--'}
+              </div>
               <p className="text-xs text-muted-foreground">µg/m³</p>
             </CardContent>
           </Card>
@@ -117,7 +139,9 @@ export function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold">{Math.round(mockData.co2)}</div>
+                  <div className="text-2xl font-bold">
+                    {currentData.co2 ? Math.round(currentData.co2) : '--'}
+                  </div>
                   <p className="text-xs text-muted-foreground">ppm</p>
                 </div>
                 <Wind className="h-8 w-8 text-muted-foreground" />
@@ -133,7 +157,9 @@ export function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold">{mockData.temperature.toFixed(1)}°</div>
+                  <div className="text-2xl font-bold">
+                    {currentData.temperature ? `${currentData.temperature.toFixed(1)}°` : '--'}
+                  </div>
                   <p className="text-xs text-muted-foreground">Celsius</p>
                 </div>
                 <ThermometerSun className="h-8 w-8 text-muted-foreground" />
@@ -149,7 +175,9 @@ export function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold">{Math.round(mockData.humidity)}%</div>
+                  <div className="text-2xl font-bold">
+                    {currentData.humidity ? `${Math.round(currentData.humidity)}%` : '--'}
+                  </div>
                   <p className="text-xs text-muted-foreground">Relative</p>
                 </div>
                 <Droplets className="h-8 w-8 text-muted-foreground" />
@@ -165,8 +193,10 @@ export function Dashboard() {
             <CardContent>
               <div className="flex items-center justify-between">
                 <div>
-                  <div className="text-2xl font-bold text-success">Online</div>
-                  <p className="text-xs text-muted-foreground">ROSAIQ 03M</p>
+                  <div className="text-2xl font-bold text-success">
+                    {currentData.onlineDevices}/{currentData.totalDevices}
+                  </div>
+                  <p className="text-xs text-muted-foreground">Devices Online</p>
                 </div>
                 <div className="h-3 w-3 bg-success rounded-full animate-pulse" />
               </div>
@@ -199,61 +229,72 @@ export function Dashboard() {
           </Card>
         )}
 
-        {/* Location Status */}
-        <div className="grid gap-4 md:grid-cols-3">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Abu Dhabi Estimada</CardTitle>
-              <CardDescription>Main monitoring site</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">Good</p>
-                  <p className="text-sm text-muted-foreground">AQI: 45</p>
-                </div>
-                <Badge variant="secondary" className="bg-success text-success-foreground">
-                  Online
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Burjeel Hospital</CardTitle>
-              <CardDescription>Healthcare facility monitoring</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">Moderate</p>
-                  <p className="text-sm text-muted-foreground">AQI: 78</p>
-                </div>
-                <Badge variant="secondary" className="bg-warning text-warning-foreground">
-                  Online
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-lg">Dubai Green Building</CardTitle>
-              <CardDescription>Sustainable building monitoring</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                  <p className="text-2xl font-bold">Good</p>
-                  <p className="text-sm text-muted-foreground">AQI: 32</p>
-                </div>
-                <Badge variant="secondary" className="bg-success text-success-foreground">
-                  Online
-                </Badge>
-              </div>
-            </CardContent>
-          </Card>
+        {/* Real-time Device Data */}
+        <div className="space-y-4">
+          <h2 className="text-xl font-semibold">Live Device Monitoring</h2>
+          {sensorData.length > 0 ? (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {sensorData.slice(0, 6).map((device) => {
+                const deviceStatus = getAqiStatus(device.aqi || 0);
+                return (
+                  <Card key={device.device_id}>
+                    <CardHeader className="pb-3">
+                      <CardTitle className="text-lg">{device.device_name}</CardTitle>
+                      <CardDescription>
+                        Last updated: {new Date(device.last_updated).toLocaleTimeString()}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="flex items-center justify-between">
+                        <div className="space-y-1">
+                          <p className="text-2xl font-bold">
+                            {device.aqi ? deviceStatus.label : 'No data'}
+                          </p>
+                          <p className="text-sm text-muted-foreground">
+                            AQI: {device.aqi || '--'}
+                          </p>
+                        </div>
+                        <Badge 
+                          variant="secondary" 
+                          className={`${
+                            device.status === 'online' 
+                              ? 'bg-success text-success-foreground' 
+                              : device.status === 'error'
+                                ? 'bg-destructive text-destructive-foreground'
+                                : 'bg-muted text-muted-foreground'
+                          }`}
+                        >
+                          {device.status.charAt(0).toUpperCase() + device.status.slice(1)}
+                        </Badge>
+                      </div>
+                      {device.status === 'online' && (
+                        <div className="mt-4 space-y-2">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">PM2.5:</span>
+                            <span>{device.pm25?.toFixed(1) || '--'} µg/m³</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Temperature:</span>
+                            <span>{device.temperature?.toFixed(1) || '--'}°C</span>
+                          </div>
+                          <div className="flex justify-between text-sm">
+                            <span className="text-muted-foreground">Humidity:</span>
+                            <span>{device.humidity?.toFixed(0) || '--'}%</span>
+                          </div>
+                        </div>
+                      )}
+                    </CardContent>
+                  </Card>
+                );
+              })}
+            </div>
+          ) : (
+            <Card>
+              <CardContent className="p-6 text-center">
+                <p className="text-muted-foreground">No sensor data available. Devices are being set up...</p>
+              </CardContent>
+            </Card>
+          )}
         </div>
       </div>
     </Layout>

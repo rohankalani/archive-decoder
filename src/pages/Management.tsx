@@ -9,6 +9,7 @@ import { Layout } from '@/components/Layout'
 import { LocationTree } from '@/components/locations/LocationTree'
 import { LocationWizard } from '@/components/locations/LocationWizard'
 import { QuickActions } from '@/components/locations/QuickActions'
+import { DeviceManagement } from '@/components/devices/DeviceManagement'
 import { 
   Building2, 
   MapPin, 
@@ -182,24 +183,7 @@ export default function Management() {
 
           {/* Device Management Tab */}
           <TabsContent value="devices" className="space-y-6">
-            <Card className="border-dashed border-2 border-muted-foreground/20">
-              <CardContent className="py-12 text-center">
-                <div className="space-y-4">
-                  <div className="mx-auto w-16 h-16 bg-success/10 rounded-full flex items-center justify-center">
-                    <Activity className="h-8 w-8 text-success" />
-                  </div>
-                  <div>
-                    <h3 className="text-xl font-semibold text-foreground">Device Management Coming Soon</h3>
-                    <p className="text-muted-foreground mt-2 max-w-md mx-auto">
-                      Once you've set up your location hierarchy, you'll be able to assign ULTRADETEKT 03M devices to specific floors.
-                    </p>
-                  </div>
-                  <Badge variant="outline" className="px-4 py-1">
-                    Next Phase
-                  </Badge>
-                </div>
-              </CardContent>
-            </Card>
+            <DeviceManagement />
           </TabsContent>
 
           {/* User Management Tab */}

@@ -548,6 +548,24 @@ export function useLocations() {
     getFloorsByBlock,
     getFloorsByBuilding,
     getRoomsByFloor,
+    getFloorLocation: (floor: Floor) => {
+      let building = null
+      let block = null
+      let site = null
+
+      if (floor.block_id && floor.block) {
+        // Floor belongs to a block
+        block = floor.block
+        building = buildings.find(b => b.id === block.building_id)
+        site = sites.find(s => s.id === building?.site_id)
+      } else if (floor.building_id) {
+        // Floor belongs directly to a building
+        building = buildings.find(b => b.id === floor.building_id)
+        site = sites.find(s => s.id === building?.site_id)
+      }
+
+      return { site, building, block, floor }
+    },
     fetchLocations,
   }
 }

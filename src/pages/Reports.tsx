@@ -4,10 +4,11 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users, Shield, Building } from 'lucide-react';
+import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users, Shield, Building, Layers } from 'lucide-react';
 import { format, subDays, subWeeks, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useReportData } from '@/hooks/useReportData';
+import { useMultiClassroomReportData } from '@/hooks/useMultiClassroomReportData';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useDevices } from '@/hooks/useDevices';
 import { useLocations } from '@/hooks/useLocations';
@@ -15,6 +16,7 @@ import { Layout } from '@/components/Layout';
 import { useUnifiedMockData } from '@/contexts/UnifiedMockDataContext';
 import { ActivityInsights } from '@/components/reports/ActivityInsights';
 import { ExternalComparison } from '@/components/reports/ExternalComparison';
+import { ClassroomComparison } from '@/components/reports/ClassroomComparison';
 
 interface DateRange {
   from: Date;
@@ -27,6 +29,7 @@ export default function Reports() {
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
   const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
   const [showCustomDate, setShowCustomDate] = useState(false);
+  const [reportMode, setReportMode] = useState<'single' | 'classroom-comparison'>('single');
 
   const { devices } = useDevices();
   const { sites, buildings } = useLocations();
@@ -65,6 +68,12 @@ export default function Reports() {
     dateRange,
     deviceId: selectedDevice === 'all' ? undefined : selectedDevice,
     locationId: selectedLocation === 'all' ? undefined : selectedLocation,
+  });
+
+  const { classroomsData, consolidatedSummary, isLoading: isLoadingClassrooms, generateConsolidatedReport, isGeneratingReport: isGeneratingConsolidated } = useMultiClassroomReportData({
+    dateRange,
+    operatingHours: { start: 8, end: 18 },
+    selectedBuildings: selectedLocation === 'all' ? undefined : [selectedLocation]
   });
 
   const handlePeriodChange = (value: string) => {
@@ -159,7 +168,21 @@ Generated on: ${format(new Date(), 'PPP')}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            {/* Report Mode Selection */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Report Type</label>
+              <Select value={reportMode} onValueChange={(value: 'single' | 'classroom-comparison') => setReportMode(value)}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Select report type" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="single">📊 Single Location Report</SelectItem>
+                  <SelectItem value="classroom-comparison">🏫 Classroom Comparison</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
             {/* Time Period */}
             <div className="space-y-2">
               <label className="text-sm font-medium">Time Period</label>
@@ -291,24 +314,45 @@ Generated on: ${format(new Date(), 'PPP')}
           )}
 
           <div className="flex gap-3">
-            <Button 
-              onClick={handleGenerateReport} 
-              disabled={isGeneratingReport}
-              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-6 py-2 rounded-xl glow-primary hover-lift"
-              size="lg"
-            >
-              {isGeneratingReport ? (
-                <>
-                  <LoadingSpinner className="w-5 h-5 mr-2" />
-                  🤖 Generating Intelligence...
-                </>
-              ) : (
-                <>
-                  <FileText className="w-5 h-5 mr-2" />
-                  🚀 Generate AI Report
-                </>
-              )}
-            </Button>
+            {reportMode === 'single' ? (
+              <Button 
+                onClick={handleGenerateReport} 
+                disabled={isGeneratingReport}
+                className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-6 py-2 rounded-xl glow-primary hover-lift"
+                size="lg"
+              >
+                {isGeneratingReport ? (
+                  <>
+                    <LoadingSpinner className="w-5 h-5 mr-2" />
+                    🤖 Generating Intelligence...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-5 h-5 mr-2" />
+                    🚀 Generate AI Report
+                  </>
+                )}
+              </Button>
+            ) : (
+              <Button 
+                onClick={generateConsolidatedReport} 
+                disabled={isGeneratingConsolidated}
+                className="bg-gradient-to-r from-secondary to-accent hover:from-secondary/90 hover:to-accent/90 text-white font-semibold px-6 py-2 rounded-xl glow-secondary hover-lift"
+                size="lg"
+              >
+                {isGeneratingConsolidated ? (
+                  <>
+                    <LoadingSpinner className="w-5 h-5 mr-2" />
+                    🎯 Generating Consolidated Report...
+                  </>
+                ) : (
+                  <>
+                    <Layers className="w-5 h-5 mr-2" />
+                    🏫 Generate Classroom Comparison
+                  </>
+                )}
+              </Button>
+            )}
             {aiSummary && (
               <Button 
                 variant="outline" 
@@ -324,7 +368,7 @@ Generated on: ${format(new Date(), 'PPP')}
         </CardContent>
       </Card>
 
-      {isLoading && (
+      {(isLoading || isLoadingClassrooms) && (
         <Card className="glass-card border-primary/20">
           <CardContent className="p-12 text-center">
             <div className="animate-pulse-glow mb-6">
@@ -342,8 +386,32 @@ Generated on: ${format(new Date(), 'PPP')}
         </Card>
       )}
 
-      {/* Premium Report Summary */}
-      {reportData && !isLoading && (
+      {/* Report Content */}
+      {reportMode === 'classroom-comparison' ? (
+        <>
+          {classroomsData.length > 0 && (
+            <ClassroomComparison 
+              classrooms={classroomsData}
+              operatingHours={{ start: 8, end: 18 }}
+            />
+          )}
+          {consolidatedSummary && (
+            <Card className="glass-card hover-lift border-primary/20 shadow-2xl">
+              <CardHeader>
+                <CardTitle>🎯 Executive Consolidated Analysis</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="prose prose-sm max-w-none whitespace-pre-wrap">
+                  {consolidatedSummary}
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </>
+      ) : (
+        <>
+          {/* Single Report Content */}
+          {reportData && !isLoading && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
           <Card className="glass-card hover-lift border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 glow-primary">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

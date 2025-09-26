@@ -85,7 +85,9 @@ serve(async (req) => {
 
     const geminiData = await response.json();
     
-    if (!geminiData.candidates || !geminiData.candidates[0] || !geminiData.candidates[0].content) {
+    if (!geminiData.candidates || geminiData.candidates.length === 0 || 
+        !geminiData.candidates[0] || !geminiData.candidates[0].content || 
+        !geminiData.candidates[0].content.parts || geminiData.candidates[0].content.parts.length === 0) {
       console.error('Unexpected Gemini response structure:', geminiData);
       throw new Error('Invalid response from Gemini API');
     }

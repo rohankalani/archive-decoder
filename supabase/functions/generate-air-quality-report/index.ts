@@ -24,22 +24,26 @@ interface ReportData {
   }>;
   activityInsights?: {
     averageCO2: number;
-    peakActivityHours: Array<{ hour: number; avgCO2: number; activityLevel: string; intensity: number }>;
-    spaceUtilization: number;
-    busyDays: Array<{ day: string; avgCO2: number; activityScore: number }>;
+    realEstateMetrics: {
+      roomUsageHours: number;
+      peakOccupancyPeriod: { start: number; end: number; description: string };
+      roomEfficiencyScore: number;
+      actualOccupancyRate: number;
+    };
+    occupancyTimeline: Array<{ hour: number; avgCO2: number; occupancyLevel: string; isOccupied: boolean }>;
     airQualityDuringClasses: {
       classHours: { avgCO2: number; avgAQI: number };
       offHours: { avgCO2: number; avgAQI: number };
-    };
-    spaceEfficiency: {
-      lowActivityPeriods: number;
-      highActivityPeriods: number;
-      optimalActivityPercentage: number;
     };
     ventilationEffectiveness: {
       recoveryTimeMinutes: number;
       maxCO2Reached: number;
       ventilationScore: number;
+    };
+    facilitiesInsights: {
+      energyCostPerHour: number;
+      hvacEfficiencyRating: string;
+      maintenanceStatus: string;
     };
   };
   externalComparison?: {
@@ -120,22 +124,22 @@ Period: ${fromDate} to ${toDate}`;
       const insights = reportData.activityInsights;
       activitySection = `
 
-🏫 **SPACE ACTIVITY & INTELLIGENCE ANALYSIS** (Advanced CO2-Based Analytics):
+🏫 **CLASSROOM INTELLIGENCE & REAL ESTATE ANALYTICS** (Advanced CO2-Based Analytics):
 - Average CO2 Levels: ${insights.averageCO2.toFixed(0)} ppm
-- Space Utilization Rate: ${insights.spaceUtilization.toFixed(1)}%
-- Peak Activity Hours: ${insights.peakActivityHours.slice(0, 3).map(h => `${h.hour}:00 (${h.activityLevel}, ${h.avgCO2.toFixed(0)} ppm)`).join(', ')}
+- Room Usage Hours: ${insights.realEstateMetrics.roomUsageHours.toFixed(1)} hours/day
+- Room Efficiency Score: ${insights.realEstateMetrics.roomEfficiencyScore}/100
+- Peak Occupancy Period: ${insights.realEstateMetrics.peakOccupancyPeriod.start}:00-${insights.realEstateMetrics.peakOccupancyPeriod.end}:00 (${insights.realEstateMetrics.peakOccupancyPeriod.description})
 
 🎯 **VENTILATION EFFECTIVENESS INTELLIGENCE**:
 - Ventilation Performance Score: ${insights.ventilationEffectiveness.ventilationScore}/100
 - Maximum CO2 Reached: ${insights.ventilationEffectiveness.maxCO2Reached.toFixed(0)} ppm
 - Estimated Recovery Time: ${insights.ventilationEffectiveness.recoveryTimeMinutes} minutes
 
-📊 Space Efficiency Metrics:
-- Optimal Activity Periods: ${insights.spaceEfficiency.optimalActivityPercentage}%
-- Low Activity Periods: ${insights.spaceEfficiency.lowActivityPeriods}% of readings
-- High Activity Periods: ${insights.spaceEfficiency.highActivityPeriods}% of readings
-
-📅 Peak Activity Days: ${insights.busyDays.slice(0, 3).map(d => `${d.day} (${d.activityScore.toFixed(0)}% activity)`).join(', ')}
+💰 **FACILITIES COST INTELLIGENCE**:
+- HVAC Cost per Usage Hour: $${insights.facilitiesInsights.energyCostPerHour.toFixed(2)}
+- System Efficiency Rating: ${insights.facilitiesInsights.hvacEfficiencyRating}
+- Maintenance Status: ${insights.facilitiesInsights.maintenanceStatus}
+- Occupancy Rate: ${insights.realEstateMetrics.actualOccupancyRate.toFixed(1)}%
 
 🕐 Class Hours vs Off-Hours Air Quality:
 - During Classes (8AM-6PM): ${insights.airQualityDuringClasses.classHours.avgCO2.toFixed(0)} ppm CO2, AQI ${insights.airQualityDuringClasses.classHours.avgAQI.toFixed(0)}
@@ -237,7 +241,9 @@ Use professional language suitable for C-suite executives, university board memb
 
     const geminiData = await response.json();
     
-    if (!geminiData.candidates || !geminiData.candidates[0] || !geminiData.candidates[0].content) {
+    if (!geminiData.candidates || geminiData.candidates.length === 0 || 
+        !geminiData.candidates[0] || !geminiData.candidates[0].content || 
+        !geminiData.candidates[0].content.parts || geminiData.candidates[0].content.parts.length === 0) {
       console.error('Unexpected Gemini response structure:', geminiData);
       throw new Error('Invalid response from Gemini API');
     }

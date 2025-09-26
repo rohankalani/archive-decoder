@@ -14,11 +14,15 @@ This guide shows how to integrate Arduino devices with the lightweight but stabl
 #include <FS.h>
 #include <SPIFFS.h>
 #include <WiFiClientSecure.h>
+#include <Preferences.h>
+#include <WebServer.h>
+#include <DNSServer.h>
 
-// WiFi and Blynk credentials
-const char* ssid = "YOUR_WIFI_SSID";
-const char* password = "YOUR_WIFI_PASSWORD";
-char auth[] = "YOUR_BLYNK_TOKEN";
+// Dynamic WiFi and Configuration Storage
+Preferences preferences;
+String stored_ssid = "";
+String stored_password = "";
+String stored_blynk_token = "";
 
 // MQTT Configuration (TLS)
 const char* mqtt_server = "your-cluster.hivemq.cloud"; // Your HiveMQ Cloud URL
@@ -34,6 +38,12 @@ const int SENSOR_INTERVAL = 30000; // 30 seconds
 WiFiClientSecure espClient;
 PubSubClient client(espClient);
 
+// Configuration Portal
+WebServer server(80);
+DNSServer dnsServer;
+const char* ap_ssid = "AirQualitySensor-Setup";
+const char* ap_password = "setup123";
+
 // Sensor pins (adjust based on your hardware)
 #define PM25_PIN A0
 #define PM10_PIN A1
@@ -46,17 +56,27 @@ unsigned long lastBlynkUpdate = 0;
 void setup() {
   Serial.begin(115200);
   
+  // Initialize preferences for storing credentials
+  preferences.begin("wifi_config", false);
+  
+  // Load stored credentials
+  loadStoredCredentials();
+  
   // Initialize sensors
   initSensors();
   
-  // Connect to WiFi
-  connectWiFi();
+  // Try to connect to stored WiFi, if fails start config portal
+  if (!connectToStoredWiFi()) {
+    startConfigPortal();
+  }
   
   // Set time for TLS certificates
   setDateTime();
   
-  // Initialize Blynk
-  Blynk.begin(auth, ssid, password);
+  // Initialize Blynk if token is available
+  if (stored_blynk_token.length() > 0) {
+    Blynk.begin(stored_blynk_token.c_str(), stored_ssid.c_str(), stored_password.c_str());
+  }
   
   // Setup TLS MQTT
   espClient.setInsecure(); // For simplified TLS (not recommended for production)
@@ -89,18 +109,146 @@ void loop() {
   delay(1000);
 }
 
-void connectWiFi() {
-  WiFi.begin(ssid, password);
-  Serial.print("Connecting to WiFi");
+void loadStoredCredentials() {
+  stored_ssid = preferences.getString("ssid", "");
+  stored_password = preferences.getString("password", "");
+  stored_blynk_token = preferences.getString("blynk_token", "");
   
-  while (WiFi.status() != WL_CONNECTED) {
-    delay(500);
-    Serial.print(".");
+  Serial.println("Loaded stored credentials:");
+  Serial.println("SSID: " + stored_ssid);
+  Serial.println("Blynk Token: " + (stored_blynk_token.length() > 0 ? "Set" : "Not Set"));
+}
+
+bool connectToStoredWiFi() {
+  if (stored_ssid.length() == 0) {
+    Serial.println("No stored WiFi credentials");
+    return false;
   }
   
-  Serial.println();
-  Serial.print("Connected! IP: ");
-  Serial.println(WiFi.localIP());
+  WiFi.begin(stored_ssid.c_str(), stored_password.c_str());
+  Serial.print("Connecting to stored WiFi: " + stored_ssid);
+  
+  int attempts = 0;
+  while (WiFi.status() != WL_CONNECTED && attempts < 20) {
+    delay(500);
+    Serial.print(".");
+    attempts++;
+  }
+  
+  if (WiFi.status() == WL_CONNECTED) {
+    Serial.println();
+    Serial.print("Connected! IP: ");
+    Serial.println(WiFi.localIP());
+    return true;
+  } else {
+    Serial.println();
+    Serial.println("Failed to connect to stored WiFi");
+    return false;
+  }
+}
+
+void startConfigPortal() {
+  Serial.println("Starting configuration portal...");
+  
+  // Start Access Point
+  WiFi.softAP(ap_ssid, ap_password);
+  
+  // Setup DNS server
+  dnsServer.start(53, "*", WiFi.softAPIP());
+  
+  // Setup web server routes
+  server.on("/", handleConfigPage);
+  server.on("/save", handleSaveConfig);
+  server.onNotFound(handleConfigPage);
+  
+  server.begin();
+  Serial.print("Config portal started. Connect to: ");
+  Serial.println(ap_ssid);
+  Serial.print("Visit: http://");
+  Serial.println(WiFi.softAPIP());
+  
+  // Keep portal running until configured
+  while (stored_ssid.length() == 0) {
+    dnsServer.processNextRequest();
+    server.handleClient();
+    delay(100);
+  }
+}
+
+void handleConfigPage() {
+  String html = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Air Quality Sensor Setup</title>
+    <style>
+        body { font-family: Arial; margin: 40px; }
+        .container { max-width: 400px; margin: 0 auto; }
+        input { width: 100%; padding: 10px; margin: 10px 0; box-sizing: border-box; }
+        button { background-color: #4CAF50; color: white; padding: 14px 20px; border: none; cursor: pointer; width: 100%; }
+        button:hover { background-color: #45a049; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Configure Air Quality Sensor</h2>
+        <form action="/save" method="POST">
+            <label>WiFi Network:</label>
+            <input type="text" name="ssid" placeholder="WiFi Network Name" required>
+            
+            <label>WiFi Password:</label>
+            <input type="password" name="password" placeholder="WiFi Password" required>
+            
+            <label>Blynk Token (Optional):</label>
+            <input type="text" name="blynk_token" placeholder="Blynk Auth Token">
+            
+            <button type="submit">Save Configuration</button>
+        </form>
+    </div>
+</body>
+</html>
+)rawliteral";
+  
+  server.send(200, "text/html", html);
+}
+
+void handleSaveConfig() {
+  String ssid = server.arg("ssid");
+  String password = server.arg("password");
+  String blynk_token = server.arg("blynk_token");
+  
+  // Save to preferences
+  preferences.putString("ssid", ssid);
+  preferences.putString("password", password);
+  preferences.putString("blynk_token", blynk_token);
+  
+  // Update stored variables
+  stored_ssid = ssid;
+  stored_password = password;
+  stored_blynk_token = blynk_token;
+  
+  String html = R"rawliteral(
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Configuration Saved</title>
+    <style>
+        body { font-family: Arial; margin: 40px; text-align: center; }
+        .success { color: green; }
+    </style>
+</head>
+<body>
+    <h2 class="success">Configuration Saved!</h2>
+    <p>Device will restart and connect to your WiFi network.</p>
+    <p>Device restarting in 5 seconds...</p>
+</body>
+</html>
+)rawliteral";
+  
+  server.send(200, "text/html", html);
+  
+  delay(5000);
+  ESP.restart();
 }
 
 void setDateTime() {

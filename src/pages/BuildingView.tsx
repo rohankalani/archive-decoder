@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Layout } from '@/components/Layout';
-import { useLiveSensorData } from '@/hooks/useLiveSensorData';
+import { useOptimizedLiveSensorData } from '@/hooks/useOptimizedLiveSensorData';
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
+import { useDebounce } from '@/hooks/useDebounce';
+import { BuildingGridSkeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search,
@@ -19,12 +21,117 @@ import {
   WifiOff
 } from 'lucide-react';
 
+// Helper function for AQI status
+const getAqiStatus = (aqi: number) => {
+  if (aqi <= 50) return { label: 'Good', color: 'success', bgColor: 'bg-success/10', borderColor: 'border-success' };
+  if (aqi <= 100) return { label: 'Moderate', color: 'warning', bgColor: 'bg-warning/10', borderColor: 'border-warning' };
+  return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
+};
+
+// Memoized building card component for performance
+const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
+  buildingId: string;
+  stats: any;
+  onBuildingClick: (id: string) => void;
+}) => {
+  const status = getAqiStatus(stats.avgAqi);
+  
+  return (
+    <Card 
+      className="bg-card hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/30 group"
+      onClick={() => onBuildingClick(buildingId)}
+    >
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between">
+          <div className="space-y-1">
+            <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
+              {stats.buildingName}
+            </CardTitle>
+            <p className="text-sm text-muted-foreground font-medium">
+              {stats.siteName}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {(stats.smokeDetected || stats.vocDetected || stats.alertCount > 0) && (
+              <div className="flex items-center gap-1 bg-destructive/20 text-destructive px-2 py-1 rounded-full">
+                <AlertTriangle className="h-3 w-3" />
+                <span className="text-xs font-medium">{stats.alertCount}</span>
+              </div>
+            )}
+            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+          </div>
+        </div>
+      </CardHeader>
+      
+      <CardContent className="space-y-4">
+        <div className="text-center p-4 rounded-lg bg-muted/30">
+          <div className="text-sm font-medium text-muted-foreground mb-1">
+            Average AQI
+          </div>
+          <div className={`text-3xl font-bold ${
+            status.color === 'success' ? 'text-success' : 
+            status.color === 'warning' ? 'text-warning' : 'text-destructive'
+          }`}>
+            {stats.avgAqi}
+          </div>
+          <div className={`text-sm font-medium ${
+            status.color === 'success' ? 'text-success' : 
+            status.color === 'warning' ? 'text-warning' : 'text-destructive'
+          }`}>
+            {status.label}
+          </div>
+        </div>
+
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-muted-foreground">Devices</span>
+            <span className="text-sm font-bold">{stats.totalDevices}</span>
+          </div>
+          
+          <div className="grid grid-cols-2 gap-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <Wifi className="h-3 w-3 text-success" />
+                <span className="text-xs font-medium text-muted-foreground">Online</span>
+              </div>
+              <span className="text-sm font-bold text-success">{stats.onlineDevices}</span>
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <div className="flex items-center gap-1">
+                <WifiOff className="h-3 w-3 text-muted-foreground" />
+                <span className="text-xs font-medium text-muted-foreground">Offline</span>
+              </div>
+              <span className="text-sm font-bold text-muted-foreground">{stats.offlineDevices}</span>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between pt-2 border-t border-border/50">
+            <span className="text-xs font-medium text-muted-foreground">Peak AQI</span>
+            <span className={`text-sm font-bold ${
+              getAqiStatus(stats.maxAqi).color === 'success' ? 'text-success' : 
+              getAqiStatus(stats.maxAqi).color === 'warning' ? 'text-warning' : 'text-destructive'
+            }`}>
+              {stats.maxAqi}
+            </span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  );
+});
+
+BuildingCard.displayName = 'BuildingCard';
+
 export function BuildingView() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const navigate = useNavigate();
+  
+  // Debounce search query for better performance
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
 
-  const { sensorData, loading: sensorLoading } = useLiveSensorData();
+  const { sensorData, loading: sensorLoading, error } = useOptimizedLiveSensorData();
   const { devices, loading: devicesLoading } = useDevices();
   const { 
     sites, 
@@ -35,20 +142,16 @@ export function BuildingView() {
     getFloorLocation
   } = useLocations();
 
-  const getAqiStatus = (aqi: number) => {
-    if (aqi <= 50) return { label: 'Good', color: 'success', bgColor: 'bg-success/10', borderColor: 'border-success' };
-    if (aqi <= 100) return { label: 'Moderate', color: 'warning', bgColor: 'bg-warning/10', borderColor: 'border-warning' };
-    return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
-  };
 
-  // Filter buildings based on selected site
+  // Filter buildings based on selected site (memoized)
   const filteredBuildings = useMemo(() => {
     if (selectedSite === 'all') return buildings;
     return getBuildingsBySite(selectedSite);
   }, [selectedSite, buildings, getBuildingsBySite]);
 
-  // Group devices by building and calculate building stats
+  // Optimized building stats calculation
   const buildingStats = useMemo(() => {
+    if (!sensorData.length || !devices.length || !buildings.length) return {};
     const stats: Record<string, {
       buildingName: string;
       siteName: string;
@@ -63,7 +166,7 @@ export function BuildingView() {
     }> = {};
 
     filteredBuildings.forEach(building => {
-      if (searchQuery && !building.name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      if (debouncedSearchQuery && !building.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) {
         return;
       }
 
@@ -105,7 +208,7 @@ export function BuildingView() {
     });
 
     return stats;
-  }, [filteredBuildings, floors, devices, sensorData, searchQuery, sites]);
+  }, [filteredBuildings, floors, devices, sensorData, debouncedSearchQuery, sites]);
 
   const handleBuildingClick = (buildingId: string) => {
     navigate(`/devices?building=${buildingId}`);
@@ -114,11 +217,37 @@ export function BuildingView() {
   if (sensorLoading || devicesLoading || locationsLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-2">
-            <Activity className="h-6 w-6 animate-spin" />
-            <span>Loading building data...</span>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Building Overview</h1>
+              <p className="text-muted-foreground">Monitor air quality across all buildings</p>
+            </div>
           </div>
+          <BuildingGridSkeleton count={6} />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="bg-card/95 backdrop-blur">
+            <CardContent className="p-8 text-center">
+              <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <div className="text-lg font-medium text-foreground mb-2">
+                Failed to load building data
+              </div>
+              <div className="text-muted-foreground mb-4">
+                {error.message}
+              </div>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     );
@@ -163,98 +292,14 @@ export function BuildingView() {
 
         {/* Building Cards Grid */}
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {Object.entries(buildingStats).map(([buildingId, stats]) => {
-            const status = getAqiStatus(stats.avgAqi);
-            
-            return (
-              <Card 
-                key={buildingId}
-                className="bg-card hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/30 group"
-                onClick={() => handleBuildingClick(buildingId)}
-              >
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-1">
-                      <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
-                        {stats.buildingName}
-                      </CardTitle>
-                      <p className="text-sm text-muted-foreground font-medium">
-                        {stats.siteName}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      {/* Alert Indicators */}
-                      {(stats.smokeDetected || stats.vocDetected || stats.alertCount > 0) && (
-                        <div className="flex items-center gap-1 bg-destructive/20 text-destructive px-2 py-1 rounded-full">
-                          <AlertTriangle className="h-3 w-3" />
-                          <span className="text-xs font-medium">{stats.alertCount}</span>
-                        </div>
-                      )}
-                      <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-                    </div>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-4">
-                  {/* AQI Display */}
-                  <div className="text-center p-4 rounded-lg bg-muted/30">
-                    <div className="text-sm font-medium text-muted-foreground mb-1">
-                      Average AQI
-                    </div>
-                    <div className={`text-3xl font-bold ${
-                      status.color === 'success' ? 'text-success' : 
-                      status.color === 'warning' ? 'text-warning' : 'text-destructive'
-                    }`}>
-                      {stats.avgAqi}
-                    </div>
-                    <div className={`text-sm font-medium ${
-                      status.color === 'success' ? 'text-success' : 
-                      status.color === 'warning' ? 'text-warning' : 'text-destructive'
-                    }`}>
-                      {status.label}
-                    </div>
-                  </div>
-
-                  {/* Device Status */}
-                  <div className="space-y-3">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-muted-foreground">Devices</span>
-                      <span className="text-sm font-bold">{stats.totalDevices}</span>
-                    </div>
-                    
-                    <div className="grid grid-cols-2 gap-3">
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <Wifi className="h-3 w-3 text-success" />
-                          <span className="text-xs font-medium text-muted-foreground">Online</span>
-                        </div>
-                        <span className="text-sm font-bold text-success">{stats.onlineDevices}</span>
-                      </div>
-                      
-                      <div className="flex items-center gap-2">
-                        <div className="flex items-center gap-1">
-                          <WifiOff className="h-3 w-3 text-muted-foreground" />
-                          <span className="text-xs font-medium text-muted-foreground">Offline</span>
-                        </div>
-                        <span className="text-sm font-bold text-muted-foreground">{stats.offlineDevices}</span>
-                      </div>
-                    </div>
-
-                    {/* Max AQI */}
-                    <div className="flex items-center justify-between pt-2 border-t border-border/50">
-                      <span className="text-xs font-medium text-muted-foreground">Peak AQI</span>
-                      <span className={`text-sm font-bold ${
-                        getAqiStatus(stats.maxAqi).color === 'success' ? 'text-success' : 
-                        getAqiStatus(stats.maxAqi).color === 'warning' ? 'text-warning' : 'text-destructive'
-                      }`}>
-                        {stats.maxAqi}
-                      </span>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
+          {Object.entries(buildingStats).map(([buildingId, stats]) => (
+            <BuildingCard
+              key={buildingId}
+              buildingId={buildingId}
+              stats={stats}
+              onBuildingClick={handleBuildingClick}
+            />
+          ))}
         </div>
 
         {Object.keys(buildingStats).length === 0 && (

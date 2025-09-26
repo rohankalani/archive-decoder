@@ -1,13 +1,15 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, memo } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Layout } from '@/components/Layout';
-import { useLiveSensorData } from '@/hooks/useLiveSensorData';
+import { useOptimizedLiveSensorData } from '@/hooks/useOptimizedLiveSensorData';
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
+import { useDebounce } from '@/hooks/useDebounce';
+import { DeviceGridSkeleton } from '@/components/ui/skeleton';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search,
@@ -19,6 +21,19 @@ import {
   Activity
 } from 'lucide-react';
 
+// Helper functions
+const getAqiStatus = (aqi: number) => {
+  if (aqi <= 50) return { label: 'Good', color: 'success', bgColor: 'bg-success/10', borderColor: 'border-success' };
+  if (aqi <= 100) return { label: 'Moderate', color: 'warning', bgColor: 'bg-warning/10', borderColor: 'border-warning' };
+  return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
+};
+
+const getSensorTypeDisplay = (aqi: number) => {
+  if (aqi <= 50) return 'GOOD';
+  if (aqi <= 100) return 'VOC';
+  return 'PM2.5';
+};
+
 export function DeviceView() {
   const [viewMode, setViewMode] = useState<'glance' | 'detailed'>('detailed');
   const [searchQuery, setSearchQuery] = useState('');
@@ -28,7 +43,10 @@ export function DeviceView() {
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
   const navigate = useNavigate();
 
-  const { sensorData, loading: sensorLoading } = useLiveSensorData();
+  // Debounce search query for better performance
+  const debouncedSearchQuery = useDebounce(searchQuery, 300);
+
+  const { sensorData, loading: sensorLoading, error } = useOptimizedLiveSensorData();
   const { devices, loading: devicesLoading } = useDevices();
   const { 
     sites, 
@@ -42,17 +60,6 @@ export function DeviceView() {
     getFloorLocation
   } = useLocations();
 
-  const getAqiStatus = (aqi: number) => {
-    if (aqi <= 50) return { label: 'Good', color: 'success', bgColor: 'bg-success/10', borderColor: 'border-success' };
-    if (aqi <= 100) return { label: 'Moderate', color: 'warning', bgColor: 'bg-warning/10', borderColor: 'border-warning' };
-    return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
-  };
-
-  const getSensorTypeDisplay = (aqi: number) => {
-    if (aqi <= 50) return 'GOOD';
-    if (aqi <= 100) return 'VOC';
-    return 'PM2.5';
-  };
 
   // Filter buildings based on selected site
   const filteredBuildings = useMemo(() => {
@@ -72,11 +79,13 @@ export function DeviceView() {
     return floors.filter(floor => floor.building_id === selectedBuilding);
   }, [selectedBuilding, floors]);
 
-  // Filter and group devices
+  // Optimized device filtering and grouping
   const filteredAndGroupedDevices = useMemo(() => {
+    if (!sensorData.length || !devices.length) return {};
+    
     let filtered = sensorData.filter(device => {
-      // Search filter
-      if (searchQuery && !device.device_name.toLowerCase().includes(searchQuery.toLowerCase())) {
+      // Search filter with debounced query
+      if (debouncedSearchQuery && !device.device_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) {
         return false;
       }
 
@@ -151,16 +160,41 @@ export function DeviceView() {
     });
 
     return grouped;
-  }, [sensorData, devices, searchQuery, selectedSite, selectedBuilding, selectedBlock, selectedFloor, getFloorLocation]);
+  }, [sensorData, devices, debouncedSearchQuery, selectedSite, selectedBuilding, selectedBlock, selectedFloor, getFloorLocation]);
 
   if (sensorLoading || devicesLoading || locationsLoading) {
     return (
       <Layout>
-        <div className="flex items-center justify-center min-h-[400px]">
-          <div className="flex items-center gap-2">
-            <Activity className="h-6 w-6 animate-spin" />
-            <span>Loading device data...</span>
+        <div className="space-y-6">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold tracking-tight">Detailed Device View</h1>
+            </div>
           </div>
+          <DeviceGridSkeleton count={8} />
+        </div>
+      </Layout>
+    );
+  }
+
+  if (error) {
+    return (
+      <Layout>
+        <div className="flex items-center justify-center min-h-[400px]">
+          <Card className="bg-card/95 backdrop-blur">
+            <CardContent className="p-8 text-center">
+              <AlertTriangle className="h-12 w-12 text-destructive mx-auto mb-4" />
+              <div className="text-lg font-medium text-foreground mb-2">
+                Failed to load device data
+              </div>
+              <div className="text-muted-foreground mb-4">
+                {error.message}
+              </div>
+              <Button onClick={() => window.location.reload()}>
+                Try Again
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </Layout>
     );

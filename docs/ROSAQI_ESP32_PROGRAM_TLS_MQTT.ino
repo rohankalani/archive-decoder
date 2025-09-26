@@ -78,11 +78,11 @@ HardwareSerial              ESP32Serial2(SERIAL2);
 #define CLOUD_UPDATE_TIME    8000
 
 // ===================== MQTT Configuration =====================
-#define MQTT_BROKER_URL     "your-cluster.hivemq.cloud"
+#define MQTT_BROKER_URL     "7bba9cf2fb494182aa5f5959dba3d631.s1.eu.hivemq.cloud"
 #define MQTT_BROKER_PORT    8883
-#define MQTT_USERNAME       "YOUR_MQTT_USERNAME"
-#define MQTT_PASSWORD       "YOUR_MQTT_PASSWORD"
-#define MQTT_PUBLISH_INTERVAL 30000  // 30 seconds - same as sensor reading interval
+#define MQTT_USERNAME       "rosiaq"
+#define MQTT_PASSWORD       "Rosaiq123$"
+#define MQTT_PUBLISH_INTERVAL 60000  // 60 seconds
 
 // MQTT Topic Structure
 #define MQTT_TOPIC_PREFIX   "sensors/"

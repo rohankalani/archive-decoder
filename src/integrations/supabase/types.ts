@@ -596,6 +596,22 @@ export type Database = {
         | "o3"
         | "voc"
         | "pressure"
+        | "pm01"
+        | "pm03"
+        | "pm05"
+        | "pm1"
+        | "pm5"
+        | "pc01"
+        | "pc03"
+        | "pc05"
+        | "pc1"
+        | "pc25"
+        | "pc5"
+        | "pc10"
+        | "hcho"
+        | "nox"
+        | "aqi_overall"
+        | "dominant_pollutant"
       user_role: "super_admin" | "admin" | "viewer" | "supervisor"
     }
     CompositeTypes: {
@@ -737,6 +753,22 @@ export const Constants = {
         "o3",
         "voc",
         "pressure",
+        "pm01",
+        "pm03",
+        "pm05",
+        "pm1",
+        "pm5",
+        "pc01",
+        "pc03",
+        "pc05",
+        "pc1",
+        "pc25",
+        "pc5",
+        "pc10",
+        "hcho",
+        "nox",
+        "aqi_overall",
+        "dominant_pollutant",
       ],
       user_role: ["super_admin", "admin", "viewer", "supervisor"],
     },

@@ -49,7 +49,11 @@ export function DeviceDetail() {
   const generateChartData = useMemo(() => {
     if (!deviceSensorData) {
       return { 
-        aqi: [], 
+        aqi: [],
+        environmental: [],
+        pollutants: [],
+        particulateMass: [],
+        particulateCount: [],
         bar: [] 
       };
     }
@@ -75,16 +79,39 @@ export function DeviceDetail() {
       
       return {
         time: timeLabel,
+        // AQI data
         overallAqi,
         pm25Aqi,
         pm10Aqi,
         hchoAqi,
         vocAqi,
-        noxAqi
+        noxAqi,
+        // Environmental data
+        temperature: item.temperature || deviceSensorData.temperature || 0,
+        humidity: item.humidity || deviceSensorData.humidity || 0,
+        co2: item.co2 || deviceSensorData.co2 || 0,
+        // Pollutants
+        voc: item.voc || deviceSensorData.voc || 0,
+        hcho: item.hcho || deviceSensorData.hcho || 0,
+        nox: item.nox || deviceSensorData.nox || 0,
+        // Particulate matter (mass) - only use what exists in historical data
+        pm25: item.pm25 || deviceSensorData.pm25 || 0,
+        pm10: item.pm10 || deviceSensorData.pm10 || 0,
+        // Use current device data for particles not in historical data
+        pm03: deviceSensorData.pm03 || 0,
+        pm1: deviceSensorData.pm1 || 0,
+        pm5: deviceSensorData.pm5 || 0,
+        // Particle count (use current device data)
+        pc03: deviceSensorData.pc03 || 0,
+        pc05: deviceSensorData.pc05 || 0,
+        pc1: deviceSensorData.pc1 || 0,
+        pc25: deviceSensorData.pc25 || 0,
+        pc5: deviceSensorData.pc5 || 0,
+        pc10: deviceSensorData.pc10 || 0
       };
     });
 
-    // Calculate current averaged values for bar chart
+    // Key pollutants summary data (current values)
     const latestData = historicalData[historicalData.length - 1] || {} as any;
     const barData = [
       {
@@ -115,6 +142,10 @@ export function DeviceDetail() {
 
     return { 
       aqi: processedData,
+      environmental: processedData,
+      pollutants: processedData,
+      particulateMass: processedData,
+      particulateCount: processedData,
       bar: barData 
     };
   }, [historicalData, deviceSensorData, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi]);
@@ -448,15 +479,13 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[
-                      { name: 'Temp', value: deviceSensorData.temperature || 0, unit: '°C' },
-                      { name: 'Humidity', value: deviceSensorData.humidity || 0, unit: '%' },
-                      { name: 'CO₂', value: deviceSensorData.co2 || 0, unit: 'ppm' }
-                    ]}>
+                    <BarChart data={generateChartData.environmental}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="value" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="temperature" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="humidity" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="co2" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -471,15 +500,13 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[
-                      { name: 'VOC', value: deviceSensorData.voc || 0, unit: 'index' },
-                      { name: 'HCHO', value: deviceSensorData.hcho || 0, unit: 'ppb' },
-                      { name: 'NOx', value: deviceSensorData.nox || 0, unit: 'index' }
-                    ]}>
+                    <BarChart data={generateChartData.pollutants}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="value" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="voc" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="hcho" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="nox" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -494,17 +521,15 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[
-                      { name: 'PM0.3', value: deviceSensorData.pm03 || 0 },
-                      { name: 'PM1', value: deviceSensorData.pm1 || 0 },
-                      { name: 'PM2.5', value: deviceSensorData.pm25 || 0 },
-                      { name: 'PM5', value: deviceSensorData.pm5 || 0 },
-                      { name: 'PM10', value: deviceSensorData.pm10 || 0 }
-                    ]}>
+                    <BarChart data={generateChartData.particulateMass}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="value" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pm03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pm1" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pm25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pm5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pm10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -519,18 +544,16 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={[
-                      { name: 'PC0.3', value: deviceSensorData.pc03 || 0 },
-                      { name: 'PC0.5', value: deviceSensorData.pc05 || 0 },
-                      { name: 'PC1', value: deviceSensorData.pc1 || 0 },
-                      { name: 'PC2.5', value: deviceSensorData.pc25 || 0 },
-                      { name: 'PC5', value: deviceSensorData.pc5 || 0 },
-                      { name: 'PC10', value: deviceSensorData.pc10 || 0 }
-                    ]}>
+                    <BarChart data={generateChartData.particulateCount}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                      <XAxis dataKey="name" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="value" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pc03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pc05" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pc1" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pc25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pc5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="pc10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

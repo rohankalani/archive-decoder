@@ -22,6 +22,21 @@ interface ReportData {
     min: number;
     count: number;
   }>;
+  occupancyInsights?: {
+    averageCO2: number;
+    peakOccupancyHours: Array<{ hour: number; avgCO2: number; estimatedOccupancy: number }>;
+    classroomUtilization: number;
+    busyDays: Array<{ day: string; avgCO2: number; occupancyScore: number }>;
+    airQualityDuringClasses: {
+      classHours: { avgCO2: number; avgAQI: number };
+      offHours: { avgCO2: number; avgAQI: number };
+    };
+    spaceEfficiency: {
+      underutilizedRooms: number;
+      overCrowdedPeriods: number;
+      optimalCapacityPercentage: number;
+    };
+  };
 }
 
 interface RequestBody {
@@ -88,7 +103,32 @@ Period: ${fromDate} to ${toDate}`;
       contextInfo += `\nLocation: All locations`;
     }
 
+    // Prepare occupancy insights section
+    let occupancySection = '';
+    if (reportData.occupancyInsights) {
+      const insights = reportData.occupancyInsights;
+      occupancySection = `
+
+🏫 **OCCUPANCY & SPACE UTILIZATION ANALYSIS** (CO2-Based Intelligence):
+- Average CO2 Levels: ${insights.averageCO2.toFixed(0)} ppm
+- Classroom Utilization Rate: ${insights.classroomUtilization.toFixed(1)}%
+- Peak Activity Hours: ${insights.peakOccupancyHours.slice(0, 3).map(h => `${h.hour}:00 (${h.estimatedOccupancy} people, ${h.avgCO2.toFixed(0)} ppm)`).join(', ')}
+
+📊 Space Efficiency Metrics:
+- Optimal Capacity Periods: ${insights.spaceEfficiency.optimalCapacityPercentage}%
+- Under-utilized Rooms: ${insights.spaceEfficiency.underutilizedRooms}% of readings
+- Overcrowded Periods: ${insights.spaceEfficiency.overCrowdedPeriods}% of readings
+
+📅 Busiest Days: ${insights.busyDays.slice(0, 3).map(d => `${d.day} (${d.occupancyScore.toFixed(0)}% utilization)`).join(', ')}
+
+🕐 Class Hours vs Off-Hours Air Quality:
+- During Classes (8AM-6PM): ${insights.airQualityDuringClasses.classHours.avgCO2.toFixed(0)} ppm CO2, AQI ${insights.airQualityDuringClasses.classHours.avgAQI.toFixed(0)}
+- Off-Hours: ${insights.airQualityDuringClasses.offHours.avgCO2.toFixed(0)} ppm CO2, AQI ${insights.airQualityDuringClasses.offHours.avgAQI.toFixed(0)}`;
+    }
+
     const prompt = `${contextInfo}
+
+📈 **COMPREHENSIVE AIR QUALITY & OCCUPANCY INTELLIGENCE REPORT**
 
 Data Summary:
 - Total sensor readings collected: ${reportData.totalReadings}
@@ -99,27 +139,33 @@ Data Summary:
 Sensor Breakdown:
 ${reportData.sensorBreakdown.map(sensor => 
   `- ${sensor.sensorType.toUpperCase()}: Average ${sensor.average.toFixed(2)}, Range ${sensor.min.toFixed(2)} - ${sensor.max.toFixed(2)} (${sensor.count} readings)`
-).join('\n')}
+).join('\n')}${occupancySection}
 
-Please provide a comprehensive air quality report analysis that includes:
+**ANALYSIS REQUIREMENTS FOR TOP MANAGEMENT:**
 
-1. **Executive Summary**: Overall air quality assessment for the period
-2. **Key Findings**: Notable trends, patterns, or concerning measurements
-3. **Health Implications**: What these readings mean for occupants/visitors
-4. **Compliance Status**: Assessment against standard air quality guidelines (WHO, EPA)
-5. **Recommendations**: Specific actionable improvements for air quality management
-6. **Risk Assessment**: Identification of any immediate or long-term health risks
-7. **Trend Analysis**: If patterns suggest improving or deteriorating conditions
+Please provide a comprehensive, executive-level air quality and occupancy intelligence report that demonstrates clear ROI for sensor deployment expansion. Include:
 
-Format the response in clear sections with bullet points where appropriate. Use professional language suitable for facility managers and health officials. Include specific numerical references to the data provided.
+1. **💼 EXECUTIVE DASHBOARD**: Key performance indicators that matter to university leadership
+2. **🎯 BUSINESS IMPACT**: How air quality correlates with student performance, class attendance, and facility efficiency
+3. **💰 COST-BENEFIT ANALYSIS**: Potential savings from optimized HVAC, reduced sick days, improved productivity
+4. **📊 OCCUPANCY INTELLIGENCE**: Detailed insights on space utilization, peak hours, classroom efficiency
+5. **⚠️ COMPLIANCE & LIABILITY**: Risk mitigation and regulatory compliance status
+6. **🏗️ EXPANSION RECOMMENDATIONS**: Specific recommendations for additional sensor deployment with ROI projections
+7. **📈 PERFORMANCE METRICS**: Baseline establishment for measuring improvement after sensor network expansion
+8. **🎓 STUDENT HEALTH & PERFORMANCE**: Direct correlation between air quality and academic environment quality
 
-AQI Reference Levels:
-- 0-50: Good (Green)
-- 51-100: Moderate (Yellow) 
-- 101-150: Unhealthy for Sensitive Groups (Orange)
-- 151-200: Unhealthy (Red)
-- 201-300: Very Unhealthy (Purple)
-- 301+: Hazardous (Maroon)`;
+**Special Focus Areas:**
+- Demonstrate how CO2 data reveals classroom overcrowding and scheduling inefficiencies
+- Show correlation between poor air quality and potential health/productivity impacts
+- Highlight revenue opportunities (energy savings, space optimization, health cost reduction)
+- Present compelling case for scaling the sensor network across more locations
+
+Use professional language suitable for C-suite executives, university board members, and facility investment committees. Include specific ROI calculations and implementation timeline recommendations.
+
+**AQI & CO2 Reference Standards:**
+- AQI: 0-50 (Good), 51-100 (Moderate), 101-150 (Unhealthy for Sensitive), 151+ (Unhealthy)
+- CO2: <400ppm (Outdoor), 400-1000ppm (Acceptable), 1000-5000ppm (Drowsiness), >5000ppm (Dangerous)
+- Occupancy Estimation: Each person adds ~100ppm CO2 in typical classroom environment`;
 
     // Call Google Gemini API
     const response = await fetch(

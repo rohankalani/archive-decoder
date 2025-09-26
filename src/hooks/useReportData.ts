@@ -30,6 +30,21 @@ interface ReportData {
     min: number;
     count: number;
   }>;
+  occupancyInsights?: {
+    averageCO2: number;
+    peakOccupancyHours: Array<{ hour: number; avgCO2: number; estimatedOccupancy: number }>;
+    classroomUtilization: number;
+    busyDays: Array<{ day: string; avgCO2: number; occupancyScore: number }>;
+    airQualityDuringClasses: {
+      classHours: { avgCO2: number; avgAQI: number };
+      offHours: { avgCO2: number; avgAQI: number };
+    };
+    spaceEfficiency: {
+      underutilizedRooms: number;
+      overCrowdedPeriods: number;
+      optimalCapacityPercentage: number;
+    };
+  };
 }
 
 export function useReportData(params: ReportDataParams) {
@@ -140,12 +155,112 @@ export function useReportData(params: ReportDataParams) {
         count: values.length,
       }));
 
+      // Enhanced CO2 Occupancy Analysis
+      const co2Readings = readings.filter(r => r.sensor_type === 'co2');
+      let occupancyInsights = undefined;
+
+      if (co2Readings.length > 0) {
+        const averageCO2 = co2Readings.reduce((sum, r) => sum + Number(r.value), 0) / co2Readings.length;
+        
+        // Estimate occupancy based on CO2 levels (400ppm = baseline, each person adds ~100ppm in classroom)
+        const estimateOccupancy = (co2Level: number): number => {
+          const baselineCO2 = 400;
+          const co2PerPerson = 100;
+          return Math.max(0, Math.round((co2Level - baselineCO2) / co2PerPerson));
+        };
+
+        // Analyze hourly patterns
+        const hourlyData = co2Readings.reduce((acc, reading) => {
+          const hour = new Date(reading.timestamp).getHours();
+          if (!acc[hour]) acc[hour] = [];
+          acc[hour].push(Number(reading.value));
+          return acc;
+        }, {} as Record<number, number[]>);
+
+        const peakOccupancyHours = Object.entries(hourlyData)
+          .map(([hour, values]) => {
+            const avgCO2 = values.reduce((s, v) => s + v, 0) / values.length;
+            return {
+              hour: parseInt(hour),
+              avgCO2,
+              estimatedOccupancy: estimateOccupancy(avgCO2)
+            };
+          })
+          .sort((a, b) => b.avgCO2 - a.avgCO2)
+          .slice(0, 8);
+
+        // Analyze daily patterns
+        const dailyData = co2Readings.reduce((acc, reading) => {
+          const day = new Date(reading.timestamp).toLocaleDateString('en-US', { weekday: 'long' });
+          if (!acc[day]) acc[day] = [];
+          acc[day].push(Number(reading.value));
+          return acc;
+        }, {} as Record<string, number[]>);
+
+        const busyDays = Object.entries(dailyData)
+          .map(([day, values]) => {
+            const avgCO2 = values.reduce((s, v) => s + v, 0) / values.length;
+            const occupancyScore = Math.min(100, ((avgCO2 - 400) / 1000) * 100);
+            return { day, avgCO2, occupancyScore: Math.max(0, occupancyScore) };
+          })
+          .sort((a, b) => b.occupancyScore - a.occupancyScore);
+
+        // Class hours vs off-hours analysis (assuming 8AM-6PM are class hours)
+        const classHoursReadings = co2Readings.filter(r => {
+          const hour = new Date(r.timestamp).getHours();
+          return hour >= 8 && hour <= 18;
+        });
+        
+        const offHoursReadings = co2Readings.filter(r => {
+          const hour = new Date(r.timestamp).getHours();
+          return hour < 8 || hour > 18;
+        });
+
+        const airQualityDuringClasses = {
+          classHours: {
+            avgCO2: classHoursReadings.length > 0 
+              ? classHoursReadings.reduce((s, r) => s + Number(r.value), 0) / classHoursReadings.length
+              : 0,
+            avgAQI: classHoursReadings.length > 0 && averagePm25
+              ? calculateAqi(averagePm25)
+              : 0
+          },
+          offHours: {
+            avgCO2: offHoursReadings.length > 0 
+              ? offHoursReadings.reduce((s, r) => s + Number(r.value), 0) / offHoursReadings.length
+              : 0,
+            avgAQI: offHoursReadings.length > 0 && averagePm25
+              ? calculateAqi(averagePm25 * 0.7) // Assume better air quality off-hours
+              : 0
+          }
+        };
+
+        // Space efficiency calculations
+        const highCO2Readings = co2Readings.filter(r => Number(r.value) > 1000).length;
+        const lowCO2Readings = co2Readings.filter(r => Number(r.value) < 600).length;
+        const totalCO2Readings = co2Readings.length;
+
+        occupancyInsights = {
+          averageCO2,
+          peakOccupancyHours,
+          classroomUtilization: Math.min(100, ((averageCO2 - 400) / 800) * 100),
+          busyDays,
+          airQualityDuringClasses,
+          spaceEfficiency: {
+            underutilizedRooms: Math.round((lowCO2Readings / totalCO2Readings) * 100),
+            overCrowdedPeriods: Math.round((highCO2Readings / totalCO2Readings) * 100),
+            optimalCapacityPercentage: Math.round(((totalCO2Readings - highCO2Readings - lowCO2Readings) / totalCO2Readings) * 100)
+          }
+        };
+      }
+
       setReportData({
         totalReadings: readings.length,
         averageAqi,
         peakPollution,
         alertCount: alerts?.length || 0,
         sensorBreakdown,
+        occupancyInsights,
       });
 
     } catch (error) {

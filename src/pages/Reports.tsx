@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle } from 'lucide-react';
+import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users } from 'lucide-react';
 import { format, subDays, subWeeks, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useReportData } from '@/hooks/useReportData';
@@ -13,6 +13,7 @@ import { useDevices } from '@/hooks/useDevices';
 import { useLocations } from '@/hooks/useLocations';
 import { Layout } from '@/components/Layout';
 import { useUnifiedMockData } from '@/contexts/UnifiedMockDataContext';
+import { OccupancyInsights } from '@/components/reports/OccupancyInsights';
 
 interface DateRange {
   from: Date;
@@ -350,6 +351,24 @@ Generated on: ${format(new Date(), 'PPP')}
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Occupancy Insights */}
+      {reportData?.occupancyInsights && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Users className="w-5 h-5" />
+              🏫 Occupancy & Space Intelligence
+            </CardTitle>
+            <CardDescription>
+              Advanced CO₂-based occupancy analysis and space utilization insights for management decision-making
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <OccupancyInsights occupancyInsights={reportData.occupancyInsights} />
+          </CardContent>
+        </Card>
       )}
 
       {/* Mock Reports Section */}

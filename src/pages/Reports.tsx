@@ -1,12 +1,8 @@
-import React, { useState, useMemo } from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Calendar } from '@/components/ui/calendar';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users, Shield, Building, Layers } from 'lucide-react';
-import { format, subDays, subWeeks, subMonths } from 'date-fns';
-import { cn } from '@/lib/utils';
+import { Download, FileText, TrendingUp, AlertTriangle, Users, Building, Layers } from 'lucide-react';
+import { format, subDays } from 'date-fns';
 import { useReportData } from '@/hooks/useReportData';
 import { useMultiClassroomReportData } from '@/hooks/useMultiClassroomReportData';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -24,12 +20,10 @@ interface DateRange {
 }
 
 const ReportsComponent = React.memo(function ReportsComponent() {
-  const [selectedPeriod, setSelectedPeriod] = useState<string>('7d');
-  const [selectedDevice, setSelectedDevice] = useState<string>('all');
-  const [selectedLocation, setSelectedLocation] = useState<string>('all');
-  const [customDateRange, setCustomDateRange] = useState<DateRange | undefined>();
-  const [showCustomDate, setShowCustomDate] = useState(false);
-  const [reportMode, setReportMode] = useState<'single' | 'classroom-comparison'>('single');
+  // Fixed to monthly reports only
+  const selectedPeriod = '30d';
+  const selectedDevice = 'all';
+  const selectedLocation = 'all';
 
   const { devices } = useDevices();
   const { sites, buildings } = useLocations();
@@ -37,40 +31,14 @@ const ReportsComponent = React.memo(function ReportsComponent() {
   // Only get isUsingMockData flag, don't subscribe to the actual mock data to prevent re-renders
   const { isUsingMockData } = useUnifiedMockData();
 
-  // Calculate date range based on selected period with stable references
+  // Fixed monthly date range
   const dateRange = useMemo((): DateRange => {
-    if (selectedPeriod === 'custom' && customDateRange) {
-      return {
-        from: new Date(customDateRange.from.getTime()), // Create stable references
-        to: new Date(customDateRange.to.getTime())
-      };
-    }
-
     const to = new Date();
-    to.setHours(23, 59, 59, 999); // End of day for consistency
-    let from: Date;
-
-    switch (selectedPeriod) {
-      case '1d':
-        from = subDays(to, 1);
-        break;
-      case '7d':
-        from = subDays(to, 7);
-        break;
-      case '30d':
-        from = subDays(to, 30);
-        break;
-      case '3m':
-        from = subMonths(to, 3);
-        break;
-      default:
-        from = subDays(to, 7);
-    }
-    
-    from.setHours(0, 0, 0, 0); // Start of day for consistency
-
+    to.setHours(23, 59, 59, 999);
+    const from = subDays(to, 30);
+    from.setHours(0, 0, 0, 0);
     return { from, to };
-  }, [selectedPeriod, customDateRange?.from?.getTime(), customDateRange?.to?.getTime()]);
+  }, []);
 
   const { reportData, aiSummary, isLoading, isGeneratingReport, generateReport } = useReportData({
     dateRange,
@@ -82,19 +50,10 @@ const ReportsComponent = React.memo(function ReportsComponent() {
   const memoizedHookParams = useMemo(() => ({
     dateRange,
     operatingHours: { start: 8, end: 18 },
-    selectedBuildings: selectedLocation === 'all' ? undefined : [selectedLocation]
-  }), [dateRange.from.getTime(), dateRange.to.getTime(), selectedLocation]);
+    selectedBuildings: undefined // All buildings for monthly overview
+  }), [dateRange.from.getTime(), dateRange.to.getTime()]);
 
   const { classroomsData, consolidatedSummary, isLoading: isLoadingClassrooms, generateConsolidatedReport, isGeneratingReport: isGeneratingConsolidated } = useMultiClassroomReportData(memoizedHookParams);
-
-  const handlePeriodChange = (value: string) => {
-    setSelectedPeriod(value);
-    if (value === 'custom') {
-      setShowCustomDate(true);
-    } else {
-      setShowCustomDate(false);
-    }
-  };
 
   const handleGenerateReport = async () => {
     await generateReport();
@@ -141,229 +100,50 @@ Generated on: ${format(new Date(), 'PPP')}
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                  🚀 AI-Powered Reports
+                  📊 Monthly Air Quality Report
                 </h1>
                 <p className="text-lg text-muted-foreground mt-2">
-                  Advanced air quality intelligence with executive insights and predictive analytics
+                  Last 30 days campus-wide air quality analysis and insights
                 </p>
               </div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <Shield className="w-5 h-5 text-secondary" />
-                <span className="text-sm font-medium">External Air Quality Comparison</span>
-              </div>
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <TrendingUp className="w-5 h-5 text-accent" />
-                <span className="text-sm font-medium">Business Intelligence & ROI</span>
-              </div>
-              <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
-                <Users className="w-5 h-5 text-tertiary" />
-                <span className="text-sm font-medium">Space Activity Analytics</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Enhanced Filters */}
-        <Card className="glass-card hover-lift border-primary/20 shadow-2xl">
-          <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 rounded-t-lg">
-            <CardTitle className="flex items-center gap-2 text-xl">
-              <div className="p-2 rounded-lg bg-primary/20 glow-primary">
-                <TrendingUp className="w-5 h-5 text-primary" />
-              </div>
-              ⚙️ Report Configuration
-            </CardTitle>
-            <CardDescription className="text-base">
-              Configure your report parameters and generate AI-powered insights with external comparisons
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {/* Report Mode Selection */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Report Type</label>
-                <Select value={reportMode} onValueChange={(value: 'single' | 'classroom-comparison') => setReportMode(value)}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select report type" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="single">📊 Single Location Report</SelectItem>
-                    <SelectItem value="classroom-comparison">🏫 Classroom Comparison</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Time Period */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Time Period</label>
-                <Select value={selectedPeriod} onValueChange={handlePeriodChange}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select period" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="1d">Last 24 Hours</SelectItem>
-                    <SelectItem value="7d">Last 7 Days</SelectItem>
-                    <SelectItem value="30d">Last 30 Days</SelectItem>
-                    <SelectItem value="3m">Last 3 Months</SelectItem>
-                    <SelectItem value="custom">Custom Range</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Device Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Device</label>
-                <Select value={selectedDevice} onValueChange={setSelectedDevice}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select device" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Devices</SelectItem>
-                    {devices?.map((device) => (
-                      <SelectItem key={device.id} value={device.id}>
-                        {device.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Location Filter */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Location</label>
-                <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select location" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Locations</SelectItem>
-                    {sites?.map((site) => (
-                      <SelectItem key={site.id} value={site.id}>
-                        {site.name} (Site)
-                      </SelectItem>
-                    ))}
-                    {buildings?.map((building) => (
-                      <SelectItem key={building.id} value={building.id}>
-                        {building.name} (Building)
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Custom Date Range */}
-            {showCustomDate && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium">Custom Date Range</label>
-                <div className="flex gap-2">
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal",
-                          !customDateRange?.from && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {customDateRange?.from ? (
-                          format(customDateRange.from, "PPP")
-                        ) : (
-                          "Start date"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={customDateRange?.from}
-                        onSelect={(date) =>
-                          setCustomDateRange((prev) => ({
-                            from: date || new Date(),
-                            to: prev?.to || new Date(),
-                          }))
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant="outline"
-                        className={cn(
-                          "justify-start text-left font-normal",
-                          !customDateRange?.to && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {customDateRange?.to ? (
-                          format(customDateRange.to, "PPP")
-                        ) : (
-                          "End date"
-                        )}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={customDateRange?.to}
-                        onSelect={(date) =>
-                          setCustomDateRange((prev) => ({
-                            from: prev?.from || new Date(),
-                            to: date || new Date(),
-                          }))
-                        }
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                </div>
-              </div>
-            )}
-
-            <div className="flex gap-3">
-              {reportMode === 'single' ? (
-                <Button 
-                  onClick={handleGenerateReport} 
-                  disabled={isGeneratingReport}
-                  className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-6 py-2 rounded-xl glow-primary hover-lift"
-                  size="lg"
-                >
-                  {isGeneratingReport ? (
-                    <>
-                      <LoadingSpinner className="w-5 h-5 mr-2" />
-                      🤖 Generating Intelligence...
-                    </>
-                  ) : (
-                    <>
-                      <FileText className="w-5 h-5 mr-2" />
-                      🚀 Generate AI Report
-                    </>
-                  )}
-                </Button>
-              ) : (
-                <Button 
-                  onClick={generateConsolidatedReport} 
-                  disabled={isGeneratingConsolidated}
-                  className="bg-gradient-to-r from-secondary to-accent hover:from-secondary/90 hover:to-accent/90 text-white font-semibold px-6 py-2 rounded-xl glow-secondary hover-lift"
-                  size="lg"
-                >
-                  {isGeneratingConsolidated ? (
-                    <>
-                      <LoadingSpinner className="w-5 h-5 mr-2" />
-                      🎯 Generating Consolidated Report...
-                    </>
-                  ) : (
-                    <>
-                      <Layers className="w-5 h-5 mr-2" />
-                      🏫 Generate Classroom Comparison
-                    </>
-                  )}
-                </Button>
-              )}
+            <div className="flex gap-3 mt-6">
+              <Button 
+                onClick={handleGenerateReport} 
+                disabled={isGeneratingReport}
+                className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-6 py-2 rounded-xl glow-primary hover-lift"
+                size="lg"
+              >
+                {isGeneratingReport ? (
+                  <>
+                    <LoadingSpinner className="w-5 h-5 mr-2" />
+                    🤖 Generating Intelligence...
+                  </>
+                ) : (
+                  <>
+                    <FileText className="w-5 h-5 mr-2" />
+                    🚀 Generate AI Report
+                  </>
+                )}
+              </Button>
+              <Button 
+                onClick={generateConsolidatedReport} 
+                disabled={isGeneratingConsolidated}
+                className="bg-gradient-to-r from-secondary to-accent hover:from-secondary/90 hover:to-accent/90 text-white font-semibold px-6 py-2 rounded-xl glow-secondary hover-lift"
+                size="lg"
+              >
+                {isGeneratingConsolidated ? (
+                  <>
+                    <LoadingSpinner className="w-5 h-5 mr-2" />
+                    🎯 Generating Classroom Analysis...
+                  </>
+                ) : (
+                  <>
+                    <Layers className="w-5 h-5 mr-2" />
+                    🏫 Generate Classroom Analysis
+                  </>
+                )}
+              </Button>
               {aiSummary && (
                 <Button 
                   variant="outline" 
@@ -376,8 +156,8 @@ Generated on: ${format(new Date(), 'PPP')}
                 </Button>
               )}
             </div>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
 
         {(isLoading || isLoadingClassrooms) && (
           <Card className="glass-card border-primary/20">
@@ -386,7 +166,7 @@ Generated on: ${format(new Date(), 'PPP')}
                 <LoadingSpinner className="w-12 h-12 mx-auto text-primary" />
               </div>
               <p className="text-lg font-medium bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                🔄 Loading premium analytics data...
+                🔄 Loading monthly analytics data...
               </p>
               <div className="flex justify-center gap-2 mt-4">
                 <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
@@ -397,154 +177,204 @@ Generated on: ${format(new Date(), 'PPP')}
           </Card>
         )}
 
-        {/* Report Content - Single Location vs Classroom Comparison */}
-        {reportMode === 'single' && (
-          <Card className="glass-card hover-lift border-accent/20 mb-6">
-            <CardHeader>
-              <CardTitle className="flex items-center gap-3">
-                <div className="p-2 rounded-lg bg-accent/20 glow-accent">
-                  <Building className="w-5 h-5 text-accent" />
+        {/* Campus Overview Card */}
+        {classroomsData && classroomsData.length > 0 && (
+          <Card className="glass-card hover-lift border-primary/20 shadow-xl mb-6">
+            <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 rounded-t-lg">
+              <CardTitle className="flex items-center gap-3 text-2xl">
+                <div className="p-2 rounded-lg bg-primary/20 glow-primary">
+                  <Building className="w-6 h-6 text-primary" />
                 </div>
-                📊 Single Location Analysis
+                🏢 Campus Air Quality Overview
               </CardTitle>
-              <CardDescription>
-                When "All Devices" is selected, this report aggregates data from all sensors in the chosen location to provide comprehensive air quality insights for that specific area, building, or site.
+              <CardDescription className="text-base">
+                Monthly performance summary for all monitored locations
               </CardDescription>
             </CardHeader>
+            <CardContent className="p-6">
+              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800">
+                  <div className="text-3xl font-bold text-green-700 dark:text-green-400">
+                    {classroomsData.length}
+                  </div>
+                  <div className="text-sm text-green-600 dark:text-green-500 mt-1">
+                    Locations Monitored
+                  </div>
+                </div>
+                
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border border-blue-200 dark:border-blue-800">
+                  <div className="text-3xl font-bold text-blue-700 dark:text-blue-400">
+                    {classroomsData.filter(room => room.averageAqi <= 50).length}
+                  </div>
+                  <div className="text-sm text-blue-600 dark:text-blue-500 mt-1">
+                    Good Air Quality
+                  </div>
+                </div>
+                
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800">
+                  <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">
+                    {classroomsData.filter(room => room.averageAqi > 50 && room.averageAqi <= 100).length}
+                  </div>
+                  <div className="text-sm text-yellow-600 dark:text-yellow-500 mt-1">
+                    Moderate Quality
+                  </div>
+                </div>
+                
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 border border-red-200 dark:border-red-800">
+                  <div className="text-3xl font-bold text-red-700 dark:text-red-400">
+                    {classroomsData.filter(room => room.averageAqi > 100).length}
+                  </div>
+                  <div className="text-sm text-red-600 dark:text-red-500 mt-1">
+                    Needs Attention
+                  </div>
+                </div>
+              </div>
+              
+              <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <div className="text-lg font-semibold text-foreground">Campus Average AQI</div>
+                    <div className="text-sm text-muted-foreground">Overall air quality index</div>
+                  </div>
+                  <div className="text-right">
+                    <div className="text-3xl font-bold text-primary">
+                      {(classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length).toFixed(1)}
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length <= 50 
+                        ? 'Good' 
+                        : classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length <= 100 
+                        ? 'Moderate' 
+                        : 'Poor'}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         )}
 
-        {reportMode === 'classroom-comparison' ? (
+        {/* Single Location Report */}
+        {reportData && !isLoading && (
           <>
-            {classroomsData.length > 0 && (
-              <ClassroomComparison 
-                classrooms={classroomsData}
-                operatingHours={{ start: 8, end: 18 }}
-              />
-            )}
-            {consolidatedSummary && (
-              <Card className="glass-card hover-lift border-primary/20 shadow-2xl">
-                <CardHeader>
-                  <CardTitle>🎯 Executive Consolidated Analysis</CardTitle>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+              <Card className="glass-card hover-lift border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 glow-primary">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-primary-glow">📊 Total Readings</CardTitle>
+                  <div className="p-2 rounded-lg bg-primary/20 animate-pulse-glow">
+                    <TrendingUp className="h-4 w-4 text-primary" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="prose prose-sm max-w-none whitespace-pre-wrap">
-                    {consolidatedSummary}
+                  <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                    {reportData.totalReadings.toLocaleString()}
+                  </div>
+                  <p className="text-xs text-primary/70 font-medium">
+                    📅 Collected over {Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))} days
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card hover-lift border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 glow-secondary">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-secondary-glow">🌬️ Average AQI</CardTitle>
+                  <div className="p-2 rounded-lg bg-secondary/20 animate-pulse-glow">
+                    <AlertTriangle className="h-4 w-4 text-secondary" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent">
+                    {reportData.averageAqi?.toFixed(1) || 'N/A'}
+                  </div>
+                  <p className="text-xs text-secondary/70 font-medium">
+                    ⚡ Air Quality Index
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card hover-lift border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 glow-accent">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-accent-glow">⚠️ Alert Count</CardTitle>
+                  <div className="p-2 rounded-lg bg-accent/20 animate-pulse-glow">
+                    <AlertTriangle className="h-4 w-4 text-accent" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-accent to-accent-glow bg-clip-text text-transparent">
+                    {reportData.alertCount}
+                  </div>
+                  <p className="text-xs text-accent/70 font-medium">
+                    🚨 Critical Events
+                  </p>
+                </CardContent>
+              </Card>
+
+              <Card className="glass-card hover-lift border-tertiary/20 bg-gradient-to-br from-tertiary/5 to-tertiary/10 glow-tertiary">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                  <CardTitle className="text-sm font-semibold text-tertiary-glow">🔥 Peak Event</CardTitle>
+                  <div className="p-2 rounded-lg bg-tertiary/20 animate-pulse-glow">
+                    <TrendingUp className="h-4 w-4 text-tertiary" />
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <div className="text-3xl font-bold bg-gradient-to-r from-tertiary to-tertiary-glow bg-clip-text text-transparent">
+                    {reportData.peakPollution?.value?.toFixed(1) || 'N/A'}
+                  </div>
+                  <p className="text-xs text-tertiary/70 font-medium">
+                    🎯 {reportData.peakPollution?.unit || 'Peak Value'}
+                  </p>
+                </CardContent>
+              </Card>
+            </div>
+
+            {aiSummary && (
+              <Card className="glass-card hover-lift border-primary/30 shadow-2xl mt-8 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-3 text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                    <div className="p-2 rounded-lg bg-primary/20 glow-primary animate-pulse-glow">
+                      <FileText className="w-5 h-5 text-primary" />
+                    </div>
+                    🤖 AI Executive Summary
+                  </CardTitle>
+                  <CardDescription>
+                    Intelligent analysis of your air quality data
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose max-w-none">
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {aiSummary}
+                    </div>
                   </div>
                 </CardContent>
               </Card>
             )}
           </>
-        ) : (
+        )}
+
+        {/* Classroom Analysis Report */}
+        {classroomsData && classroomsData.length > 0 && (
           <>
-            {/* Single Report Content */}
-            {reportData && !isLoading && (
-              <>
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
-                  <Card className="glass-card hover-lift border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 glow-primary">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-semibold text-primary-glow">📊 Total Readings</CardTitle>
-                      <div className="p-2 rounded-lg bg-primary/20 animate-pulse-glow">
-                        <TrendingUp className="h-4 w-4 text-primary" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                        {reportData.totalReadings.toLocaleString()}
-                      </div>
-                      <p className="text-xs text-primary/70 font-medium">
-                        📅 Collected over {Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))} days
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="glass-card hover-lift border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 glow-secondary">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-semibold text-secondary-glow">🌬️ Average AQI</CardTitle>
-                      <div className="p-2 rounded-lg bg-secondary/20 animate-pulse-glow">
-                        <TrendingUp className="h-4 w-4 text-secondary" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent">
-                        {reportData.averageAqi?.toFixed(1) || 'N/A'}
-                      </div>
-                      <p className="text-xs text-secondary/70 font-medium">
-                        Air Quality Index Score
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="glass-card hover-lift border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-semibold text-warning-glow">⚠️ Peak Pollution</CardTitle>
-                      <div className="p-2 rounded-lg bg-warning/20 animate-pulse-glow">
-                        <AlertTriangle className="h-4 w-4 text-warning" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-warning to-warning-glow bg-clip-text text-transparent">
-                        {reportData.peakPollution?.value?.toFixed(2) || 'N/A'}
-                      </div>
-                      <p className="text-xs text-warning/70 font-medium">
-                        {reportData.peakPollution?.sensorType} ({reportData.peakPollution?.unit})
-                      </p>
-                    </CardContent>
-                  </Card>
-
-                  <Card className="glass-card hover-lift border-danger/20 bg-gradient-to-br from-danger/5 to-danger/10">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                      <CardTitle className="text-sm font-semibold text-danger-glow">🚨 Alerts Generated</CardTitle>
-                      <div className="p-2 rounded-lg bg-danger/20 animate-pulse-glow">
-                        <AlertTriangle className="h-4 w-4 text-danger" />
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="text-3xl font-bold bg-gradient-to-r from-danger to-danger-glow bg-clip-text text-transparent">
-                        {reportData.alertCount}
-                      </div>
-                      <p className="text-xs text-danger/70 font-medium">
-                        Air Quality Violations
-                      </p>
-                    </CardContent>
-                  </Card>
-                </div>
-
-                {/* Activity Insights */}
-                {reportData.activityInsights && (
-                  <ActivityInsights activityInsights={reportData.activityInsights} />
-                )}
-
-                {/* External Comparison */}
-                {reportData.externalComparison && (
-                  <ExternalComparison 
-                    externalComparison={reportData.externalComparison}
-                    indoorPM25={reportData.sensorBreakdown.find(s => s.sensorType === 'pm25')?.average}
-                  />
-                )}
-
-                {/* AI Summary */}
-                {aiSummary && (
-                  <Card className="glass-card hover-lift border-primary/20 shadow-2xl">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <FileText className="w-5 h-5" />
-                        AI-Generated Report Summary
-                      </CardTitle>
-                      <CardDescription>
-                        Intelligent analysis of your air quality data
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="prose max-w-none">
-                        <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                          {aiSummary}
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                )}
-              </>
+            <ClassroomComparison 
+              classrooms={classroomsData}
+              operatingHours={{ start: 8, end: 18 }}
+            />
+            {consolidatedSummary && (
+              <Card className="glass-card hover-lift border-primary/20 shadow-2xl">
+                <CardHeader>
+                  <CardTitle>🎯 Executive Consolidated Analysis</CardTitle>
+                  <CardDescription>
+                    AI-powered insights across all monitored classrooms
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="prose max-w-none">
+                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
+                      {consolidatedSummary}
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
             )}
           </>
         )}

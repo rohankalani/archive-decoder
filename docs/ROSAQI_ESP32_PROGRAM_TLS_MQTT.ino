@@ -2741,8 +2741,52 @@ String createMQTTPayload() {
     doc["humidity"] = aht_humid_disp;
   }
   
-  // Add AQI if calculated
-  if (actual_aqi > 0) doc["aqi"] = actual_aqi;
+  // AQI Information - Overall and Individual Pollutants
+  if (actual_aqi > 0) doc["aqi_overall"] = actual_aqi;
+  if (pm25_actual_aqi > 0) doc["aqi_pm25"] = pm25_actual_aqi;
+  if (pm10_actual_aqi > 0) doc["aqi_pm10"] = pm10_actual_aqi;
+  if (voc_actual_aqi > 0) doc["aqi_voc"] = voc_actual_aqi;
+  if (nox_actual_aqi > 0) doc["aqi_nox"] = nox_actual_aqi;
+  if (hcho_actual_aqi > 0) doc["aqi_hcho"] = hcho_actual_aqi;
+  
+  // Determine and add dominant pollutant
+  String dominantPollutant = "none";
+  uint16_t maxAqi = 0;
+  
+  if (pm25_actual_aqi > maxAqi) {
+    maxAqi = pm25_actual_aqi;
+    dominantPollutant = "pm25";
+  }
+  if (pm10_actual_aqi > maxAqi) {
+    maxAqi = pm10_actual_aqi;
+    dominantPollutant = "pm10";
+  }
+  if (voc_actual_aqi > maxAqi) {
+    maxAqi = voc_actual_aqi;
+    dominantPollutant = "voc";
+  }
+  if (nox_actual_aqi > maxAqi) {
+    maxAqi = nox_actual_aqi;
+    dominantPollutant = "nox";
+  }
+  if (hcho_actual_aqi > maxAqi) {
+    maxAqi = hcho_actual_aqi;
+    dominantPollutant = "hcho";
+  }
+  
+  doc["dominant_pollutant"] = dominantPollutant;
+  doc["dominant_aqi"] = maxAqi;
+  
+  // Air Quality Category based on overall AQI
+  String aqiCategory = "unknown";
+  if (actual_aqi <= 50) aqiCategory = "good";
+  else if (actual_aqi <= 100) aqiCategory = "moderate";
+  else if (actual_aqi <= 150) aqiCategory = "unhealthy_sensitive";
+  else if (actual_aqi <= 200) aqiCategory = "unhealthy";
+  else if (actual_aqi <= 300) aqiCategory = "very_unhealthy";
+  else if (actual_aqi > 300) aqiCategory = "hazardous";
+  
+  doc["aqi_category"] = aqiCategory;
   
   // Add device status information
   doc["wifi_rssi"] = WiFi.RSSI();

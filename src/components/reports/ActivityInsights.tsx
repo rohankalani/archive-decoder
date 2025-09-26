@@ -27,7 +27,13 @@ interface ActivityInsightsProps {
   };
 }
 
-const COLORS = ['hsl(var(--chart-1))', 'hsl(var(--chart-2))', 'hsl(var(--chart-3))', 'hsl(var(--chart-4))'];
+const COLORS = [
+  'hsl(var(--chart-1))', 
+  'hsl(var(--chart-2))', 
+  'hsl(var(--chart-3))', 
+  'hsl(var(--chart-4))',
+  'hsl(var(--chart-5))'
+];
 
 export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
   const formatHour = (hour: number) => {
@@ -62,66 +68,74 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
 
   return (
     <div className="space-y-6">
-      {/* Executive Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card className="bg-gradient-to-br from-blue-50 to-blue-100 dark:from-blue-950 dark:to-blue-900 border-blue-200 dark:border-blue-800">
+      {/* Premium Executive Summary Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <Card className="glass-card hover-lift border-primary/30 bg-gradient-to-br from-primary/10 to-primary/20 glow-primary animate-fade-in">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average CO₂ Level</CardTitle>
-            <Building className="h-4 w-4 text-blue-600" />
+            <CardTitle className="text-sm font-semibold text-primary-glow">💨 Average CO₂ Level</CardTitle>
+            <div className="p-2 rounded-lg bg-primary/20 animate-pulse-glow">
+              <Building className="h-4 w-4 text-primary" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-blue-700 dark:text-blue-300">
+            <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
               {activityInsights.averageCO2.toFixed(0)} ppm
             </div>
-            <div className="flex items-center gap-2 mt-1">
-              <div className={`w-2 h-2 rounded-full ${getCO2Status(activityInsights.averageCO2).color}`} />
-              <p className="text-xs text-muted-foreground">
+            <div className="flex items-center gap-2 mt-2">
+              <div className={`w-3 h-3 rounded-full ${getCO2Status(activityInsights.averageCO2).color} animate-pulse`} />
+              <p className="text-xs text-primary/70 font-medium">
                 {getCO2Status(activityInsights.averageCO2).status}
               </p>
             </div>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-green-50 to-green-100 dark:from-green-950 dark:to-green-900 border-green-200 dark:border-green-800">
+        <Card className="glass-card hover-lift border-secondary/30 bg-gradient-to-br from-secondary/10 to-secondary/20 glow-secondary animate-fade-in">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Space Utilization</CardTitle>
-            <Activity className="h-4 w-4 text-green-600" />
+            <CardTitle className="text-sm font-semibold text-secondary-glow">📊 Space Utilization</CardTitle>
+            <div className="p-2 rounded-lg bg-secondary/20 animate-pulse-glow">
+              <Activity className="h-4 w-4 text-secondary" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-green-700 dark:text-green-300">
+            <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent">
               {activityInsights.spaceUtilization.toFixed(1)}%
             </div>
-            <p className="text-xs text-muted-foreground">
-              Overall space efficiency
+            <p className="text-xs text-secondary/70 font-medium">
+              🎯 Overall space efficiency
             </p>
           </CardContent>
         </Card>
 
-        <Card className="bg-gradient-to-br from-purple-50 to-purple-100 dark:from-purple-950 dark:to-purple-900 border-purple-200 dark:border-purple-800">
+        <Card className="glass-card hover-lift border-tertiary/30 bg-gradient-to-br from-tertiary/10 to-tertiary/20 animate-fade-in">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Peak Activity Time</CardTitle>
-            <TrendingUp className="h-4 w-4 text-purple-600" />
+            <CardTitle className="text-sm font-semibold text-tertiary-glow">⏰ Peak Activity Time</CardTitle>
+            <div className="p-2 rounded-lg bg-tertiary/20 animate-pulse-glow">
+              <TrendingUp className="h-4 w-4 text-tertiary" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-purple-700 dark:text-purple-300">
+            <div className="text-3xl font-bold bg-gradient-to-r from-tertiary to-tertiary-glow bg-clip-text text-transparent">
               {formatHour(activityInsights.peakActivityHours[0]?.hour || 0)}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-tertiary/70 font-medium">
               {activityInsights.peakActivityHours[0]?.activityLevel || 'N/A'}
             </p>
           </CardContent>
         </Card>
 
-        <Card className={`bg-gradient-to-br ${ventilationGrade.bg} border-current`}>
+        <Card className={`glass-card hover-lift border-accent/30 bg-gradient-to-br from-accent/10 to-accent/20 animate-fade-in`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Ventilation Grade</CardTitle>
-            <Gauge className="h-4 w-4" />
+            <CardTitle className="text-sm font-semibold text-accent">🏆 Ventilation Grade</CardTitle>
+            <div className="p-2 rounded-lg bg-accent/20 animate-pulse-glow">
+              <Gauge className="h-4 w-4 text-accent" />
+            </div>
           </CardHeader>
           <CardContent>
-            <div className={`text-2xl font-bold ${ventilationGrade.color}`}>
+            <div className={`text-3xl font-bold bg-gradient-to-r from-accent to-accent-glow bg-clip-text text-transparent`}>
               {ventilationGrade.grade}
             </div>
-            <p className="text-xs text-muted-foreground">
+            <p className="text-xs text-accent/70 font-medium">
               {activityInsights.ventilationEffectiveness.ventilationScore}/100 Score
             </p>
           </CardContent>
@@ -129,15 +143,19 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Peak Activity Hours Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Clock className="w-5 h-5" />
-              Daily Activity Pattern
+        {/* Premium Peak Activity Hours Chart */}
+        <Card className="glass-card hover-lift border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
+          <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-primary/20 glow-primary">
+                <Clock className="w-5 h-5 text-primary" />
+              </div>
+              <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                📈 Daily Activity Intelligence
+              </span>
             </CardTitle>
-            <CardDescription>
-              CO₂ levels and activity intensity throughout the day
+            <CardDescription className="ml-11">
+              CO₂ patterns and activity intensity with predictive insights
             </CardDescription>
           </CardHeader>
           <CardContent>

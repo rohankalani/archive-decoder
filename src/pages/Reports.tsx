@@ -110,22 +110,52 @@ Generated on: ${format(new Date(), 'PPP')}
 
   return (
     <Layout title="AI Reports">
-      <div className="space-y-6">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold">AI Reports</h1>
-          <p className="text-muted-foreground">
-            Generate intelligent air quality reports with AI-powered insights
-          </p>
+      <div className="space-y-8">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 p-8 glass-card animate-fade-in">
+          <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10 animate-gradient animate-gradient-shift"></div>
+          <div className="relative z-10">
+            <div className="flex items-center gap-4 mb-4">
+              <div className="p-3 rounded-2xl bg-primary/20 glow-primary animate-pulse-glow">
+                <FileText className="w-8 h-8 text-primary" />
+              </div>
+              <div>
+                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                  🚀 AI-Powered Reports
+                </h1>
+                <p className="text-lg text-muted-foreground mt-2">
+                  Advanced air quality intelligence with executive insights and predictive analytics
+                </p>
+              </div>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-6">
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <Shield className="w-5 h-5 text-secondary" />
+                <span className="text-sm font-medium">External Air Quality Comparison</span>
+              </div>
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <TrendingUp className="w-5 h-5 text-accent" />
+                <span className="text-sm font-medium">Business Intelligence & ROI</span>
+              </div>
+              <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5 backdrop-blur-sm border border-white/10">
+                <Users className="w-5 h-5 text-tertiary" />
+                <span className="text-sm font-medium">Space Activity Analytics</span>
+              </div>
+            </div>
+          </div>
         </div>
-      </div>
 
-      {/* Filters */}
-      <Card>
-        <CardHeader>
-          <CardTitle>Report Configuration</CardTitle>
-          <CardDescription>
-            Configure your report parameters and generate AI-powered insights
+      {/* Enhanced Filters */}
+      <Card className="glass-card hover-lift border-primary/20 shadow-2xl">
+        <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 rounded-t-lg">
+          <CardTitle className="flex items-center gap-2 text-xl">
+            <div className="p-2 rounded-lg bg-primary/20 glow-primary">
+              <TrendingUp className="w-5 h-5 text-primary" />
+            </div>
+            ⚙️ Report Configuration
+          </CardTitle>
+          <CardDescription className="text-base">
+            Configure your report parameters and generate AI-powered insights with external comparisons
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -260,24 +290,34 @@ Generated on: ${format(new Date(), 'PPP')}
             </div>
           )}
 
-          <div className="flex gap-2">
-            <Button onClick={handleGenerateReport} disabled={isGeneratingReport}>
+          <div className="flex gap-3">
+            <Button 
+              onClick={handleGenerateReport} 
+              disabled={isGeneratingReport}
+              className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-6 py-2 rounded-xl glow-primary hover-lift"
+              size="lg"
+            >
               {isGeneratingReport ? (
                 <>
-                  <LoadingSpinner className="w-4 h-4 mr-2" />
-                  Generating Report...
+                  <LoadingSpinner className="w-5 h-5 mr-2" />
+                  🤖 Generating Intelligence...
                 </>
               ) : (
                 <>
-                  <FileText className="w-4 h-4 mr-2" />
-                  Generate AI Report
+                  <FileText className="w-5 h-5 mr-2" />
+                  🚀 Generate AI Report
                 </>
               )}
             </Button>
             {aiSummary && (
-              <Button variant="outline" onClick={handleDownloadReport}>
-                <Download className="w-4 h-4 mr-2" />
-                Download Report
+              <Button 
+                variant="outline" 
+                onClick={handleDownloadReport}
+                className="border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 px-6 py-2 rounded-xl hover-lift"
+                size="lg"
+              >
+                <Download className="w-5 h-5 mr-2" />
+                📋 Download Report
               </Button>
             )}
           </div>
@@ -285,88 +325,113 @@ Generated on: ${format(new Date(), 'PPP')}
       </Card>
 
       {isLoading && (
-        <Card>
-          <CardContent className="p-8 text-center">
-            <LoadingSpinner className="w-8 h-8 mx-auto mb-4" />
-            <p>Loading report data...</p>
+        <Card className="glass-card border-primary/20">
+          <CardContent className="p-12 text-center">
+            <div className="animate-pulse-glow mb-6">
+              <LoadingSpinner className="w-12 h-12 mx-auto text-primary" />
+            </div>
+            <p className="text-lg font-medium bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+              🔄 Loading premium analytics data...
+            </p>
+            <div className="flex justify-center gap-2 mt-4">
+              <div className="w-2 h-2 bg-primary rounded-full animate-bounce"></div>
+              <div className="w-2 h-2 bg-secondary rounded-full animate-bounce" style={{animationDelay: '0.1s'}}></div>
+              <div className="w-2 h-2 bg-accent rounded-full animate-bounce" style={{animationDelay: '0.2s'}}></div>
+            </div>
           </CardContent>
         </Card>
       )}
 
-      {/* Report Summary */}
+      {/* Premium Report Summary */}
       {reportData && !isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
+          <Card className="glass-card hover-lift border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 glow-primary">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Total Readings</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-primary-glow">📊 Total Readings</CardTitle>
+              <div className="p-2 rounded-lg bg-primary/20 animate-pulse-glow">
+                <TrendingUp className="h-4 w-4 text-primary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{reportData.totalReadings}</div>
-              <p className="text-xs text-muted-foreground">
-                Collected over {Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))} days
+              <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
+                {reportData.totalReadings.toLocaleString()}
+              </div>
+              <p className="text-xs text-primary/70 font-medium">
+                📅 Collected over {Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))} days
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card hover-lift border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 glow-secondary">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Average AQI</CardTitle>
-              <TrendingUp className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-secondary-glow">🌬️ Average AQI</CardTitle>
+              <div className="p-2 rounded-lg bg-secondary/20 animate-pulse-glow">
+                <TrendingUp className="h-4 w-4 text-secondary" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent">
                 {reportData.averageAqi?.toFixed(1) || 'N/A'}
               </div>
-              <p className="text-xs text-muted-foreground">
-                Air Quality Index
+              <p className="text-xs text-secondary/70 font-medium">
+                Air Quality Index Score
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card hover-lift border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Peak Pollution</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-warning-glow">⚠️ Peak Pollution</CardTitle>
+              <div className="p-2 rounded-lg bg-warning/20 animate-pulse-glow">
+                <AlertTriangle className="h-4 w-4 text-warning" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-3xl font-bold bg-gradient-to-r from-warning to-warning-glow bg-clip-text text-transparent">
                 {reportData.peakPollution?.value?.toFixed(2) || 'N/A'}
               </div>
-              <p className="text-xs text-muted-foreground">
+              <p className="text-xs text-warning/70 font-medium">
                 {reportData.peakPollution?.sensorType} ({reportData.peakPollution?.unit})
               </p>
             </CardContent>
           </Card>
 
-          <Card>
+          <Card className="glass-card hover-lift border-danger/20 bg-gradient-to-br from-danger/5 to-danger/10">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">Alerts Generated</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-muted-foreground" />
+              <CardTitle className="text-sm font-semibold text-danger-glow">🚨 Alerts Generated</CardTitle>
+              <div className="p-2 rounded-lg bg-danger/20 animate-pulse-glow">
+                <AlertTriangle className="h-4 w-4 text-danger" />
+              </div>
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{reportData.alertCount}</div>
-              <p className="text-xs text-muted-foreground">
-                Quality threshold breaches
+              <div className="text-3xl font-bold bg-gradient-to-r from-danger to-danger-glow bg-clip-text text-transparent">
+                {reportData.alertCount}
+              </div>
+              <p className="text-xs text-danger/70 font-medium">
+                🎯 Quality threshold breaches
               </p>
             </CardContent>
           </Card>
         </div>
       )}
 
-      {/* External Air Quality Comparison */}
+      {/* Premium External Air Quality Comparison */}
       {reportData?.externalComparison && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Shield className="w-5 h-5" />
-              🌍 Air Quality Advantage Analysis
+        <Card className="glass-card hover-lift border-secondary/30 bg-gradient-to-br from-secondary/5 via-accent/5 to-tertiary/5 shadow-2xl animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-secondary/10 via-accent/10 to-tertiary/10 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-3 rounded-xl bg-secondary/20 glow-secondary animate-float">
+                <Shield className="w-6 h-6 text-secondary" />
+              </div>
+              <span className="bg-gradient-to-r from-secondary via-accent to-tertiary bg-clip-text text-transparent">
+                🌍 Air Quality Advantage Intelligence
+              </span>
             </CardTitle>
-            <CardDescription>
-              Real-time comparison with Abu Dhabi outdoor conditions and business value quantification
+            <CardDescription className="text-base ml-12">
+              Real-time Abu Dhabi comparison with executive-level ROI analysis and competitive positioning
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <ExternalComparison 
               externalComparison={reportData.externalComparison}
               indoorPM25={reportData.sensorBreakdown.find(s => s.sensorType === 'pm25')?.average}
@@ -375,19 +440,23 @@ Generated on: ${format(new Date(), 'PPP')}
         </Card>
       )}
 
-      {/* Activity Intelligence */}
+      {/* Premium Activity Intelligence */}
       {reportData?.activityInsights && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Users className="w-5 h-5" />
-              🏫 Space Activity & Intelligence Analysis
+        <Card className="glass-card hover-lift border-tertiary/30 bg-gradient-to-br from-tertiary/5 via-primary/5 to-accent/5 shadow-2xl animate-fade-in">
+          <CardHeader className="bg-gradient-to-r from-tertiary/10 via-primary/10 to-accent/10 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3 text-2xl">
+              <div className="p-3 rounded-xl bg-tertiary/20 glow-primary animate-float">
+                <Users className="w-6 h-6 text-tertiary" />
+              </div>
+              <span className="bg-gradient-to-r from-tertiary via-primary to-accent bg-clip-text text-transparent">
+                🏫 Space Intelligence & Activity Analytics
+              </span>
             </CardTitle>
-            <CardDescription>
-              Advanced CO₂-based activity patterns, ventilation effectiveness, and space optimization insights
+            <CardDescription className="text-base ml-12">
+              Advanced CO₂-based activity patterns, HVAC performance scoring, and strategic space optimization
             </CardDescription>
           </CardHeader>
-          <CardContent>
+          <CardContent className="p-6">
             <ActivityInsights activityInsights={reportData.activityInsights} />
           </CardContent>
         </Card>

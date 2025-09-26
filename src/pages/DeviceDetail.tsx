@@ -483,9 +483,10 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="temperature" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="humidity" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="co2" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
+                      <Legend />
+                      <Bar dataKey="temperature" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Temperature (°C)" />
+                      <Bar dataKey="humidity" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="Humidity (%)" />
+                      <Bar dataKey="co2" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="CO₂ (ppm)" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -504,9 +505,10 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="voc" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="hcho" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="nox" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
+                      <Legend />
+                      <Bar dataKey="voc" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} name="VOC (index)" />
+                      <Bar dataKey="hcho" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="HCHO (ppb)" />
+                      <Bar dataKey="nox" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="NOx (index)" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -525,11 +527,12 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="pm03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pm1" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pm25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pm5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pm10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Legend />
+                      <Bar dataKey="pm03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="PM0.3 (μg/m³)" />
+                      <Bar dataKey="pm1" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} name="PM1 (μg/m³)" />
+                      <Bar dataKey="pm25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="PM2.5 (μg/m³)" />
+                      <Bar dataKey="pm5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="PM5 (μg/m³)" />
+                      <Bar dataKey="pm10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="PM10 (μg/m³)" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -548,12 +551,13 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Bar dataKey="pc03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pc05" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pc1" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pc25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pc5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} />
-                      <Bar dataKey="pc10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                      <Legend />
+                      <Bar dataKey="pc03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="PC0.3 (#/m³)" />
+                      <Bar dataKey="pc05" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} name="PC0.5 (#/m³)" />
+                      <Bar dataKey="pc1" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="PC1 (#/m³)" />
+                      <Bar dataKey="pc25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="PC2.5 (#/m³)" />
+                      <Bar dataKey="pc5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="PC5 (#/m³)" />
+                      <Bar dataKey="pc10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="PC10 (#/m³)" />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

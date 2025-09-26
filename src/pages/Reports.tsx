@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -28,7 +28,7 @@ export default function Reports() {
   const { sites, buildings } = useLocations();
 
   // Calculate date range based on selected period
-  const getDateRange = (): DateRange => {
+  const dateRange = useMemo((): DateRange => {
     if (selectedPeriod === 'custom' && customDateRange) {
       return customDateRange;
     }
@@ -54,9 +54,8 @@ export default function Reports() {
     }
 
     return { from, to };
-  };
+  }, [selectedPeriod, customDateRange]);
 
-  const dateRange = getDateRange();
   const { reportData, aiSummary, isLoading, isGeneratingReport, generateReport } = useReportData({
     dateRange,
     deviceId: selectedDevice === 'all' ? undefined : selectedDevice,

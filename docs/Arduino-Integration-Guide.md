@@ -10,23 +10,28 @@ This guide shows how to integrate Arduino devices with the lightweight but stabl
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include <BlynkSimpleEsp32.h>
+#include <time.h>
+#include <FS.h>
+#include <SPIFFS.h>
+#include <WiFiClientSecure.h>
 
 // WiFi and Blynk credentials
 const char* ssid = "YOUR_WIFI_SSID";
 const char* password = "YOUR_WIFI_PASSWORD";
 char auth[] = "YOUR_BLYNK_TOKEN";
 
-// MQTT Configuration
-const char* mqtt_server = "your-hivemq-broker.com";
-const int mqtt_port = 1883;
-const char* mqtt_user = "your_mqtt_username";
-const char* mqtt_password = "your_mqtt_password";
+// MQTT Configuration (TLS)
+const char* mqtt_server = "your-cluster.hivemq.cloud"; // Your HiveMQ Cloud URL
+const int mqtt_port = 8883; // TLS port
+const char* mqtt_user = "YOUR_MQTT_USERNAME"; // From HiveMQ Cloud
+const char* mqtt_password = "YOUR_MQTT_PASSWORD"; // From HiveMQ Cloud
 
 // Device Configuration
 const char* device_id = "ULTRA-ENG-001"; // Unique for each device
 const int SENSOR_INTERVAL = 30000; // 30 seconds
 
-WiFiClient espClient;
+// TLS MQTT Client
+WiFiClientSecure espClient;
 PubSubClient client(espClient);
 
 // Sensor pins (adjust based on your hardware)
@@ -47,10 +52,14 @@ void setup() {
   // Connect to WiFi
   connectWiFi();
   
+  // Set time for TLS certificates
+  setDateTime();
+  
   // Initialize Blynk
   Blynk.begin(auth, ssid, password);
   
-  // Setup MQTT
+  // Setup TLS MQTT
+  espClient.setInsecure(); // For simplified TLS (not recommended for production)
   client.setServer(mqtt_server, mqtt_port);
   connectMQTT();
 }
@@ -92,6 +101,24 @@ void connectWiFi() {
   Serial.println();
   Serial.print("Connected! IP: ");
   Serial.println(WiFi.localIP());
+}
+
+void setDateTime() {
+  // Configure time for TLS certificate validation
+  configTime(0, 0, "pool.ntp.org", "time.nist.gov");
+  
+  Serial.print("Waiting for NTP time sync: ");
+  time_t now = time(nullptr);
+  while (now < 8 * 3600 * 2) {
+    delay(100);
+    Serial.print(".");
+    now = time(nullptr);
+  }
+  Serial.println();
+  
+  struct tm timeinfo;
+  gmtime_r(&now, &timeinfo);
+  Serial.printf("Current time: %s", asctime(&timeinfo));
 }
 
 void connectMQTT() {

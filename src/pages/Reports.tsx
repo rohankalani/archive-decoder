@@ -12,6 +12,7 @@ import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useDevices } from '@/hooks/useDevices';
 import { useLocations } from '@/hooks/useLocations';
 import { Layout } from '@/components/Layout';
+import { useUnifiedMockData } from '@/contexts/UnifiedMockDataContext';
 
 interface DateRange {
   from: Date;
@@ -27,6 +28,7 @@ export default function Reports() {
 
   const { devices } = useDevices();
   const { sites, buildings } = useLocations();
+  const { isUsingMockData, reports: mockReports } = useUnifiedMockData();
 
   // Calculate date range based on selected period
   const dateRange = useMemo((): DateRange => {
@@ -348,6 +350,87 @@ Generated on: ${format(new Date(), 'PPP')}
             </CardContent>
           </Card>
         </div>
+      )}
+
+      {/* Mock Reports Section */}
+      {isUsingMockData && mockReports.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <FileText className="w-5 h-5" />
+              Pre-Generated University Reports
+            </CardTitle>
+            <CardDescription>
+              Abu Dhabi University air quality reports with realistic data
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4">
+              {mockReports.map((report) => (
+                <div key={report.id} className="border rounded-lg p-4 hover:bg-muted/50 transition-colors">
+                  <div className="flex items-start justify-between mb-3">
+                    <div>
+                      <h3 className="font-semibold text-lg">{report.title}</h3>
+                      <p className="text-sm text-muted-foreground">{report.description}</p>
+                      <p className="text-sm text-muted-foreground mt-1">
+                        {format(report.period.start, 'MMM d')} - {format(report.period.end, 'MMM d, yyyy')}
+                      </p>
+                    </div>
+                    <Button variant="outline" size="sm">
+                      <Download className="w-4 h-4 mr-2" />
+                      Download
+                    </Button>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-primary">{report.averageAQI}</div>
+                      <div className="text-xs text-muted-foreground">Avg AQI</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-warning">{report.alertsGenerated}</div>
+                      <div className="text-xs text-muted-foreground">Alerts</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-success">{report.deviceCount}</div>
+                      <div className="text-xs text-muted-foreground">Devices</div>
+                    </div>
+                    <div className="text-center">
+                      <div className="text-xl font-bold text-accent-foreground">{report.totalReadings.toLocaleString()}</div>
+                      <div className="text-xs text-muted-foreground">Readings</div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <h4 className="font-medium text-sm">Top Issues</h4>
+                    <div className="flex flex-wrap gap-2">
+                      {report.topIssues.slice(0, 3).map((issue, idx) => (
+                        <div key={idx} className="flex items-center gap-1 text-xs bg-muted rounded-full px-3 py-1">
+                          <AlertTriangle className="w-3 h-3" />
+                          {issue.type} ({issue.count})
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  {report.recommendations.length > 0 && (
+                    <div className="mt-3 space-y-1">
+                      <h4 className="font-medium text-sm">Key Recommendations</h4>
+                      <ul className="text-sm text-muted-foreground space-y-1">
+                        {report.recommendations.slice(0, 2).map((rec, idx) => (
+                          <li key={idx} className="flex items-start gap-2">
+                            <div className="w-1 h-1 bg-primary rounded-full mt-2 flex-shrink-0"></div>
+                            {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       )}
 
       {/* AI Summary */}

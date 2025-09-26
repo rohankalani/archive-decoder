@@ -139,32 +139,48 @@ export function DeviceDetail() {
       };
     });
 
-    // Key pollutants summary data (current values)
-    const latestData = historicalData[historicalData.length - 1] || {} as any;
+    // Key pollutants summary data - use AVERAGE AQI sub-indices for the selected time period
+    const avgAqiData = processedData.reduce((acc, item) => {
+      acc.pm25Aqi += item.pm25Aqi;
+      acc.pm10Aqi += item.pm10Aqi;
+      acc.hchoAqi += item.hchoAqi;
+      acc.vocAqi += item.vocAqi;
+      acc.noxAqi += item.noxAqi;
+      acc.count++;
+      return acc;
+    }, { pm25Aqi: 0, pm10Aqi: 0, hchoAqi: 0, vocAqi: 0, noxAqi: 0, count: 0 });
+
+    const dataCount = avgAqiData.count || 1;
     const barData = [
       {
         name: 'PM2.5',
-        value: latestData.pm25 || deviceSensorData.pm25 || 0,
-        unit: 'μg/m³',
-        aqi: (latestData.pm25 || deviceSensorData.pm25) ? calculatePM25Aqi(latestData.pm25 || deviceSensorData.pm25 || 0) : 0
+        value: Math.round(avgAqiData.pm25Aqi / dataCount),
+        unit: 'AQI',
+        aqi: Math.round(avgAqiData.pm25Aqi / dataCount)
       },
       {
         name: 'PM10',
-        value: latestData.pm10 || deviceSensorData.pm10 || 0,
-        unit: 'μg/m³',
-        aqi: (latestData.pm10 || deviceSensorData.pm10) ? calculatePM10Aqi(latestData.pm10 || deviceSensorData.pm10 || 0) : 0
+        value: Math.round(avgAqiData.pm10Aqi / dataCount),
+        unit: 'AQI',
+        aqi: Math.round(avgAqiData.pm10Aqi / dataCount)
       },
       {
         name: 'HCHO',
-        value: latestData.hcho || deviceSensorData.hcho || 0,
-        unit: 'ppb',
-        aqi: (latestData.hcho || deviceSensorData.hcho) ? calculateHCHOAqi(latestData.hcho || deviceSensorData.hcho || 0) : 0
+        value: Math.round(avgAqiData.hchoAqi / dataCount),
+        unit: 'AQI',
+        aqi: Math.round(avgAqiData.hchoAqi / dataCount)
       },
       {
         name: 'VOC',
-        value: latestData.voc || deviceSensorData.voc || 0,
-        unit: 'index',
-        aqi: (latestData.voc || deviceSensorData.voc) ? calculateVOCAqi(latestData.voc || deviceSensorData.voc || 0) : 0
+        value: Math.round(avgAqiData.vocAqi / dataCount),
+        unit: 'AQI',
+        aqi: Math.round(avgAqiData.vocAqi / dataCount)
+      },
+      {
+        name: 'NOx',
+        value: Math.round(avgAqiData.noxAqi / dataCount),
+        unit: 'AQI',
+        aqi: Math.round(avgAqiData.noxAqi / dataCount)
       }
     ];
 
@@ -454,10 +470,10 @@ export function DeviceDetail() {
             </div>
           </div>
 
-          {/* Key Pollutants Bar Chart */}
+          {/* Key Pollutants Bar Chart - Average AQI for selected time period */}
           <Card>
             <CardHeader>
-              <CardTitle>Key Pollutants</CardTitle>
+              <CardTitle>Key Pollutants - Average AQI ({timePeriod})</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64">

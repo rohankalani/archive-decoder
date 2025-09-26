@@ -39,7 +39,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
   return (
     <div className="min-h-screen bg-background">
       {/* Top Navigation Bar */}
-      <header className="sticky top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
+      <header className="fixed top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-16 items-center justify-between">
           {/* Left side */}
           <div className="flex items-center gap-4">
@@ -168,7 +168,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
       </header>
 
       {/* Main Content */}
-      <main className="container py-6">
+      <main className="container py-6 pt-20">
         {children}
       </main>
     </div>

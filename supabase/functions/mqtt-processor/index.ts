@@ -8,13 +8,21 @@ const corsHeaders = {
 
 interface SensorData {
   device_id: string;
-  pm25?: number;
+  pm03?: number;
+  pm05?: number;
+  pm1?: number;
+  pm5?: number;
   pm10?: number;
   co2?: number;
   temperature?: number;
   humidity?: number;
   voc?: number;
   no2?: number;
+  pc03?: number;
+  pc05?: number;
+  pc1?: number;
+  pc25?: number;
+  pc5?: number;
   timestamp: string;
   [key: string]: any;
 }
@@ -35,15 +43,23 @@ serve(async (req) => {
 
     // Batch insert sensor readings for better performance
     const readings = [];
-    const sensorTypes = ['pm25', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'no2'];
+    const sensorTypes = ['pm03', 'pm05', 'pm1', 'pm5', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'no2', 'pc03', 'pc05', 'pc1', 'pc25', 'pc5'];
     const units: Record<string, string> = {
-      pm25: 'µg/m³',
+      pm03: 'µg/m³',
+      pm05: 'µg/m³',
+      pm1: 'µg/m³',
+      pm5: 'µg/m³',
       pm10: 'µg/m³', 
       co2: 'ppm',
       temperature: '°C',
       humidity: '%',
       voc: 'ppb',
-      no2: 'µg/m³'
+      no2: 'µg/m³',
+      pc03: 'particles/cm³',
+      pc05: 'particles/cm³',
+      pc1: 'particles/cm³',
+      pc25: 'particles/cm³',
+      pc5: 'particles/cm³'
     };
 
     for (const type of sensorTypes) {
@@ -112,17 +128,17 @@ async function checkForAlerts(supabase: any, sensorData: SensorData) {
 
   const alerts = [];
   
-  // Check PM2.5 levels
-  if (sensorData.pm25) {
-    const pm25Threshold = thresholds.find((t: any) => t.sensor_type === 'pm25');
-    if (pm25Threshold && sensorData.pm25 > pm25Threshold.unhealthy_max) {
+  // Check PM10 levels
+  if (sensorData.pm10) {
+    const pm10Threshold = thresholds.find((t: any) => t.sensor_type === 'pm10');
+    if (pm10Threshold && sensorData.pm10 > pm10Threshold.unhealthy_max) {
       alerts.push({
         device_id: sensorData.device_id,
-        sensor_type: 'pm25',
-        value: sensorData.pm25,
-        threshold_value: pm25Threshold.unhealthy_max,
-        severity: sensorData.pm25 > pm25Threshold.hazardous_min ? 'critical' : 'high',
-        message: `PM2.5 level (${sensorData.pm25} µg/m³) exceeds safe threshold`
+        sensor_type: 'pm10',
+        value: sensorData.pm10,
+        threshold_value: pm10Threshold.unhealthy_max,
+        severity: sensorData.pm10 > pm10Threshold.hazardous_min ? 'critical' : 'high',
+        message: `PM10 level (${sensorData.pm10} µg/m³) exceeds safe threshold`
       });
     }
   }

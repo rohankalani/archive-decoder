@@ -49,7 +49,7 @@ export interface ProcessedChartData {
   pc10: number;
 }
 
-// Arduino AQI Breakpoints from ROSAIQ device
+// ROSAIQ Arduino AQI Breakpoints - Exact values from firmware
 const AQI_RANGES = {
   R1: { low: 0, high: 50 },
   R2: { low: 51, high: 100 },
@@ -60,49 +60,59 @@ const AQI_RANGES = {
 };
 
 const PM25_RANGES = {
-  R1: { low: 0, high: 12.0 },
-  R2: { low: 12.1, high: 35.4 },
-  R3: { low: 35.5, high: 55.4 },
-  R4: { low: 55.5, high: 150.4 },
+  R1: { low: 0, high: 50.4 },
+  R2: { low: 50.5, high: 60.4 },
+  R3: { low: 60.5, high: 75.4 },
+  R4: { low: 75.5, high: 150.4 },
   R5: { low: 150.5, high: 250.4 },
-  R6: { low: 250.5, high: 350.4 }
+  R6: { low: 250.5, high: 500.4 }
 };
 
 const PM10_RANGES = {
-  R1: { low: 0, high: 54 },
-  R2: { low: 55, high: 154 },
-  R3: { low: 155, high: 254 },
-  R4: { low: 255, high: 354 },
-  R5: { low: 355, high: 424 },
-  R6: { low: 425, high: 604 }
+  R1: { low: 0, high: 75.0 },
+  R2: { low: 75.1, high: 150.0 },
+  R3: { low: 150.1, high: 250.0 },
+  R4: { low: 250.1, high: 350.0 },
+  R5: { low: 350.1, high: 420.0 },
+  R6: { low: 420.1, high: 600.0 }
 };
 
 const HCHO_RANGES = {
-  R1: { low: 0, high: 30 },
-  R2: { low: 31, high: 50 },
-  R3: { low: 51, high: 100 },
-  R4: { low: 101, high: 200 },
-  R5: { low: 201, high: 300 },
-  R6: { low: 301, high: 500 }
+  R1: { low: 0, high: 30.0 },
+  R2: { low: 30.1, high: 80.0 },
+  R3: { low: 80.1, high: 120.0 },
+  R4: { low: 120.1, high: 200.0 },
+  R5: { low: 200.1, high: 300.0 },
+  R6: { low: 300.1, high: 500.0 }
 };
 
 const VOC_RANGES = {
-  R1: { low: 0, high: 50 },
-  R2: { low: 51, high: 100 },
-  R3: { low: 101, high: 150 },
-  R4: { low: 151, high: 200 },
-  R5: { low: 201, high: 300 },
-  R6: { low: 301, high: 500 }
+  R1: { low: 0, high: 100.0 },
+  R2: { low: 100.1, high: 200.0 },
+  R3: { low: 200.1, high: 300.0 },
+  R4: { low: 300.1, high: 400.0 },
+  R5: { low: 400.1, high: 450.0 },
+  R6: { low: 450.1, high: 500.0 }
 };
 
 const NOX_RANGES = {
-  R1: { low: 0, high: 50 },
-  R2: { low: 51, high: 100 },
-  R3: { low: 101, high: 150 },
-  R4: { low: 151, high: 200 },
-  R5: { low: 201, high: 300 },
-  R6: { low: 301, high: 500 }
+  R1: { low: 0, high: 100.0 },
+  R2: { low: 100.1, high: 200.0 },
+  R3: { low: 200.1, high: 300.0 },
+  R4: { low: 300.1, high: 400.0 },
+  R5: { low: 400.1, high: 450.0 },
+  R6: { low: 450.1, high: 500.0 }
 };
+
+// AQI color function based on ROSAIQ 6-level system
+export function getAqiColor(aqi: number): string {
+  if (aqi <= 50) return 'hsl(120, 100%, 40%)';        // Good - Green
+  if (aqi <= 100) return 'hsl(60, 100%, 50%)';       // Moderate - Yellow
+  if (aqi <= 150) return 'hsl(30, 100%, 50%)';       // Unhealthy for Sensitive - Orange
+  if (aqi <= 200) return 'hsl(0, 100%, 50%)';        // Unhealthy - Red
+  if (aqi <= 300) return 'hsl(300, 100%, 40%)';      // Very Unhealthy - Purple
+  return 'hsl(320, 100%, 25%)';                      // Hazardous - Maroon
+}
 
 // Arduino AQI calculation formula matching device firmware
 function calculateAqi(reading: number, aqiLow: number, aqiHigh: number, bpLow: number, bpHigh: number): number {
@@ -190,11 +200,48 @@ export function generateDeterministicSensorData(
 
   return historicalData.map((item) => {
     const time = new Date(item.timestamp);
-    const timeLabel = time.toLocaleTimeString('en-US', { 
-      hour: '2-digit', 
-      minute: '2-digit',
-      hour12: true 
-    });
+    
+    // Generate appropriate time labels based on period
+    let timeLabel: string;
+    switch (timePeriod) {
+      case '10min':
+        timeLabel = time.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          second: '2-digit',
+          hour12: false 
+        });
+        break;
+      case '1hr':
+        timeLabel = time.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+        break;
+      case '8hr':
+        timeLabel = time.toLocaleDateString('en-US', { 
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          hour12: false
+        });
+        break;
+      case '24hr':
+        timeLabel = time.toLocaleDateString('en-US', { 
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          hour12: false
+        });
+        break;
+      default:
+        timeLabel = time.toLocaleTimeString('en-US', { 
+          hour: '2-digit', 
+          minute: '2-digit',
+          hour12: false 
+        });
+    }
     
     // Use actual data if available, otherwise generate deterministic variations
     const pm25Value = item.pm25 ?? getDeterministicVariation(item.timestamp, basePM25, 0.2);
@@ -213,6 +260,7 @@ export function generateDeterministicSensorData(
     const vocAqi = calculateVOCAqi(vocValue);
     const noxAqi = calculateNOxAqi(noxValue);
     
+    // Arduino MAX_AQI implementation - highest individual pollutant AQI
     const overallAqi = Math.max(pm25Aqi, pm10Aqi, hchoAqi, vocAqi, noxAqi);
 
     // Generate particle data deterministically

@@ -15,7 +15,8 @@ import {
   calculatePM10Aqi,
   calculateVOCAqi,
   calculateHCHOAqi,
-  calculateNOxAqi
+  calculateNOxAqi,
+  getAqiColor
 } from '@/utils/chartDataUtils';
 import { 
   ArrowLeft,
@@ -55,9 +56,7 @@ export function DeviceDetail() {
   };
 
   const getBarColor = (aqi: number) => {
-    if (aqi <= 50) return 'hsl(var(--success))';
-    if (aqi <= 100) return 'hsl(var(--warning))';
-    return 'hsl(var(--destructive))';
+    return getAqiColor(aqi);
   };
 
   // Additional AQI calculation functions for missing parameters

@@ -229,41 +229,46 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
           </CardContent>
         </Card>
 
-        {/* Ventilation Performance */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Gauge className="w-5 h-5" />
-              Ventilation Effectiveness
+        {/* Premium Ventilation Performance */}
+        <Card className="glass-card hover-lift border-accent/20 bg-gradient-to-br from-accent/5 to-tertiary/5">
+          <CardHeader className="bg-gradient-to-r from-accent/10 to-tertiary/10 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/20 glow-accent">
+                <Gauge className="w-5 h-5 text-accent" />
+              </div>
+              <span className="bg-gradient-to-r from-accent to-tertiary bg-clip-text text-transparent">
+                🏆 HVAC Performance Intelligence
+              </span>
             </CardTitle>
-            <CardDescription>
-              HVAC system performance metrics and recovery analysis
+            <CardDescription className="ml-11">
+              Advanced ventilation system metrics and efficiency scoring
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="text-center p-4 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold text-primary">
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              <div className="text-center p-6 rounded-xl glass-card border-primary/20 bg-gradient-to-br from-primary/10 to-primary/20 hover-lift">
+                <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent mb-2">
                   {activityInsights.ventilationEffectiveness.recoveryTimeMinutes}
                 </div>
-                <div className="text-sm text-muted-foreground">Minutes Recovery Time</div>
+                <div className="text-sm font-medium text-primary/70">⏱️ Minutes Recovery Time</div>
               </div>
-              <div className="text-center p-4 rounded-lg bg-muted/50">
-                <div className="text-2xl font-bold text-destructive">
+              <div className="text-center p-6 rounded-xl glass-card border-danger/20 bg-gradient-to-br from-danger/10 to-danger/20 hover-lift">
+                <div className="text-3xl font-bold bg-gradient-to-r from-danger to-danger-glow bg-clip-text text-transparent mb-2">
                   {activityInsights.ventilationEffectiveness.maxCO2Reached.toFixed(0)}
                 </div>
-                <div className="text-sm text-muted-foreground">Peak CO₂ (ppm)</div>
+                <div className="text-sm font-medium text-danger/70">🔺 Peak CO₂ (ppm)</div>
               </div>
             </div>
-            <div className="p-4 rounded-lg bg-gradient-to-r from-green-50 to-blue-50 dark:from-green-950 dark:to-blue-950 border">
-              <div className="flex items-center justify-between">
-                <span className="font-medium">Overall Performance</span>
-                <Badge variant="secondary" className={`${ventilationGrade.color} font-bold`}>
+            
+            <div className="p-6 rounded-xl glass-card border-accent/20 bg-gradient-to-r from-accent/10 via-primary/10 to-secondary/10 hover-lift">
+              <div className="flex items-center justify-between mb-3">
+                <span className="font-semibold text-lg text-foreground">🏆 Overall Performance</span>
+                <div className="px-4 py-2 rounded-xl bg-gradient-to-r from-accent to-accent-glow text-accent-foreground font-bold text-lg shadow-lg glow-accent">
                   Grade {ventilationGrade.grade}
-                </Badge>
+                </div>
               </div>
-              <div className="text-sm text-muted-foreground mt-1">
-                Based on CO₂ management and recovery patterns
+              <div className="text-sm text-muted-foreground leading-relaxed">
+                Based on CO₂ management and recovery patterns - showing excellent ventilation system performance
               </div>
             </div>
           </CardContent>

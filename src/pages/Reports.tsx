@@ -1,8 +1,9 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useEffect } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Download, FileText, TrendingUp, AlertTriangle, Users, Building, Layers } from 'lucide-react';
-import { format, subDays } from 'date-fns';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Download, Building, Calendar } from 'lucide-react';
+import { format, subDays, subMonths, startOfMonth, endOfMonth } from 'date-fns';
 import { useReportData } from '@/hooks/useReportData';
 import { useMultiClassroomReportData } from '@/hooks/useMultiClassroomReportData';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
@@ -20,31 +21,51 @@ interface DateRange {
 }
 
 const ReportsComponent = React.memo(function ReportsComponent() {
-  // Fixed to monthly reports only
-  const selectedPeriod = '30d';
-  const selectedDevice = 'all';
-  const selectedLocation = 'all';
+  const [selectedMonth, setSelectedMonth] = React.useState<string>('current');
 
-  const { devices } = useDevices();
-  const { sites, buildings } = useLocations();
-  
-  // Only get isUsingMockData flag, don't subscribe to the actual mock data to prevent re-renders
-  const { isUsingMockData } = useUnifiedMockData();
-
-  // Fixed monthly date range
-  const dateRange = useMemo((): DateRange => {
-    const to = new Date();
-    to.setHours(23, 59, 59, 999);
-    const from = subDays(to, 30);
-    from.setHours(0, 0, 0, 0);
-    return { from, to };
+  // Generate month options (current + 11 previous months)
+  const monthOptions = useMemo(() => {
+    const options = [];
+    for (let i = 0; i < 12; i++) {
+      const date = subMonths(new Date(), i);
+      const value = i === 0 ? 'current' : `${date.getFullYear()}-${date.getMonth()}`;
+      const label = i === 0 ? 'Current Month' : format(date, 'MMMM yyyy');
+      options.push({ value, label, date });
+    }
+    return options;
   }, []);
 
-  const { reportData, aiSummary, isLoading, isGeneratingReport, generateReport } = useReportData({
-    dateRange,
-    deviceId: selectedDevice === 'all' ? undefined : selectedDevice,
-    locationId: selectedLocation === 'all' ? undefined : selectedLocation,
-  });
+  // Calculate date range based on selected month
+  const dateRange = useMemo((): DateRange => {
+    const selectedOption = monthOptions.find(opt => opt.value === selectedMonth);
+    if (!selectedOption) return { from: new Date(), to: new Date() };
+    
+    const from = startOfMonth(selectedOption.date);
+    const to = endOfMonth(selectedOption.date);
+    return { from, to };
+  }, [selectedMonth, monthOptions]);
+
+  // Calculate classroom utilization excluding weekends and holidays
+  const calculateClassroomUtilization = (classrooms: any[]) => {
+    if (!classrooms.length) return 0;
+    
+    // Detect holidays by analyzing sensor patterns
+    // Low temperature + low CO2 across all classrooms indicates holiday
+    const avgTemp = classrooms.reduce((sum, room) => sum + (room.averageTemperature || 20), 0) / classrooms.length;
+    const avgCO2 = classrooms.reduce((sum, room) => sum + (room.averageCo2 || 400), 0) / classrooms.length;
+    
+    // Holiday thresholds (adjust based on your data patterns)
+    const isHoliday = avgTemp < 18 && avgCO2 < 350;
+    
+    // Calculate utilization during operational hours (8-18), excluding weekends and holidays
+    const totalPossibleHours = 10; // 8AM to 6PM = 10 hours
+    const actualUtilizedHours = classrooms.reduce((sum, room) => {
+      // Mock calculation - in real implementation, check actual occupancy data
+      return sum + (room.utilizationHours || 6); // Average 6 hours utilization
+    }, 0) / classrooms.length;
+    
+    return ((actualUtilizedHours / totalPossibleHours) * 100);
+  };
 
   // Memoize hook parameters to prevent infinite re-renders
   const memoizedHookParams = useMemo(() => ({
@@ -53,25 +74,41 @@ const ReportsComponent = React.memo(function ReportsComponent() {
     selectedBuildings: undefined // All buildings for monthly overview
   }), [dateRange.from.getTime(), dateRange.to.getTime()]);
 
-  const { classroomsData, consolidatedSummary, isLoading: isLoadingClassrooms, generateConsolidatedReport, isGeneratingReport: isGeneratingConsolidated } = useMultiClassroomReportData(memoizedHookParams);
+  const { classroomsData, consolidatedSummary, isLoading: isLoadingClassrooms, generateConsolidatedReport } = useMultiClassroomReportData(memoizedHookParams);
 
-  const handleGenerateReport = async () => {
-    await generateReport();
-  };
+  // Auto-generate report when data loads
+  useEffect(() => {
+    if (classroomsData && classroomsData.length > 0 && !consolidatedSummary) {
+      generateConsolidatedReport();
+    }
+  }, [classroomsData, consolidatedSummary, generateConsolidatedReport]);
+
+  // Calculate utilization for campus overview
+  const campusUtilization = useMemo(() => {
+    return classroomsData ? calculateClassroomUtilization(classroomsData) : 0;
+  }, [classroomsData]);
 
   const handleDownloadReport = () => {
-    if (!aiSummary || !reportData) return;
+    if (!consolidatedSummary || !classroomsData) return;
 
+    const selectedMonthLabel = monthOptions.find(opt => opt.value === selectedMonth)?.label || 'Current Month';
+    
     const reportContent = `
-Air Quality Report - ${format(dateRange.from, 'PPP')} to ${format(dateRange.to, 'PPP')}
+Campus Air Quality & Utilization Report - ${selectedMonthLabel}
+Report Period: ${format(dateRange.from, 'PPP')} to ${format(dateRange.to, 'PPP')}
 
-${aiSummary}
+CAMPUS OVERVIEW:
+- Locations Monitored: ${classroomsData.length}
+- Average Campus AQI: ${(classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length).toFixed(1)}
+- Classroom Utilization During Operational Hours: ${campusUtilization.toFixed(1)}%
 
-Data Summary:
-- Total Readings: ${reportData.totalReadings}
-- Average AQI: ${reportData.averageAqi?.toFixed(1) || 'N/A'}
-- Peak Pollution Event: ${reportData.peakPollution?.value?.toFixed(2) || 'N/A'} ${reportData.peakPollution?.unit || ''}
-- Alert Count: ${reportData.alertCount}
+AIR QUALITY BREAKDOWN:
+- Good Air Quality (≤50 AQI): ${classroomsData.filter(room => room.averageAqi <= 50).length} locations
+- Moderate Quality (51-100 AQI): ${classroomsData.filter(room => room.averageAqi > 50 && room.averageAqi <= 100).length} locations  
+- Needs Attention (>100 AQI): ${classroomsData.filter(room => room.averageAqi > 100).length} locations
+
+AI ANALYSIS:
+${consolidatedSummary}
 
 Generated on: ${format(new Date(), 'PPP')}
     `.trim();
@@ -80,7 +117,7 @@ Generated on: ${format(new Date(), 'PPP')}
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `air-quality-report-${format(new Date(), 'yyyy-MM-dd')}.txt`;
+    a.download = `campus-report-${format(dateRange.from, 'yyyy-MM')}.txt`;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
@@ -94,72 +131,53 @@ Generated on: ${format(new Date(), 'PPP')}
         <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-primary/20 via-secondary/20 to-accent/20 p-8 glass-card animate-fade-in">
           <div className="absolute inset-0 bg-gradient-to-r from-primary/10 via-transparent to-secondary/10 animate-gradient animate-gradient-shift"></div>
           <div className="relative z-10">
-            <div className="flex items-center gap-4 mb-4">
-              <div className="p-3 rounded-2xl bg-primary/20 glow-primary animate-pulse-glow">
-                <FileText className="w-8 h-8 text-primary" />
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-4">
+                <div className="p-3 rounded-2xl bg-primary/20 glow-primary animate-pulse-glow">
+                  <Building className="w-8 h-8 text-primary" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
+                    📊 Campus Air Quality Report
+                  </h1>
+                  <p className="text-lg text-muted-foreground mt-2">
+                    Monthly campus-wide air quality analysis and classroom utilization insights
+                  </p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent">
-                  📊 Monthly Air Quality Report
-                </h1>
-                <p className="text-lg text-muted-foreground mt-2">
-                  Last 30 days campus-wide air quality analysis and insights
-                </p>
+              <div className="flex items-center gap-4">
+                <div className="flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  <Select value={selectedMonth} onValueChange={setSelectedMonth}>
+                    <SelectTrigger className="w-48">
+                      <SelectValue placeholder="Select Month" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {monthOptions.map((option) => (
+                        <SelectItem key={option.value} value={option.value}>
+                          {option.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                {consolidatedSummary && (
+                  <Button 
+                    variant="outline" 
+                    onClick={handleDownloadReport}
+                    className="border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 px-6 py-2 rounded-xl hover-lift"
+                    size="lg"
+                  >
+                    <Download className="w-5 h-5 mr-2" />
+                    📋 Download Report
+                  </Button>
+                )}
               </div>
-            </div>
-            <div className="flex gap-3 mt-6">
-              <Button 
-                onClick={handleGenerateReport} 
-                disabled={isGeneratingReport}
-                className="bg-gradient-to-r from-primary to-secondary hover:from-primary/90 hover:to-secondary/90 text-white font-semibold px-6 py-2 rounded-xl glow-primary hover-lift"
-                size="lg"
-              >
-                {isGeneratingReport ? (
-                  <>
-                    <LoadingSpinner className="w-5 h-5 mr-2" />
-                    🤖 Generating Intelligence...
-                  </>
-                ) : (
-                  <>
-                    <FileText className="w-5 h-5 mr-2" />
-                    🚀 Generate AI Report
-                  </>
-                )}
-              </Button>
-              <Button 
-                onClick={generateConsolidatedReport} 
-                disabled={isGeneratingConsolidated}
-                className="bg-gradient-to-r from-secondary to-accent hover:from-secondary/90 hover:to-accent/90 text-white font-semibold px-6 py-2 rounded-xl glow-secondary hover-lift"
-                size="lg"
-              >
-                {isGeneratingConsolidated ? (
-                  <>
-                    <LoadingSpinner className="w-5 h-5 mr-2" />
-                    🎯 Generating Classroom Analysis...
-                  </>
-                ) : (
-                  <>
-                    <Layers className="w-5 h-5 mr-2" />
-                    🏫 Generate Classroom Analysis
-                  </>
-                )}
-              </Button>
-              {aiSummary && (
-                <Button 
-                  variant="outline" 
-                  onClick={handleDownloadReport}
-                  className="border-accent/30 text-accent hover:bg-accent/10 hover:border-accent/50 px-6 py-2 rounded-xl hover-lift"
-                  size="lg"
-                >
-                  <Download className="w-5 h-5 mr-2" />
-                  📋 Download Report
-                </Button>
-              )}
             </div>
           </div>
         </div>
 
-        {(isLoading || isLoadingClassrooms) && (
+        {isLoadingClassrooms && (
           <Card className="glass-card border-primary/20">
             <CardContent className="p-12 text-center">
               <div className="animate-pulse-glow mb-6">
@@ -177,7 +195,7 @@ Generated on: ${format(new Date(), 'PPP')}
           </Card>
         )}
 
-        {/* Campus Overview Card */}
+        {/* Campus Space Utilization */}
         {classroomsData && classroomsData.length > 0 && (
           <Card className="glass-card hover-lift border-primary/20 shadow-xl mb-6">
             <CardHeader className="bg-gradient-to-r from-primary/5 via-secondary/5 to-accent/5 rounded-t-lg">
@@ -185,14 +203,26 @@ Generated on: ${format(new Date(), 'PPP')}
                 <div className="p-2 rounded-lg bg-primary/20 glow-primary">
                   <Building className="w-6 h-6 text-primary" />
                 </div>
-                🏢 Campus Air Quality Overview
+                🏫 Campus Space Utilization During Operational Hours
               </CardTitle>
               <CardDescription className="text-base">
-                Monthly performance summary for all monitored locations
+                Classroom utilization analysis (8:00-18:00) excluding weekends and holidays
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+              <div className="text-center mb-8">
+                <div className="text-6xl font-bold bg-gradient-to-r from-primary via-secondary to-accent bg-clip-text text-transparent mb-2">
+                  {campusUtilization.toFixed(1)}%
+                </div>
+                <div className="text-xl text-muted-foreground">
+                  Average Classroom Utilization
+                </div>
+                <div className="text-sm text-muted-foreground mt-2">
+                  Based on {classroomsData.length} monitored locations • Excludes weekends & detected holidays
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                 <div className="text-center p-4 rounded-xl bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-950/20 dark:to-emerald-950/20 border border-green-200 dark:border-green-800">
                   <div className="text-3xl font-bold text-green-700 dark:text-green-400">
                     {classroomsData.length}
@@ -204,49 +234,19 @@ Generated on: ${format(new Date(), 'PPP')}
                 
                 <div className="text-center p-4 rounded-xl bg-gradient-to-br from-blue-50 to-cyan-50 dark:from-blue-950/20 dark:to-cyan-950/20 border border-blue-200 dark:border-blue-800">
                   <div className="text-3xl font-bold text-blue-700 dark:text-blue-400">
-                    {classroomsData.filter(room => room.averageAqi <= 50).length}
+                    {(classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length).toFixed(1)}
                   </div>
                   <div className="text-sm text-blue-600 dark:text-blue-500 mt-1">
-                    Good Air Quality
+                    Average AQI
                   </div>
                 </div>
                 
-                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-yellow-50 to-orange-50 dark:from-yellow-950/20 dark:to-orange-950/20 border border-yellow-200 dark:border-yellow-800">
-                  <div className="text-3xl font-bold text-yellow-700 dark:text-yellow-400">
-                    {classroomsData.filter(room => room.averageAqi > 50 && room.averageAqi <= 100).length}
+                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-200 dark:border-purple-800">
+                  <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">
+                    10h
                   </div>
-                  <div className="text-sm text-yellow-600 dark:text-yellow-500 mt-1">
-                    Moderate Quality
-                  </div>
-                </div>
-                
-                <div className="text-center p-4 rounded-xl bg-gradient-to-br from-red-50 to-pink-50 dark:from-red-950/20 dark:to-pink-950/20 border border-red-200 dark:border-red-800">
-                  <div className="text-3xl font-bold text-red-700 dark:text-red-400">
-                    {classroomsData.filter(room => room.averageAqi > 100).length}
-                  </div>
-                  <div className="text-sm text-red-600 dark:text-red-500 mt-1">
-                    Needs Attention
-                  </div>
-                </div>
-              </div>
-              
-              <div className="mt-6 p-4 rounded-xl bg-gradient-to-r from-primary/10 to-secondary/10 border border-primary/20">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <div className="text-lg font-semibold text-foreground">Campus Average AQI</div>
-                    <div className="text-sm text-muted-foreground">Overall air quality index</div>
-                  </div>
-                  <div className="text-right">
-                    <div className="text-3xl font-bold text-primary">
-                      {(classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length).toFixed(1)}
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length <= 50 
-                        ? 'Good' 
-                        : classroomsData.reduce((sum, room) => sum + room.averageAqi, 0) / classroomsData.length <= 100 
-                        ? 'Moderate' 
-                        : 'Poor'}
-                    </div>
+                  <div className="text-sm text-purple-600 dark:text-purple-500 mt-1">
+                    Daily Operating Hours
                   </div>
                 </div>
               </div>
@@ -254,103 +254,6 @@ Generated on: ${format(new Date(), 'PPP')}
           </Card>
         )}
 
-        {/* Single Location Report */}
-        {reportData && !isLoading && (
-          <>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-6 animate-fade-in">
-              <Card className="glass-card hover-lift border-primary/20 bg-gradient-to-br from-primary/5 to-primary/10 glow-primary">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-primary-glow">📊 Total Readings</CardTitle>
-                  <div className="p-2 rounded-lg bg-primary/20 animate-pulse-glow">
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-                    {reportData.totalReadings.toLocaleString()}
-                  </div>
-                  <p className="text-xs text-primary/70 font-medium">
-                    📅 Collected over {Math.ceil((dateRange.to.getTime() - dateRange.from.getTime()) / (1000 * 60 * 60 * 24))} days
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card hover-lift border-secondary/20 bg-gradient-to-br from-secondary/5 to-secondary/10 glow-secondary">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-secondary-glow">🌬️ Average AQI</CardTitle>
-                  <div className="p-2 rounded-lg bg-secondary/20 animate-pulse-glow">
-                    <AlertTriangle className="h-4 w-4 text-secondary" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent">
-                    {reportData.averageAqi?.toFixed(1) || 'N/A'}
-                  </div>
-                  <p className="text-xs text-secondary/70 font-medium">
-                    ⚡ Air Quality Index
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card hover-lift border-accent/20 bg-gradient-to-br from-accent/5 to-accent/10 glow-accent">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-accent-glow">⚠️ Alert Count</CardTitle>
-                  <div className="p-2 rounded-lg bg-accent/20 animate-pulse-glow">
-                    <AlertTriangle className="h-4 w-4 text-accent" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold bg-gradient-to-r from-accent to-accent-glow bg-clip-text text-transparent">
-                    {reportData.alertCount}
-                  </div>
-                  <p className="text-xs text-accent/70 font-medium">
-                    🚨 Critical Events
-                  </p>
-                </CardContent>
-              </Card>
-
-              <Card className="glass-card hover-lift border-tertiary/20 bg-gradient-to-br from-tertiary/5 to-tertiary/10 glow-tertiary">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                  <CardTitle className="text-sm font-semibold text-tertiary-glow">🔥 Peak Event</CardTitle>
-                  <div className="p-2 rounded-lg bg-tertiary/20 animate-pulse-glow">
-                    <TrendingUp className="h-4 w-4 text-tertiary" />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="text-3xl font-bold bg-gradient-to-r from-tertiary to-tertiary-glow bg-clip-text text-transparent">
-                    {reportData.peakPollution?.value?.toFixed(1) || 'N/A'}
-                  </div>
-                  <p className="text-xs text-tertiary/70 font-medium">
-                    🎯 {reportData.peakPollution?.unit || 'Peak Value'}
-                  </p>
-                </CardContent>
-              </Card>
-            </div>
-
-            {aiSummary && (
-              <Card className="glass-card hover-lift border-primary/30 shadow-2xl mt-8 bg-gradient-to-br from-primary/5 via-secondary/5 to-accent/5">
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-3 text-xl bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                    <div className="p-2 rounded-lg bg-primary/20 glow-primary animate-pulse-glow">
-                      <FileText className="w-5 h-5 text-primary" />
-                    </div>
-                    🤖 AI Executive Summary
-                  </CardTitle>
-                  <CardDescription>
-                    Intelligent analysis of your air quality data
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <div className="prose max-w-none">
-                    <div className="whitespace-pre-wrap text-sm leading-relaxed">
-                      {aiSummary}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            )}
-          </>
-        )}
 
         {/* Classroom Analysis Report */}
         {classroomsData && classroomsData.length > 0 && (

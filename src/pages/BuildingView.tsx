@@ -10,6 +10,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
 import { useDebounce } from '@/hooks/useDebounce';
 import { BuildingGridSkeleton } from '@/components/ui/skeleton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search,
@@ -123,7 +124,8 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
 
 BuildingCard.displayName = 'BuildingCard';
 
-export function BuildingView() {
+// Main component wrapped with error boundary
+const BuildingViewContent = memo(() => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const navigate = useNavigate();
@@ -142,7 +144,6 @@ export function BuildingView() {
     getFloorLocation
   } = useLocations();
 
-
   // Filter buildings based on selected site (memoized)
   const filteredBuildings = useMemo(() => {
     if (selectedSite === 'all') return buildings;
@@ -152,6 +153,7 @@ export function BuildingView() {
   // Optimized building stats calculation
   const buildingStats = useMemo(() => {
     if (!sensorData.length || !devices.length || !buildings.length) return {};
+
     const stats: Record<string, {
       buildingName: string;
       siteName: string;
@@ -317,5 +319,15 @@ export function BuildingView() {
         )}
       </div>
     </Layout>
+  );
+});
+
+BuildingViewContent.displayName = 'BuildingViewContent';
+
+export function BuildingView() {
+  return (
+    <ErrorBoundary>
+      <BuildingViewContent />
+    </ErrorBoundary>
   );
 }

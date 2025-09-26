@@ -4,11 +4,11 @@ import { logger } from './errors';
 export interface OptimizedSensorReading {
   device_id: string;
   device_name: string;
-  device_status: 'online' | 'offline' | 'error';
+  device_status: 'online' | 'offline' | 'maintenance' | 'error';
   sensor_type: string;
   value: number;
   unit: string;
-  timestamp: string;
+  reading_timestamp: string;
 }
 
 export interface LiveSensorData {
@@ -33,7 +33,7 @@ export interface LiveSensorData {
   pc5?: number;
   pc10?: number;
   aqi?: number;
-  status: 'online' | 'offline' | 'error';
+  status: 'online' | 'offline' | 'maintenance' | 'error';
   last_updated: string;
 }
 
@@ -51,12 +51,23 @@ export class OptimizedSensorApi {
   // Single query to get all latest sensor readings for all devices
   static async getAllLatestSensorReadings(): Promise<LiveSensorData[]> {
     try {
-      // For now, use the optimized fallback method
-      // TODO: Create RPC function later for even better performance
-      return this.getAllLatestSensorReadingsFallback();
+      // Try to use the optimized RPC function first
+      const { data: readings, error } = await supabase.rpc('get_latest_sensor_readings_optimized');
+      
+      if (error) {
+        logger.error('RPC function failed, using fallback', error);
+        return this.getAllLatestSensorReadingsFallback();
+      }
+
+      if (!readings || readings.length === 0) {
+        return [];
+      }
+
+      return this.processReadingsToLiveData(readings);
     } catch (error) {
       logger.error('Error fetching optimized sensor readings', error as Error);
-      throw error;
+      // Fallback to manual query
+      return this.getAllLatestSensorReadingsFallback();
     }
   }
 
@@ -162,7 +173,7 @@ export class OptimizedSensorApi {
         pc5: readings.pc5?.value,
         pc10: readings.pc10?.value,
         aqi,
-        status: device.status as 'online' | 'offline' | 'error',
+        status: device.status as 'online' | 'offline' | 'maintenance' | 'error',
         last_updated: lastUpdated
       });
     });
@@ -194,8 +205,8 @@ export class OptimizedSensorApi {
       const aqi = pm25Value > 0 ? calculateAQI(pm25Value) : undefined;
       
       const lastUpdated = deviceReadings.reduce((latest, reading) => {
-        return !latest || new Date(reading.timestamp) > new Date(latest) 
-          ? reading.timestamp 
+        return !latest || new Date(reading.reading_timestamp) > new Date(latest) 
+          ? reading.reading_timestamp 
           : latest;
       }, '');
       

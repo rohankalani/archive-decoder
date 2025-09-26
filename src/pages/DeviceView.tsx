@@ -10,6 +10,7 @@ import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
 import { useDebounce } from '@/hooks/useDebounce';
 import { DeviceGridSkeleton } from '@/components/ui/skeleton';
+import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useNavigate } from 'react-router-dom';
 import { 
   Search,
@@ -34,7 +35,8 @@ const getSensorTypeDisplay = (aqi: number) => {
   return 'PM2.5';
 };
 
-export function DeviceView() {
+// Main component wrapped with error boundary  
+const DeviceViewContent = memo(() => {
   const [viewMode, setViewMode] = useState<'glance' | 'detailed'>('detailed');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSite, setSelectedSite] = useState<string>('all');
@@ -481,5 +483,15 @@ export function DeviceView() {
         </div>
       </div>
     </Layout>
+  );
+});
+
+DeviceViewContent.displayName = 'DeviceViewContent';
+
+export function DeviceView() {
+  return (
+    <ErrorBoundary>
+      <DeviceViewContent />
+    </ErrorBoundary>
   );
 }

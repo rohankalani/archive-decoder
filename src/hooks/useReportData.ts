@@ -162,6 +162,11 @@ export function useReportData(params: ReportDataParams) {
       return;
     }
 
+    if (reportData.totalReadings === 0) {
+      toast.error('No sensor data available for the selected period. Try a different date range or check if devices are collecting data.');
+      return;
+    }
+
     setIsGeneratingReport(true);
     try {
       const { data, error } = await supabase.functions.invoke('generate-air-quality-report', {

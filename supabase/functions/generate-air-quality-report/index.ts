@@ -50,6 +50,20 @@ serve(async (req) => {
       dateRange,
     });
 
+    // Check if we have enough data to generate a meaningful report
+    if (reportData.totalReadings === 0) {
+      return new Response(
+        JSON.stringify({ 
+          error: 'No data available for the selected period',
+          details: 'Please select a different date range or ensure devices are collecting data'
+        }),
+        {
+          status: 400,
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        }
+      );
+    }
+
     const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
     if (!geminiApiKey) {
       throw new Error('Google Gemini API key not found');

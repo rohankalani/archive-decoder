@@ -14,6 +14,7 @@ import { useEmailSettings } from '@/hooks/useEmailSettings';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
+import { Layout } from '@/components/Layout';
 
 type UserRole = 'viewer' | 'admin' | 'supervisor' | 'super_admin';
 
@@ -135,30 +136,35 @@ export default function UserManagement() {
 
   if (usersLoading || settingsLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <LoadingSpinner className="w-8 h-8 mx-auto" />
-      </div>
+      <Layout title="User Management">
+        <div className="container mx-auto p-6">
+          <LoadingSpinner className="w-8 h-8 mx-auto" />
+        </div>
+      </Layout>
     );
   }
 
   if (!isAdmin) {
     return (
-      <div className="container mx-auto p-6">
-        <Card>
-          <CardContent className="p-8 text-center">
-            <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
-            <h3 className="text-lg font-medium mb-2">Access Denied</h3>
-            <p className="text-muted-foreground">
-              You don't have permission to access user management.
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+      <Layout title="User Management">
+        <div className="container mx-auto p-6">
+          <Card>
+            <CardContent className="p-8 text-center">
+              <Shield className="w-12 h-12 mx-auto mb-4 text-muted-foreground" />
+              <h3 className="text-lg font-medium mb-2">Access Denied</h3>
+              <p className="text-muted-foreground">
+                You don't have permission to access user management.
+              </p>
+            </CardContent>
+          </Card>
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Layout title="User Management">
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">User Management</h1>
@@ -469,6 +475,7 @@ export default function UserManagement() {
           )}
         </DialogContent>
       </Dialog>
-    </div>
+      </div>
+    </Layout>
   );
 }

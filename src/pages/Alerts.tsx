@@ -10,6 +10,7 @@ import { useAlerts } from '@/hooks/useAlerts';
 import { useNotifications } from '@/hooks/useNotifications';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useAuth } from '@/contexts/AuthContext';
+import { Layout } from '@/components/Layout';
 
 interface AlertsProps {}
 
@@ -69,14 +70,17 @@ export default function Alerts() {
 
   if (alertsLoading || notificationsLoading) {
     return (
-      <div className="container mx-auto p-6">
-        <LoadingSpinner className="w-8 h-8 mx-auto" />
-      </div>
+      <Layout title="Alerts & Notifications">
+        <div className="container mx-auto p-6">
+          <LoadingSpinner className="w-8 h-8 mx-auto" />
+        </div>
+      </Layout>
     );
   }
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Layout title="Alerts & Notifications">
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Alerts & Notifications</h1>
@@ -271,6 +275,7 @@ export default function Alerts() {
           </div>
         </TabsContent>
       </Tabs>
-    </div>
+      </div>
+    </Layout>
   );
 }

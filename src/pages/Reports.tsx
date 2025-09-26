@@ -11,6 +11,7 @@ import { useReportData } from '@/hooks/useReportData';
 import { LoadingSpinner } from '@/components/LoadingSpinner';
 import { useDevices } from '@/hooks/useDevices';
 import { useLocations } from '@/hooks/useLocations';
+import { Layout } from '@/components/Layout';
 
 interface DateRange {
   from: Date;
@@ -104,7 +105,8 @@ Generated on: ${format(new Date(), 'PPP')}
   };
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Layout title="AI Reports">
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">AI Reports</h1>
@@ -369,6 +371,7 @@ Generated on: ${format(new Date(), 'PPP')}
           </CardContent>
         </Card>
       )}
-    </div>
+      </div>
+    </Layout>
   );
 }

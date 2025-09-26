@@ -11,3 +11,9 @@ verify_jwt = false
 
 [functions.generate-monthly-report]
 verify_jwt = false
+
+[functions.mqtt-processor]
+verify_jwt = false
+
+[functions.device-health-monitor]
+verify_jwt = false

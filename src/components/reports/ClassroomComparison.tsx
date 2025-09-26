@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
@@ -36,7 +36,7 @@ interface ClassroomComparisonProps {
   operatingHours: { start: number; end: number };
 }
 
-export function ClassroomComparison({ classrooms, operatingHours }: ClassroomComparisonProps) {
+export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: ClassroomComparisonProps) => {
   const getStatusColor = (status: string) => {
     switch (status) {
       case 'excellent': return 'text-success border-success/30 bg-success/10';
@@ -56,80 +56,102 @@ export function ClassroomComparison({ classrooms, operatingHours }: ClassroomCom
     return { grade: 'D', color: 'text-danger', bg: 'bg-danger/20' };
   };
 
-  // Calculate executive insights
-  const totalClassrooms = classrooms.length;
-  const averageEfficiency = classrooms.reduce((sum, c) => sum + c.roomEfficiencyScore, 0) / totalClassrooms;
-  const topPerformer = classrooms.reduce((best, current) => 
-    current.roomEfficiencyScore > best.roomEfficiencyScore ? current : best
-  );
-  const needsAttention = classrooms.filter(c => c.status === 'needs_attention' || c.status === 'critical');
-  const totalAlerts = classrooms.reduce((sum, c) => sum + c.alertCount, 0);
+  // Memoize expensive calculations to prevent flashing
+  const executiveInsights = useMemo(() => {
+    if (!classrooms.length) return null;
+    
+    const totalClassrooms = classrooms.length;
+    const averageEfficiency = classrooms.reduce((sum, c) => sum + c.roomEfficiencyScore, 0) / totalClassrooms;
+    const topPerformer = classrooms.reduce((best, current) => 
+      current.roomEfficiencyScore > best.roomEfficiencyScore ? current : best
+    );
+    const needsAttention = classrooms.filter(c => c.status === 'needs_attention' || c.status === 'critical');
+    const totalAlerts = classrooms.reduce((sum, c) => sum + c.alertCount, 0);
+    
+    return {
+      totalClassrooms,
+      averageEfficiency,
+      topPerformer,
+      needsAttention,
+      totalAlerts
+    };
+  }, [classrooms]);
 
-  // Prepare chart data
-  const comparisonData = classrooms.map(c => ({
-    name: c.classroomName,
-    efficiency: c.roomEfficiencyScore,
-    aqi: c.operatingHoursAqi,
-    co2: c.operatingHoursCO2,
-    temperature: c.operatingHoursTemp,
-    ventilation: c.ventilationScore
-  }));
+  // Memoize chart data to prevent re-renders
+  const chartData = useMemo(() => {
+    const comparisonData = classrooms.map((c, index) => ({
+      id: `${c.classroomId}-${index}`, // Stable key
+      name: c.classroomName,
+      efficiency: c.roomEfficiencyScore,
+      aqi: c.operatingHoursAqi,
+      co2: c.operatingHoursCO2,
+      temperature: c.operatingHoursTemp,
+      ventilation: c.ventilationScore
+    }));
 
-  const temperatureInsightData = classrooms.map(c => ({
-    name: c.classroomName,
-    operatingTemp: c.operatingHoursTemp,
-    afterHoursTemp: c.afterHoursTemp,
-    stability: c.temperatureStability
-  }));
+    const temperatureInsightData = classrooms.map((c, index) => ({
+      id: `${c.classroomId}-temp-${index}`, // Stable key
+      name: c.classroomName,
+      operatingTemp: c.operatingHoursTemp,
+      afterHoursTemp: c.afterHoursTemp,
+      stability: c.temperatureStability
+    }));
+
+    return { comparisonData, temperatureInsightData };
+  }, [classrooms]);
+
+  if (!executiveInsights) {
+    return <div>No classroom data available</div>;
+  }
 
   return (
     <TooltipProvider>
       <div className="space-y-8">
         {/* Executive Summary Dashboard */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-          <Card className="glass-card hover-lift border-primary/30 bg-gradient-to-br from-primary/10 to-primary/20 glow-primary">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-primary-glow">📊 Campus Overview</CardTitle>
-              <Building className="h-4 w-4 text-primary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-primary mb-2">{totalClassrooms}</div>
-              <p className="text-xs text-primary/70">Active Classrooms Monitored</p>
-            </CardContent>
-          </Card>
+            <Card className="glass-card hover-lift border-primary/30 bg-gradient-to-br from-primary/10 to-primary/20 glow-primary">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-semibold text-primary-glow">📊 Campus Overview</CardTitle>
+                <Building className="h-4 w-4 text-primary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-primary mb-2">{executiveInsights.totalClassrooms}</div>
+                <p className="text-xs text-primary/70">Active Classrooms Monitored</p>
+              </CardContent>
+            </Card>
 
-          <Card className="glass-card hover-lift border-secondary/30 bg-gradient-to-br from-secondary/10 to-secondary/20 glow-secondary">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-secondary-glow">🏆 Top Performer</CardTitle>
-              <Star className="h-4 w-4 text-secondary" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-lg font-bold text-secondary mb-1">{topPerformer.classroomName}</div>
-              <p className="text-xs text-secondary/70">{topPerformer.roomEfficiencyScore}% Efficiency</p>
-            </CardContent>
-          </Card>
+            <Card className="glass-card hover-lift border-secondary/30 bg-gradient-to-br from-secondary/10 to-secondary/20 glow-secondary">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-semibold text-secondary-glow">🏆 Top Performer</CardTitle>
+                <Star className="h-4 w-4 text-secondary" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-lg font-bold text-secondary mb-1">{executiveInsights.topPerformer.classroomName}</div>
+                <p className="text-xs text-secondary/70">{executiveInsights.topPerformer.roomEfficiencyScore}% Efficiency</p>
+              </CardContent>
+            </Card>
 
-          <Card className="glass-card hover-lift border-accent/30 bg-gradient-to-br from-accent/10 to-accent/20">
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-accent">📈 Average Efficiency</CardTitle>
-              <TrendingUp className="h-4 w-4 text-accent" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-accent mb-2">{averageEfficiency.toFixed(1)}%</div>
-              <p className="text-xs text-accent/70">Campus Space Utilization</p>
-            </CardContent>
-          </Card>
+            <Card className="glass-card hover-lift border-accent/30 bg-gradient-to-br from-accent/10 to-accent/20">
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-semibold text-accent">📈 Average Efficiency</CardTitle>
+                <TrendingUp className="h-4 w-4 text-accent" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-accent mb-2">{executiveInsights.averageEfficiency.toFixed(1)}%</div>
+                <p className="text-xs text-accent/70">Campus Space Utilization</p>
+              </CardContent>
+            </Card>
 
-          <Card className={`glass-card hover-lift border-warning/30 bg-gradient-to-br from-warning/10 to-warning/20 ${needsAttention.length > 0 ? 'animate-pulse-glow' : ''}`}>
-            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-semibold text-warning-glow">⚠️ Needs Attention</CardTitle>
-              <AlertTriangle className="h-4 w-4 text-warning" />
-            </CardHeader>
-            <CardContent>
-              <div className="text-3xl font-bold text-warning mb-2">{needsAttention.length}</div>
-              <p className="text-xs text-warning/70">Classrooms Requiring Action</p>
-            </CardContent>
-          </Card>
+            <Card className={`glass-card hover-lift border-warning/30 bg-gradient-to-br from-warning/10 to-warning/20 ${executiveInsights.needsAttention.length > 0 ? 'animate-pulse-glow' : ''}`}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <CardTitle className="text-sm font-semibold text-warning-glow">⚠️ Needs Attention</CardTitle>
+                <AlertTriangle className="h-4 w-4 text-warning" />
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-bold text-warning mb-2">{executiveInsights.needsAttention.length}</div>
+                <p className="text-xs text-warning/70">Classrooms Requiring Action</p>
+              </CardContent>
+            </Card>
         </div>
 
         {/* Classroom Performance Comparison Chart */}
@@ -147,7 +169,7 @@ export function ClassroomComparison({ classrooms, operatingHours }: ClassroomCom
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={400}>
-              <BarChart data={comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+              <BarChart data={chartData.comparisonData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="name" 
@@ -186,7 +208,7 @@ export function ClassroomComparison({ classrooms, operatingHours }: ClassroomCom
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
-              <ScatterChart data={temperatureInsightData}>
+              <ScatterChart data={chartData.temperatureInsightData}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis dataKey="operatingTemp" name="Operating Hours °C" />
                 <YAxis dataKey="afterHoursTemp" name="After Hours °C" />
@@ -387,4 +409,6 @@ export function ClassroomComparison({ classrooms, operatingHours }: ClassroomCom
       </div>
     </TooltipProvider>
   );
-}
+});
+
+ClassroomComparison.displayName = 'ClassroomComparison';

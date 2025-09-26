@@ -325,6 +325,32 @@ uint8_t aht_humid_data_count = 0; uint8_t aht_humid_limit_fail_count=0;
 float aht_temp=0; float aht_temp_disp=0; float aht_temp_cld=0; float aht_temp_mavg_arr[8]={0};
 uint8_t aht_temp_data_count = 0; uint8_t aht_temp_limit_fail_count=0;
 
+// ===================== MQTT 60-Second Averaging Variables =====================
+// MQTT-specific 60-second averaging arrays (20 readings for 60s at 3s intervals)
+float mqtt_pm25_avg_arr[20] = {0};
+float mqtt_pm10_avg_arr[20] = {0};
+float mqtt_co2_avg_arr[20] = {0};
+float mqtt_voc_avg_arr[20] = {0};
+float mqtt_nox_avg_arr[20] = {0};
+float mqtt_hcho_avg_arr[20] = {0};
+float mqtt_temp_avg_arr[20] = {0};
+float mqtt_humid_avg_arr[20] = {0};
+
+// MQTT averaging control variables
+uint8_t mqtt_reading_index = 0;
+uint8_t mqtt_readings_count = 0;
+bool mqtt_avg_ready = false;
+
+// MQTT averaged values for transmission
+float mqtt_pm25_avg = 0;
+float mqtt_pm10_avg = 0;
+float mqtt_co2_avg = 0;
+float mqtt_voc_avg = 0;
+float mqtt_nox_avg = 0;
+float mqtt_hcho_avg = 0;
+float mqtt_temp_avg = 0;
+float mqtt_humid_avg = 0;
+
 
 uint32_t i2c_resp_wait_time=0;
 uint8_t i2c_read_complete_flag=0;
@@ -526,6 +552,8 @@ void publishSensorData();
 void setDateTime();
 String createMQTTPayload();
 void handleMQTTConnection();
+void update_mqtt_averaging();
+void calculate_mqtt_averages();
 
 /******************************/
 //////////////////////////////////////////////////////////////////////////////////////////
@@ -655,6 +683,8 @@ void loop()
       Serial.print("\n SAM LIVE CNT    : "); Serial.print(sam_live_check_cnt); Serial.println("/60");
 
       /********************************************************/  
+      // Update MQTT 60-second averaging after sensor processing
+      update_mqtt_averaging();
     }
     sensor_read_base_time=millis();   
   }
@@ -2569,6 +2599,84 @@ void initMQTT() {
   Serial.print(":"); Serial.println(MQTT_BROKER_PORT);
 }
 
+// ===================== MQTT 60-Second Averaging Functions =====================
+void update_mqtt_averaging() {
+  // Store current sensor readings in 60-second circular buffer
+  mqtt_pm25_avg_arr[mqtt_reading_index] = pm25_avg_disp;
+  mqtt_pm10_avg_arr[mqtt_reading_index] = pm10_avg_disp;
+  mqtt_co2_avg_arr[mqtt_reading_index] = co2_disp;
+  mqtt_voc_avg_arr[mqtt_reading_index] = vocIndex_disp;
+  mqtt_nox_avg_arr[mqtt_reading_index] = noxIndex_disp;
+  mqtt_hcho_avg_arr[mqtt_reading_index] = hcho_disp;
+  
+  // Temperature (use best available sensor)
+  if (sfa_temp_disp > 0) mqtt_temp_avg_arr[mqtt_reading_index] = sfa_temp_disp;
+  else if (sen_temp_disp > 0) mqtt_temp_avg_arr[mqtt_reading_index] = sen_temp_disp;
+  else if (aht_temp_disp > 0) mqtt_temp_avg_arr[mqtt_reading_index] = aht_temp_disp;
+  
+  // Humidity (use best available sensor)
+  if (sfa_humid_disp > 0) mqtt_humid_avg_arr[mqtt_reading_index] = sfa_humid_disp;
+  else if (sen_humid_disp > 0) mqtt_humid_avg_arr[mqtt_reading_index] = sen_humid_disp;
+  else if (aht_humid_disp > 0) mqtt_humid_avg_arr[mqtt_reading_index] = aht_humid_disp;
+  
+  // Update circular buffer index
+  mqtt_reading_index = (mqtt_reading_index + 1) % 20;
+  if (mqtt_readings_count < 20) mqtt_readings_count++;
+  
+  // Enable 60-second averages when we have enough data
+  if (mqtt_readings_count >= 20) mqtt_avg_ready = true;
+  
+  Serial.print("MQTT averaging updated - Index: ");
+  Serial.print(mqtt_reading_index);
+  Serial.print(", Count: ");
+  Serial.print(mqtt_readings_count);
+  Serial.print(", Ready: ");
+  Serial.println(mqtt_avg_ready ? "Yes" : "No");
+}
+
+void calculate_mqtt_averages() {
+  if (!mqtt_avg_ready) {
+    Serial.println("MQTT 60s averages not ready yet");
+    return;
+  }
+  
+  float sum_pm25 = 0, sum_pm10 = 0, sum_co2 = 0;
+  float sum_voc = 0, sum_nox = 0, sum_hcho = 0;
+  float sum_temp = 0, sum_humid = 0;
+  uint8_t valid_pm25 = 0, valid_pm10 = 0, valid_co2 = 0;
+  uint8_t valid_voc = 0, valid_nox = 0, valid_hcho = 0;
+  uint8_t valid_temp = 0, valid_humid = 0;
+  
+  // Calculate sums and count valid readings
+  for (int i = 0; i < 20; i++) {
+    if (mqtt_pm25_avg_arr[i] > 0) { sum_pm25 += mqtt_pm25_avg_arr[i]; valid_pm25++; }
+    if (mqtt_pm10_avg_arr[i] > 0) { sum_pm10 += mqtt_pm10_avg_arr[i]; valid_pm10++; }
+    if (mqtt_co2_avg_arr[i] > 0) { sum_co2 += mqtt_co2_avg_arr[i]; valid_co2++; }
+    if (mqtt_voc_avg_arr[i] > 0) { sum_voc += mqtt_voc_avg_arr[i]; valid_voc++; }
+    if (mqtt_nox_avg_arr[i] > 0) { sum_nox += mqtt_nox_avg_arr[i]; valid_nox++; }
+    if (mqtt_hcho_avg_arr[i] > 0) { sum_hcho += mqtt_hcho_avg_arr[i]; valid_hcho++; }
+    if (mqtt_temp_avg_arr[i] > 0) { sum_temp += mqtt_temp_avg_arr[i]; valid_temp++; }
+    if (mqtt_humid_avg_arr[i] > 0) { sum_humid += mqtt_humid_avg_arr[i]; valid_humid++; }
+  }
+  
+  // Calculate 60-second averages
+  mqtt_pm25_avg = (valid_pm25 > 0) ? sum_pm25 / valid_pm25 : 0;
+  mqtt_pm10_avg = (valid_pm10 > 0) ? sum_pm10 / valid_pm10 : 0;
+  mqtt_co2_avg = (valid_co2 > 0) ? sum_co2 / valid_co2 : 0;
+  mqtt_voc_avg = (valid_voc > 0) ? sum_voc / valid_voc : 0;
+  mqtt_nox_avg = (valid_nox > 0) ? sum_nox / valid_nox : 0;
+  mqtt_hcho_avg = (valid_hcho > 0) ? sum_hcho / valid_hcho : 0;
+  mqtt_temp_avg = (valid_temp > 0) ? sum_temp / valid_temp : 0;
+  mqtt_humid_avg = (valid_humid > 0) ? sum_humid / valid_humid : 0;
+  
+  Serial.println("MQTT 60-second averages calculated:");
+  Serial.print("  PM2.5: "); Serial.print(mqtt_pm25_avg); Serial.print(" (from "); Serial.print(valid_pm25); Serial.println(" readings)");
+  Serial.print("  PM10: "); Serial.print(mqtt_pm10_avg); Serial.print(" (from "); Serial.print(valid_pm10); Serial.println(" readings)");
+  Serial.print("  CO2: "); Serial.print(mqtt_co2_avg); Serial.print(" (from "); Serial.print(valid_co2); Serial.println(" readings)");
+  Serial.print("  VOC: "); Serial.print(mqtt_voc_avg); Serial.print(" (from "); Serial.print(valid_voc); Serial.println(" readings)");
+}
+
+// ===================== Original MQTT Functions =====================
 void setDateTime() {
   // Configure time for TLS certificate validation
   configTime(0, 0, "pool.ntp.org", "time.nist.gov");
@@ -2652,50 +2760,94 @@ void publishSensorData() {
 }
 
 String createMQTTPayload() {
+  // Calculate fresh 60-second averages before creating payload
+  calculate_mqtt_averages();
+  
   // Create JSON payload matching the expected format
   StaticJsonDocument<1024> doc;
   
   doc["device_id"] = deviceId;
   doc["timestamp"] = timeClient.getFormattedTime(); // Use your existing time client
   
-  // Add all PM sensor readings (mass concentration)
+  // Use MQTT-specific 60-second averages for key sensors
+  // PM sensors - use 60-second averages if available, otherwise fallback to display values
+  if (mqtt_avg_ready && mqtt_pm25_avg > 0) {
+    doc["pm25"] = mqtt_pm25_avg;
+  } else if (pm25_avg_disp > 0) {
+    doc["pm25"] = pm25_avg_disp;
+  }
+  
+  if (mqtt_avg_ready && mqtt_pm10_avg > 0) {
+    doc["pm10"] = mqtt_pm10_avg;
+  } else if (pm10_avg_disp > 0) {
+    doc["pm10"] = pm10_avg_disp;
+  }
+  
+  // Gas sensors - use 60-second averages if available
+  if (mqtt_avg_ready && mqtt_co2_avg > 0) {
+    doc["co2"] = mqtt_co2_avg;
+  } else if (co2_disp > 0) {
+    doc["co2"] = co2_disp;
+  }
+  
+  if (mqtt_avg_ready && mqtt_voc_avg > 0) {
+    doc["voc"] = mqtt_voc_avg;
+  } else if (vocIndex_disp > 0) {
+    doc["voc"] = vocIndex_disp;
+  }
+  
+  if (mqtt_avg_ready && mqtt_nox_avg > 0) {
+    doc["no2"] = mqtt_nox_avg;
+  } else if (noxIndex_disp > 0) {
+    doc["no2"] = noxIndex_disp;
+  }
+  
+  if (mqtt_avg_ready && mqtt_hcho_avg > 0) {
+    doc["hcho"] = mqtt_hcho_avg;
+  } else if (hcho_disp > 0) {
+    doc["hcho"] = hcho_disp;
+  }
+  
+  // Temperature - use 60-second average if available
+  if (mqtt_avg_ready && mqtt_temp_avg > 0) {
+    doc["temperature"] = mqtt_temp_avg;
+  } else {
+    // Fallback to original logic
+    if (sfa_temp_disp > 0) {
+      doc["temperature"] = sfa_temp_disp;
+    } else if (sen_temp_disp > 0) {
+      doc["temperature"] = sen_temp_disp;
+    } else if (aht_temp_disp > 0) {
+      doc["temperature"] = aht_temp_disp;
+    }
+  }
+  
+  // Humidity - use 60-second average if available
+  if (mqtt_avg_ready && mqtt_humid_avg > 0) {
+    doc["humidity"] = mqtt_humid_avg;
+  } else {
+    // Fallback to original logic
+    if (sfa_humid_disp > 0) {
+      doc["humidity"] = sfa_humid_disp;
+    } else if (sen_humid_disp > 0) {
+      doc["humidity"] = sen_humid_disp;
+    } else if (aht_humid_disp > 0) {
+      doc["humidity"] = aht_humid_disp;
+    }
+  }
+  
+  // Add remaining PM readings (use display values as these are less critical)
   if (pm03_avg_disp > 0) doc["pm03"] = pm03_avg_disp;
   if (pm05_avg_disp > 0) doc["pm05"] = pm05_avg_disp;
   if (pm1_avg_disp > 0) doc["pm1"] = pm1_avg_disp;
-  if (pm25_avg_disp > 0) doc["pm25"] = pm25_avg_disp;
   if (pm5_avg_disp > 0) doc["pm5"] = pm5_avg_disp;
-  if (pm10_avg_disp > 0) doc["pm10"] = pm10_avg_disp;
   
-  // Add all particle count readings
+  // Add all particle count readings (use display values)
   if (pc03_avg_disp > 0) doc["pc03"] = pc03_avg_disp;
   if (pc05_avg_disp > 0) doc["pc05"] = pc05_avg_disp;
   if (pc1_avg_disp > 0) doc["pc1"] = pc1_avg_disp;
   if (pc25_avg_disp > 0) doc["pc25"] = pc25_avg_disp;
   if (pc5_avg_disp > 0) doc["pc5"] = pc5_avg_disp;
-  
-  // Gas sensors
-  if (co2_disp > 0) doc["co2"] = co2_disp;
-  if (vocIndex_disp > 0) doc["voc"] = vocIndex_disp;
-  if (noxIndex_disp > 0) doc["no2"] = noxIndex_disp;
-  if (hcho_disp > 0) doc["hcho"] = hcho_disp;
-  
-  // Temperature (prefer SFA sensor, fallback to others)
-  if (sfa_temp_disp > 0) {
-    doc["temperature"] = sfa_temp_disp;
-  } else if (sen_temp_disp > 0) {
-    doc["temperature"] = sen_temp_disp;
-  } else if (aht_temp_disp > 0) {
-    doc["temperature"] = aht_temp_disp;
-  }
-  
-  // Humidity (prefer SFA sensor, fallback to others)
-  if (sfa_humid_disp > 0) {
-    doc["humidity"] = sfa_humid_disp;
-  } else if (sen_humid_disp > 0) {
-    doc["humidity"] = sen_humid_disp;
-  } else if (aht_humid_disp > 0) {
-    doc["humidity"] = aht_humid_disp;
-  }
   
   // AQI Information - Overall and Individual Pollutants
   if (actual_aqi > 0) doc["aqi_overall"] = actual_aqi;

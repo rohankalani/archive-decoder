@@ -73,9 +73,9 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
   }): string[] => {
     const recommendations: string[] = [];
 
-    if (data.efficiency < 60) {
-      recommendations.push("📊 Consider schedule optimization - room underutilized during peak hours");
-    }
+        if (data.efficiency < 60) {
+          recommendations.push("📊 Consider schedule optimization - room underutilized during peak hours");
+        }
     
     if (data.operatingCO2 > 1000) {
       recommendations.push("🌬️ Increase ventilation during class hours - CO₂ levels elevated");
@@ -235,15 +235,17 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
           : avgTemp;
 
         // Calculate temperature stability (standard deviation)
-        const tempStability = temperatureReadings.length > 0
+        const tempStability = temperatureReadings.length > 1
           ? Math.sqrt(temperatureReadings.reduce((sum, r) => {
               const diff = Number(r.value) - avgTemp;
               return sum + (diff * diff);
-            }, 0) / temperatureReadings.length)
+            }, 0) / (temperatureReadings.length - 1))
           : 0;
 
-        // Calculate occupancy and room efficiency
+        // Calculate occupancy and room efficiency - improved logic
         const getOccupancyLevel = (co2Level: number): boolean => co2Level >= 500;
+        
+        // Group readings by hour and calculate occupancy more accurately
         const hourlyData = operatingCO2Readings.reduce((acc, reading) => {
           const hour = new Date(reading.timestamp).getHours();
           if (!acc[hour]) acc[hour] = [];
@@ -251,14 +253,16 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
           return acc;
         }, {} as Record<number, number[]>);
 
+        // Count hours where average CO2 indicates occupancy
         const occupiedHours = Object.entries(hourlyData).filter(([_, values]) => {
           const avgCO2ForHour = values.reduce((s, v) => s + v, 0) / values.length;
           return getOccupancyLevel(avgCO2ForHour);
         }).length;
 
         const totalOperatingHours = params.operatingHours.end - params.operatingHours.start;
-        const roomUsageHours = (occupiedHours / 24) * totalOperatingHours;
-        const roomEfficiencyScore = Math.min(100, Math.max(0, (roomUsageHours / totalOperatingHours) * 100));
+        const roomUsageHours = occupiedHours; // Hours actually occupied
+        // Fix calculation: occupiedHours is already the count of occupied hours during operating period
+        const roomEfficiencyScore = Math.min(100, Math.max(0, (occupiedHours / totalOperatingHours) * 100));
 
         // Calculate ventilation score
         const maxCO2 = Math.max(...co2Readings.map(r => Number(r.value)));

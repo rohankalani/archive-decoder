@@ -82,8 +82,8 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
     const comparisonData = classrooms.map((c, index) => ({
       id: `${c.classroomId}-${index}`, // Stable key
       name: c.classroomName,
-      efficiency: c.roomEfficiencyScore,
-      aqi: c.operatingHoursAqi,
+      efficiency: Number(c.roomEfficiencyScore.toFixed(1)),
+      aqi: Number(c.operatingHoursAqi.toFixed(1)),
       co2: c.operatingHoursCO2,
       temperature: c.operatingHoursTemp,
       ventilation: c.ventilationScore
@@ -92,9 +92,9 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
     const temperatureInsightData = classrooms.map((c, index) => ({
       id: `${c.classroomId}-temp-${index}`, // Stable key
       name: c.classroomName,
-      operatingTemp: c.operatingHoursTemp,
-      afterHoursTemp: c.afterHoursTemp,
-      stability: c.temperatureStability
+      operatingTemp: Number(c.operatingHoursTemp.toFixed(1)),
+      afterHoursTemp: Number(c.afterHoursTemp.toFixed(1)),
+      stability: Number(c.temperatureStability.toFixed(1))
     }));
 
     return { comparisonData, temperatureInsightData };
@@ -115,10 +115,10 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
               <div className="p-2 rounded-lg bg-primary/20 glow-primary">
                 <TrendingUp className="w-5 h-5 text-primary" />
               </div>
-              📊 Classroom Performance Analytics
+              📊 Room Occupancy & Air Quality Analytics
             </CardTitle>
             <CardDescription>
-              Real-time efficiency and air quality comparison across all monitored classrooms during operating hours ({operatingHours.start}:00-{operatingHours.end}:00)
+              Average occupancy during operating hours and air quality comparison across all monitored classrooms ({operatingHours.start}:00-{operatingHours.end}:00)
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -140,8 +140,8 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
                     borderRadius: '8px'
                   }}
                 />
-                <Bar dataKey="efficiency" fill="hsl(var(--primary))" name="Efficiency %" />
-                <Bar dataKey="aqi" fill="hsl(var(--secondary))" name="AQI" />
+                <Bar dataKey="efficiency" fill="hsl(var(--primary))" name="Room Occupancy %" />
+                <Bar dataKey="aqi" fill="hsl(var(--secondary))" name="Air Quality Index" />
               </BarChart>
             </ResponsiveContainer>
           </CardContent>
@@ -162,19 +162,38 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={350}>
-              <ScatterChart data={chartData.temperatureInsightData}>
+              <ScatterChart data={chartData.temperatureInsightData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                 <CartesianGrid strokeDasharray="3 3" />
-                <XAxis dataKey="operatingTemp" name="Operating Hours °C" />
-                <YAxis dataKey="afterHoursTemp" name="After Hours °C" />
+                <XAxis 
+                  dataKey="operatingTemp" 
+                  name="Operating Hours °C"
+                  type="number"
+                  domain={['dataMin - 2', 'dataMax + 2']}
+                  label={{ value: 'Operating Hours Temperature (°C)', position: 'insideBottom', offset: -10 }}
+                />
+                <YAxis 
+                  dataKey="afterHoursTemp" 
+                  name="After Hours °C"
+                  type="number"
+                  domain={['dataMin - 2', 'dataMax + 2']}
+                  label={{ value: 'After Hours Temperature (°C)', angle: -90, position: 'insideLeft' }}
+                />
                 <RechartsTooltip 
                   cursor={{ strokeDasharray: '3 3' }}
-                  formatter={(value, name) => [
-                    typeof value === 'number' ? `${value.toFixed(1)}°C` : value,
-                    name === 'operatingTemp' ? 'Operating Hours' : 'After Hours'
-                  ]}
-                  labelFormatter={(label) => `Classroom: ${label}`}
+                  content={({ payload, label }) => {
+                    if (!payload || !payload[0]) return null;
+                    const data = payload[0].payload;
+                    return (
+                      <div className="bg-card border border-border rounded-lg p-3 shadow-lg">
+                        <p className="font-semibold">{data.name}</p>
+                        <p className="text-sm">Operating: {data.operatingTemp?.toFixed(1)}°C</p>
+                        <p className="text-sm">After Hours: {data.afterHoursTemp?.toFixed(1)}°C</p>
+                        <p className="text-sm">Difference: {Math.abs(data.operatingTemp - data.afterHoursTemp)?.toFixed(1)}°C</p>
+                      </div>
+                    );
+                  }}
                 />
-                <Scatter dataKey="stability" fill="hsl(var(--chart-1))" name="Temperature Stability" />
+                <Scatter dataKey="operatingTemp" fill="hsl(var(--chart-1))" name="Temperature Comparison" />
               </ScatterChart>
             </ResponsiveContainer>
           </CardContent>
@@ -187,10 +206,10 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
               <div className="p-2 rounded-lg bg-secondary/20 glow-secondary">
                 <Users className="w-5 h-5 text-secondary" />
               </div>
-              🏆 Classroom Performance Rankings & Insights
+              🏆 Room Occupancy Rankings & Insights
             </CardTitle>
             <CardDescription>
-              Detailed analysis including temperature insights and operating vs after-hours performance
+              Detailed analysis of room usage, air quality, and HVAC performance during operating vs after-hours
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -240,7 +259,7 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
                           <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                               <span>AQI:</span>
-                              <Badge variant="secondary">{classroom.operatingHoursAqi.toFixed(0)}</Badge>
+                              <Badge variant="secondary">{classroom.operatingHoursAqi.toFixed(1)}</Badge>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>CO₂:</span>
@@ -271,7 +290,7 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
                           <div className="space-y-2">
                             <div className="flex justify-between text-sm">
                               <span>AQI:</span>
-                              <Badge variant="outline">{classroom.afterHoursAqi.toFixed(0)}</Badge>
+                              <Badge variant="outline">{classroom.afterHoursAqi.toFixed(1)}</Badge>
                             </div>
                             <div className="flex justify-between text-sm">
                               <span>CO₂:</span>
@@ -294,7 +313,7 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
                                   <HelpCircle className="h-3 w-3 text-muted-foreground cursor-help" />
                                 </TooltipTrigger>
                                 <TooltipContent>
-                                  <p>Room efficiency, temperature stability, and HVAC performance</p>
+                                  <p>Room occupancy %, ventilation effectiveness, and temperature variation</p>
                                 </TooltipContent>
                               </Tooltip>
                             </TooltipProvider>
@@ -302,20 +321,47 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
                           <div className="space-y-2">
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span>Efficiency:</span>
-                                <span className="font-medium">{classroom.roomEfficiencyScore}%</span>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="cursor-help underline decoration-dotted">Room Occupancy:</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Percentage of operating hours when room is occupied (based on CO₂ levels)</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
+                                <span className="font-medium">{classroom.roomEfficiencyScore.toFixed(1)}%</span>
                               </div>
                               <Progress value={classroom.roomEfficiencyScore} className="h-2" />
                             </div>
                             <div>
                               <div className="flex justify-between text-sm mb-1">
-                                <span>Ventilation:</span>
+                                <TooltipProvider>
+                                  <Tooltip>
+                                    <TooltipTrigger asChild>
+                                      <span className="cursor-help underline decoration-dotted">Ventilation:</span>
+                                    </TooltipTrigger>
+                                    <TooltipContent>
+                                      <p>Air circulation effectiveness based on CO₂ removal rate (100 = excellent, 0 = poor)</p>
+                                    </TooltipContent>
+                                  </Tooltip>
+                                </TooltipProvider>
                                 <span className="font-medium">{classroom.ventilationScore}/100</span>
                               </div>
                               <Progress value={classroom.ventilationScore} className="h-2" />
                             </div>
                             <div className="flex justify-between text-sm">
-                              <span>Temp Stability:</span>
+                              <TooltipProvider>
+                                <Tooltip>
+                                  <TooltipTrigger asChild>
+                                    <span className="cursor-help underline decoration-dotted">Temp Variation:</span>
+                                  </TooltipTrigger>
+                                  <TooltipContent>
+                                    <p>Temperature fluctuation range - lower is more stable (0-2°C = excellent, {'>'}5°C = needs attention)</p>
+                                  </TooltipContent>
+                                </Tooltip>
+                              </TooltipProvider>
                               <span className="font-medium">{classroom.temperatureStability.toFixed(1)}°C</span>
                             </div>
                           </div>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -13,6 +13,7 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
 
 export function DeviceDetail() {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -31,6 +32,45 @@ export function DeviceDetail() {
     if (aqi <= 100) return { label: 'Moderate', color: 'warning' };
     return { label: 'Unhealthy', color: 'destructive' };
   };
+
+  // Generate mock historical data for charts
+  const generateHistoricalData = useMemo(() => {
+    const data = [];
+    const now = new Date();
+    
+    for (let i = 23; i >= 0; i--) {
+      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
+      const hour = time.getHours();
+      const timeLabel = time.toLocaleTimeString('en-US', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: true 
+      });
+      
+      data.push({
+        time: timeLabel,
+        aqi: 30 + Math.random() * 120 + Math.sin(hour / 24 * Math.PI * 2) * 20,
+        pm25: 10 + Math.random() * 40 + Math.sin(hour / 24 * Math.PI * 2) * 10,
+        pm10: 15 + Math.random() * 50 + Math.sin(hour / 24 * Math.PI * 2) * 15,
+        co2: 400 + Math.random() * 800 + Math.sin(hour / 24 * Math.PI * 2) * 200,
+        temperature: 20 + Math.random() * 10 + Math.sin(hour / 24 * Math.PI * 2) * 5,
+        humidity: 30 + Math.random() * 40 + Math.sin(hour / 24 * Math.PI * 2) * 15,
+        voc: 50 + Math.random() * 200 + Math.sin(hour / 24 * Math.PI * 2) * 50,
+        hcho: (0.01 + Math.random() * 0.05 + Math.sin(hour / 24 * Math.PI * 2) * 0.02) * 1000,
+        pm03: 1 + Math.random() * 5,
+        pm1: 1 + Math.random() * 8,
+        pm5: 12 + Math.random() * 45,
+        pc03: (10000 + Math.random() * 80000) / 1000, // Convert to thousands for better display
+        pc05: (5000 + Math.random() * 40000) / 1000,
+        pc1: (500 + Math.random() * 2000) / 100, // Convert to hundreds
+        pc25: (100 + Math.random() * 800) / 10,
+        pc5: 10 + Math.random() * 80,
+        pc10: 5 + Math.random() * 150
+      });
+    }
+    
+    return data;
+  }, []);
 
   if (sensorLoading || devicesLoading) {
     return (
@@ -306,6 +346,257 @@ export function DeviceDetail() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Charts Section */}
+        <div className="space-y-4">
+          {/* AQI & Sub-Indices Chart */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">AQI & Sub-Indices</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={generateHistoricalData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="time" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="aqi" 
+                      stroke="#8884d8" 
+                      strokeWidth={2}
+                      name="AQI"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pm25" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                      name="PM2.5"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pm10" 
+                      stroke="#f97316" 
+                      strokeWidth={2}
+                      name="PM10"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="co2" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      name="CO₂"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Environmental Conditions Chart */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Environmental Conditions</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={generateHistoricalData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="time" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="temperature" 
+                      stroke="#f97316" 
+                      strokeWidth={2}
+                      name="Temp (°C)"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="humidity" 
+                      stroke="#06b6d4" 
+                      strokeWidth={2}
+                      name="Humidity (%)"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="voc" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={2}
+                      name="VOC (ppb)"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="hcho" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      name="HCHO (μg/m³)"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Particulate Matter Chart */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Particulate Matter (μg/m³)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={generateHistoricalData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="time" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pm03" 
+                      stroke="#84cc16" 
+                      strokeWidth={2}
+                      name="PM0.3"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pm1" 
+                      stroke="#eab308" 
+                      strokeWidth={2}
+                      name="PM1"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pm25" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                      name="PM2.5"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pm5" 
+                      stroke="#f97316" 
+                      strokeWidth={2}
+                      name="PM5"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pm10" 
+                      stroke="#dc2626" 
+                      strokeWidth={2}
+                      name="PM10"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Particle Count Chart */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Particle Count (#/m³)</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={generateHistoricalData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="time" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                      interval="preserveStartEnd"
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Legend />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pc03" 
+                      stroke="#3b82f6" 
+                      strokeWidth={2}
+                      name="PC0.3 (k)"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pc05" 
+                      stroke="#8b5cf6" 
+                      strokeWidth={2}
+                      name="PC0.5 (k)"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pc1" 
+                      stroke="#06b6d4" 
+                      strokeWidth={2}
+                      name="PC1 (h)"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pc25" 
+                      stroke="#10b981" 
+                      strokeWidth={2}
+                      name="PC2.5 (10s)"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pc5" 
+                      stroke="#f59e0b" 
+                      strokeWidth={2}
+                      name="PC5"
+                      dot={false}
+                    />
+                    <Line 
+                      type="monotone" 
+                      dataKey="pc10" 
+                      stroke="#ef4444" 
+                      strokeWidth={2}
+                      name="PC10"
+                      dot={false}
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </Layout>
   );

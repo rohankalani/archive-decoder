@@ -122,8 +122,8 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
       const { data: devices, error: devicesError } = await supabase
         .from('devices')
         .select(`
-          id, name, status,
-          floors!inner(floor_number, building_id)
+          id, name, status, floor_id,
+          floors(floor_number)
         `);
 
       if (devicesError) throw devicesError;
@@ -295,7 +295,7 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
           classroomId: device.id,
           classroomName: device.name,
           building: 'Building', // Simplified for now
-          floor: device.floors.floor_number,
+          floor: device.floors?.floor_number || 1,
           totalReadings: deviceReadings.length,
           averageAqi,
           operatingHoursAqi,

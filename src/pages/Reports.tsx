@@ -35,13 +35,17 @@ export default function Reports() {
   const { sites, buildings } = useLocations();
   const { isUsingMockData, reports: mockReports } = useUnifiedMockData();
 
-  // Calculate date range based on selected period
+  // Calculate date range based on selected period with stable references
   const dateRange = useMemo((): DateRange => {
     if (selectedPeriod === 'custom' && customDateRange) {
-      return customDateRange;
+      return {
+        from: new Date(customDateRange.from.getTime()), // Create stable references
+        to: new Date(customDateRange.to.getTime())
+      };
     }
 
     const to = new Date();
+    to.setHours(23, 59, 59, 999); // End of day for consistency
     let from: Date;
 
     switch (selectedPeriod) {
@@ -60,9 +64,11 @@ export default function Reports() {
       default:
         from = subDays(to, 7);
     }
+    
+    from.setHours(0, 0, 0, 0); // Start of day for consistency
 
     return { from, to };
-  }, [selectedPeriod, customDateRange]);
+  }, [selectedPeriod, customDateRange?.from?.getTime(), customDateRange?.to?.getTime()]);
 
   const { reportData, aiSummary, isLoading, isGeneratingReport, generateReport } = useReportData({
     dateRange,
@@ -386,7 +392,23 @@ Generated on: ${format(new Date(), 'PPP')}
           </Card>
         )}
 
-        {/* Report Content */}
+        {/* Report Content - Single Location vs Classroom Comparison */}
+        {reportMode === 'single' && (
+          <Card className="glass-card hover-lift border-accent/20 mb-6">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-3">
+                <div className="p-2 rounded-lg bg-accent/20 glow-accent">
+                  <Building className="w-5 h-5 text-accent" />
+                </div>
+                📊 Single Location Analysis
+              </CardTitle>
+              <CardDescription>
+                When "All Devices" is selected, this report aggregates data from all sensors in the chosen location to provide comprehensive air quality insights for that specific area, building, or site.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        )}
+
         {reportMode === 'classroom-comparison' ? (
           <>
             {classroomsData.length > 0 && (

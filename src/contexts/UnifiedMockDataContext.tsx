@@ -167,7 +167,7 @@ export function UnifiedMockDataProvider({ children }: { children: ReactNode }) {
     }
   }, [isUsingMockData]);
 
-  // Simulate real-time updates every 30 seconds when using mock data
+  // Simulate real-time updates every 2 minutes when using mock data (reduced frequency)
   useEffect(() => {
     if (!isUsingMockData) return;
     
@@ -180,8 +180,8 @@ export function UnifiedMockDataProvider({ children }: { children: ReactNode }) {
         status: Math.random() > 0.02 ? 'online' : device.status // 2% chance of going offline
       })));
       
-      // Occasionally generate new alerts
-      if (Math.random() < 0.1) { // 10% chance every 30 seconds
+      // Occasionally generate new alerts (reduced frequency)
+      if (Math.random() < 0.05) { // 5% chance every 2 minutes
         const randomDevice = devices[Math.floor(Math.random() * devices.length)];
         if (randomDevice) {
           const newAlerts = mockAlerts.generateRecentAlerts([randomDevice], 1);
@@ -190,10 +190,10 @@ export function UnifiedMockDataProvider({ children }: { children: ReactNode }) {
           }
         }
       }
-    }, 30000);
+    }, 120000); // Changed from 30 seconds to 2 minutes
 
     return () => clearInterval(interval);
-  }, [isUsingMockData, devices]);
+  }, [isUsingMockData, devices.length]); // Use devices.length instead of full devices array
 
   return (
     <UnifiedMockDataContext.Provider value={{

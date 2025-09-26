@@ -116,6 +116,8 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
   }, []);
 
   const fetchClassroomReports = useCallback(async () => {
+    if (isLoading) return; // Prevent multiple concurrent fetches
+    
     setIsLoading(true);
     try {
       // Get all devices with their location information  
@@ -326,7 +328,17 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
     } finally {
       setIsLoading(false);
     }
-  }, [params.dateRange.from, params.dateRange.to, params.operatingHours, params.selectedBuildings, calculateAqi, generateRecommendations, getClassroomStatus]);
+  }, [
+    params.dateRange.from.getTime(), 
+    params.dateRange.to.getTime(), 
+    params.operatingHours.start, 
+    params.operatingHours.end, 
+    params.selectedBuildings?.join(','),
+    calculateAqi, 
+    generateRecommendations, 
+    getClassroomStatus,
+    isLoading
+  ]);
 
   const generateConsolidatedReport = useCallback(async () => {
     if (!classroomsData || classroomsData.length === 0) {

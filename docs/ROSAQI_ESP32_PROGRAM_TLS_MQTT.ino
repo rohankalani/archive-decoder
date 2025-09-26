@@ -2699,12 +2699,28 @@ String createMQTTPayload() {
   doc["device_id"] = deviceId;
   doc["timestamp"] = timeClient.getFormattedTime(); // Use your existing time client
   
-  // Add all sensor readings - using display values that are already processed
+  // Add all PM sensor readings (mass concentration)
+  if (pm01_avg_disp > 0) doc["pm01"] = pm01_avg_disp;
+  if (pm03_avg_disp > 0) doc["pm03"] = pm03_avg_disp;
+  if (pm05_avg_disp > 0) doc["pm05"] = pm05_avg_disp;
+  if (pm1_avg_disp > 0) doc["pm1"] = pm1_avg_disp;
   if (pm25_avg_disp > 0) doc["pm25"] = pm25_avg_disp;
+  if (pm5_avg_disp > 0) doc["pm5"] = pm5_avg_disp;
   if (pm10_avg_disp > 0) doc["pm10"] = pm10_avg_disp;
+  
+  // Add all particle count readings
+  if (pc01_avg_disp > 0) doc["pc01"] = pc01_avg_disp;
+  if (pc03_avg_disp > 0) doc["pc03"] = pc03_avg_disp;
+  if (pc05_avg_disp > 0) doc["pc05"] = pc05_avg_disp;
+  if (pc1_avg_disp > 0) doc["pc1"] = pc1_avg_disp;
+  if (pc25_avg_disp > 0) doc["pc25"] = pc25_avg_disp;
+  if (pc5_avg_disp > 0) doc["pc5"] = pc5_avg_disp;
+  if (pc10_avg_disp > 0) doc["pc10"] = pc10_avg_disp;
+  
+  // Gas sensors
   if (co2_disp > 0) doc["co2"] = co2_disp;
-  if (voc_disp > 0) doc["voc"] = voc_disp;
-  if (nox_disp > 0) doc["no2"] = nox_disp;
+  if (vocIndex_disp > 0) doc["voc"] = vocIndex_disp;
+  if (noxIndex_disp > 0) doc["no2"] = noxIndex_disp;
   if (hcho_disp > 0) doc["hcho"] = hcho_disp;
   
   // Temperature (prefer SFA sensor, fallback to others)

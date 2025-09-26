@@ -2,3 +2,6 @@ project_id = "xunlqdiappgyokhknvoc"
 
 [functions.generate-sensor-data]
 verify_jwt = false
+
+[functions.generate-air-quality-report]
+verify_jwt = false

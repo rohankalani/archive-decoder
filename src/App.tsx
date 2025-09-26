@@ -10,6 +10,7 @@ import { DeviceView } from '@/pages/DeviceView'
 import { DeviceDetail } from '@/pages/DeviceDetail'
 import Management from '@/pages/Management'
 import { Settings } from '@/pages/Settings'
+import Reports from '@/pages/Reports'
 
 function App() {
   return (
@@ -59,6 +60,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Settings />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports"
+              element={
+                <ProtectedRoute>
+                  <Reports />
                 </ProtectedRoute>
               }
             />

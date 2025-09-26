@@ -8,7 +8,8 @@ import {
   LogOut, 
   User,
   ArrowLeft,
-  Activity
+  Activity,
+  FileText
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -90,6 +91,17 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
                 </Link>
               </Button>
             )}
+            
+            <Button
+              variant={isActive('/reports') ? 'default' : 'ghost'}
+              size="sm"
+              asChild
+            >
+              <Link to="/reports" className="gap-2">
+                <FileText className="h-4 w-4" />
+                Reports
+              </Link>
+            </Button>
             
             <Button
               variant={isActive('/settings') ? 'default' : 'ghost'}

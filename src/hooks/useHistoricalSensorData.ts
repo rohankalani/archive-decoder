@@ -8,6 +8,9 @@ export interface AveragedSensorData {
   timestamp: string;
   pm25?: number;
   pm10?: number;
+  pm03?: number;
+  pm1?: number;
+  pm5?: number;
   co2?: number;
   temperature?: number;
   humidity?: number;
@@ -15,6 +18,12 @@ export interface AveragedSensorData {
   hcho?: number;
   nox?: number;
   no2?: number;
+  pc03?: number;
+  pc05?: number;
+  pc1?: number;
+  pc25?: number;
+  pc5?: number;
+  pc10?: number;
 }
 
 export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '1hr') {

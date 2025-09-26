@@ -9,6 +9,15 @@ import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
 import { useSettings } from '@/contexts/SettingsContext';
 import { 
+  generateDeterministicSensorData, 
+  calculateAverageAqiData,
+  calculatePM25Aqi,
+  calculatePM10Aqi,
+  calculateVOCAqi,
+  calculateHCHOAqi,
+  calculateNOxAqi
+} from '@/utils/chartDataUtils';
+import { 
   ArrowLeft,
   Activity,
   AlertTriangle,
@@ -75,7 +84,7 @@ export function DeviceDetail() {
 
   // Generate chart data with AQI calculations and color coding
   const generateChartData = useMemo(() => {
-    if (!deviceSensorData) {
+    if (!historicalData.length || !deviceSensorData) {
       return { 
         aqi: [],
         environmental: [],
@@ -86,96 +95,13 @@ export function DeviceDetail() {
       };
     }
 
-    // Base values for consistent calculation across time periods
-    const basePM25 = deviceSensorData.pm25 || 19.7;
-    const basePM10 = deviceSensorData.pm10 || 32.1;
-    const baseVOC = deviceSensorData.voc || 75;
-    const baseHCHO = 20; // Realistic baseline
-    const baseNOx = 50; // Realistic baseline
+    // Generate deterministic data using the new utility function
+    const processedData = generateDeterministicSensorData(historicalData, deviceSensorData, timePeriod);
 
-    // Process historical data for time-based charts
-    const processedData = historicalData.map((item, index) => {
-      const time = new Date(item.timestamp);
-      const timeLabel = time.toLocaleTimeString('en-US', { 
-        hour: '2-digit', 
-        minute: '2-digit',
-        hour12: true 
-      });
-      
-      // Use base values with small variations for consistency
-      const pm25Value = item.pm25 || basePM25 + (Math.random() - 0.5) * 4;
-      const pm10Value = item.pm10 || basePM10 + (Math.random() - 0.5) * 6;
-      const vocValue = item.voc || baseVOC + (Math.random() - 0.5) * 20;
-      const hchoValue = item.hcho || baseHCHO + (Math.random() - 0.5) * 8;
-      const noxValue = item.nox || baseNOx + (Math.random() - 0.5) * 15;
-      
-      // Calculate sub-indices for AQI chart using consistent values
-      const pm25Aqi = calculatePM25Aqi(pm25Value);
-      const pm10Aqi = calculatePM10Aqi(pm10Value);
-      const hchoAqi = calculateHCHOAqi(hchoValue);
-      const vocAqi = calculateVOCAqi(vocValue);
-      const noxAqi = calculateNOxAqi(noxValue);
-      
-      // Overall AQI is max of all sub-indices
-      const overallAqi = Math.max(pm25Aqi, pm10Aqi, hchoAqi, vocAqi, noxAqi);
-      
-      return {
-        time: timeLabel,
-        // AQI data
-        overallAqi,
-        pm25Aqi,
-        pm10Aqi,
-        hchoAqi,
-        vocAqi,
-        noxAqi,
-        // Environmental data
-        temperature: item.temperature || deviceSensorData.temperature || 25.2,
-        humidity: item.humidity || deviceSensorData.humidity || 55.9,
-        co2: item.co2 || deviceSensorData.co2 || 442,
-        // Air quality pollutants - consistent values
-        voc: vocValue,
-        hcho: hchoValue,
-        nox: noxValue,
-        // Particulate matter (mass) - consistent values
-        pm25: pm25Value,
-        pm10: pm10Value,
-        // Use current device data for particles not in historical data - simulate time series
-        pm03: deviceSensorData.pm03 ? deviceSensorData.pm03 + (Math.random() - 0.5) * 2 : 5 + Math.random() * 10,
-        pm1: deviceSensorData.pm1 ? deviceSensorData.pm1 + (Math.random() - 0.5) * 2 : 8 + Math.random() * 15,
-        pm5: deviceSensorData.pm5 ? deviceSensorData.pm5 + (Math.random() - 0.5) * 2 : 12 + Math.random() * 20,
-        // Particle count - generate realistic fake data if missing
-        pc03: deviceSensorData.pc03 ? Math.max(0, deviceSensorData.pc03 + (Math.random() - 0.5) * deviceSensorData.pc03 * 0.2) : 15000 + Math.random() * 25000,
-        pc05: deviceSensorData.pc05 ? Math.max(0, deviceSensorData.pc05 + (Math.random() - 0.5) * deviceSensorData.pc05 * 0.2) : 8000 + Math.random() * 15000,
-        pc1: deviceSensorData.pc1 ? Math.max(0, deviceSensorData.pc1 + (Math.random() - 0.5) * deviceSensorData.pc1 * 0.2) : 3000 + Math.random() * 8000,
-        pc25: deviceSensorData.pc25 ? Math.max(0, deviceSensorData.pc25 + (Math.random() - 0.5) * deviceSensorData.pc25 * 0.2) : 800 + Math.random() * 2000,
-        pc5: deviceSensorData.pc5 ? Math.max(0, deviceSensorData.pc5 + (Math.random() - 0.5) * deviceSensorData.pc5 * 0.2) : 50 + Math.random() * 200,
-        pc10: deviceSensorData.pc10 ? Math.max(0, deviceSensorData.pc10 + (Math.random() - 0.5) * deviceSensorData.pc10 * 0.2) : 10 + Math.random() * 50
-      };
-    });
-
-    // Key pollutants summary data - use AVERAGE AQI sub-indices for the selected time period
-    const avgAqiData = processedData.reduce((acc, item) => {
-      acc.pm25Aqi += item.pm25Aqi;
-      acc.pm10Aqi += item.pm10Aqi;
-      acc.hchoAqi += item.hchoAqi;
-      acc.vocAqi += item.vocAqi;
-      acc.noxAqi += item.noxAqi;
-      acc.count++;
-      return acc;
-    }, { pm25Aqi: 0, pm10Aqi: 0, hchoAqi: 0, vocAqi: 0, noxAqi: 0, count: 0 });
-
-    // Debug average calculation
-    console.log('Average AQI Debug:', {
-      timePeriod,
-      dataCount: avgAqiData.count,
-      totalPM25: avgAqiData.pm25Aqi,
-      avgPM25: avgAqiData.pm25Aqi / (avgAqiData.count || 1),
-      processedDataLength: processedData.length,
-      firstItem: processedData[0],
-      lastItem: processedData[processedData.length - 1]
-    });
-
+    // Calculate average AQI data using the new utility function
+    const avgAqiData = calculateAverageAqiData(processedData);
     const dataCount = Math.max(avgAqiData.count, 1);
+    
     const barData = [
       {
         name: 'PM2.5',
@@ -217,7 +143,7 @@ export function DeviceDetail() {
       particulateCount: processedData,
       bar: barData 
     };
-  }, [historicalData, deviceSensorData, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi]);
+  }, [historicalData, deviceSensorData, timePeriod]);
 
   // Debug particle count data
   console.log('Particle Count Debug:', {

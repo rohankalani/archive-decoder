@@ -49,85 +49,110 @@ export interface ProcessedChartData {
   pc10: number;
 }
 
-// AQI Breakpoints following EPA standards
-const PM25_BREAKPOINTS = [
-  { low: 0, high: 12, aqiLow: 0, aqiHigh: 50 },
-  { low: 12.1, high: 35.4, aqiLow: 51, aqiHigh: 100 },
-  { low: 35.5, high: 55.4, aqiLow: 101, aqiHigh: 150 },
-  { low: 55.5, high: 150.4, aqiLow: 151, aqiHigh: 200 },
-  { low: 150.5, high: 250.4, aqiLow: 201, aqiHigh: 300 },
-  { low: 250.5, high: 350.4, aqiLow: 301, aqiHigh: 400 },
-  { low: 350.5, high: 500.4, aqiLow: 401, aqiHigh: 500 }
-];
+// Arduino AQI Breakpoints from ROSAIQ device
+const AQI_RANGES = {
+  R1: { low: 0, high: 50 },
+  R2: { low: 51, high: 100 },
+  R3: { low: 101, high: 150 },
+  R4: { low: 151, high: 200 },
+  R5: { low: 201, high: 300 },
+  R6: { low: 301, high: 500 }
+};
 
-const PM10_BREAKPOINTS = [
-  { low: 0, high: 54, aqiLow: 0, aqiHigh: 50 },
-  { low: 55, high: 154, aqiLow: 51, aqiHigh: 100 },
-  { low: 155, high: 254, aqiLow: 101, aqiHigh: 150 },
-  { low: 255, high: 354, aqiLow: 151, aqiHigh: 200 },
-  { low: 355, high: 424, aqiLow: 201, aqiHigh: 300 },
-  { low: 425, high: 504, aqiLow: 301, aqiHigh: 400 },
-  { low: 505, high: 604, aqiLow: 401, aqiHigh: 500 }
-];
+const PM25_RANGES = {
+  R1: { low: 0, high: 12.0 },
+  R2: { low: 12.1, high: 35.4 },
+  R3: { low: 35.5, high: 55.4 },
+  R4: { low: 55.5, high: 150.4 },
+  R5: { low: 150.5, high: 250.4 },
+  R6: { low: 250.5, high: 350.4 }
+};
 
-// Simplified breakpoints for other pollutants
-const VOC_BREAKPOINTS = [
-  { low: 0, high: 100, aqiLow: 0, aqiHigh: 50 },
-  { low: 101, high: 200, aqiLow: 51, aqiHigh: 100 },
-  { low: 201, high: 400, aqiLow: 101, aqiHigh: 150 },
-  { low: 401, high: 800, aqiLow: 151, aqiHigh: 200 },
-  { low: 801, high: 1200, aqiLow: 201, aqiHigh: 300 }
-];
+const PM10_RANGES = {
+  R1: { low: 0, high: 54 },
+  R2: { low: 55, high: 154 },
+  R3: { low: 155, high: 254 },
+  R4: { low: 255, high: 354 },
+  R5: { low: 355, high: 424 },
+  R6: { low: 425, high: 604 }
+};
 
-const HCHO_BREAKPOINTS = [
-  { low: 0, high: 10, aqiLow: 0, aqiHigh: 50 },
-  { low: 11, high: 30, aqiLow: 51, aqiHigh: 100 },
-  { low: 31, high: 60, aqiLow: 101, aqiHigh: 150 },
-  { low: 61, high: 120, aqiLow: 151, aqiHigh: 200 },
-  { low: 121, high: 200, aqiLow: 201, aqiHigh: 300 }
-];
+const HCHO_RANGES = {
+  R1: { low: 0, high: 30 },
+  R2: { low: 31, high: 50 },
+  R3: { low: 51, high: 100 },
+  R4: { low: 101, high: 200 },
+  R5: { low: 201, high: 300 },
+  R6: { low: 301, high: 500 }
+};
 
-const NOX_BREAKPOINTS = [
-  { low: 0, high: 50, aqiLow: 0, aqiHigh: 50 },
-  { low: 51, high: 100, aqiLow: 51, aqiHigh: 100 },
-  { low: 101, high: 200, aqiLow: 101, aqiHigh: 150 },
-  { low: 201, high: 400, aqiLow: 151, aqiHigh: 200 },
-  { low: 401, high: 800, aqiLow: 201, aqiHigh: 300 }
-];
+const VOC_RANGES = {
+  R1: { low: 0, high: 50 },
+  R2: { low: 51, high: 100 },
+  R3: { low: 101, high: 150 },
+  R4: { low: 151, high: 200 },
+  R5: { low: 201, high: 300 },
+  R6: { low: 301, high: 500 }
+};
 
-function calculateAqiFromBreakpoints(concentration: number, breakpoints: typeof PM25_BREAKPOINTS): number {
-  if (concentration <= 0) return 0;
-  
-  for (const bp of breakpoints) {
-    if (concentration >= bp.low && concentration <= bp.high) {
-      return Math.round(
-        ((bp.aqiHigh - bp.aqiLow) / (bp.high - bp.low)) * (concentration - bp.low) + bp.aqiLow
-      );
-    }
-  }
-  
-  // If concentration exceeds all breakpoints, return max AQI
-  return 500;
+const NOX_RANGES = {
+  R1: { low: 0, high: 50 },
+  R2: { low: 51, high: 100 },
+  R3: { low: 101, high: 150 },
+  R4: { low: 151, high: 200 },
+  R5: { low: 201, high: 300 },
+  R6: { low: 301, high: 500 }
+};
+
+// Arduino AQI calculation formula matching device firmware
+function calculateAqi(reading: number, aqiLow: number, aqiHigh: number, bpLow: number, bpHigh: number): number {
+  const aqiIndex = ((aqiHigh - aqiLow) / (bpHigh - bpLow)) * (reading - bpLow) + aqiLow;
+  return Math.min(500, Math.round(aqiIndex));
 }
 
-export function calculatePM25Aqi(pm25: number): number {
-  return calculateAqiFromBreakpoints(pm25, PM25_BREAKPOINTS);
+export function calculatePM25Aqi(value: number): number {
+  if (value < PM25_RANGES.R2.low) return calculateAqi(value, AQI_RANGES.R1.low, AQI_RANGES.R1.high, PM25_RANGES.R1.low, PM25_RANGES.R1.high);
+  if (value < PM25_RANGES.R3.low) return calculateAqi(value, AQI_RANGES.R2.low, AQI_RANGES.R2.high, PM25_RANGES.R2.low, PM25_RANGES.R2.high);
+  if (value < PM25_RANGES.R4.low) return calculateAqi(value, AQI_RANGES.R3.low, AQI_RANGES.R3.high, PM25_RANGES.R3.low, PM25_RANGES.R3.high);
+  if (value < PM25_RANGES.R5.low) return calculateAqi(value, AQI_RANGES.R4.low, AQI_RANGES.R4.high, PM25_RANGES.R4.low, PM25_RANGES.R4.high);
+  if (value < PM25_RANGES.R6.low) return calculateAqi(value, AQI_RANGES.R5.low, AQI_RANGES.R5.high, PM25_RANGES.R5.low, PM25_RANGES.R5.high);
+  return calculateAqi(value, AQI_RANGES.R6.low, AQI_RANGES.R6.high, PM25_RANGES.R6.low, PM25_RANGES.R6.high);
 }
 
-export function calculatePM10Aqi(pm10: number): number {
-  return calculateAqiFromBreakpoints(pm10, PM10_BREAKPOINTS);
+export function calculatePM10Aqi(value: number): number {
+  if (value < PM10_RANGES.R2.low) return calculateAqi(value, AQI_RANGES.R1.low, AQI_RANGES.R1.high, PM10_RANGES.R1.low, PM10_RANGES.R1.high);
+  if (value < PM10_RANGES.R3.low) return calculateAqi(value, AQI_RANGES.R2.low, AQI_RANGES.R2.high, PM10_RANGES.R2.low, PM10_RANGES.R2.high);
+  if (value < PM10_RANGES.R4.low) return calculateAqi(value, AQI_RANGES.R3.low, AQI_RANGES.R3.high, PM10_RANGES.R3.low, PM10_RANGES.R3.high);
+  if (value < PM10_RANGES.R5.low) return calculateAqi(value, AQI_RANGES.R4.low, AQI_RANGES.R4.high, PM10_RANGES.R4.low, PM10_RANGES.R4.high);
+  if (value < PM10_RANGES.R6.low) return calculateAqi(value, AQI_RANGES.R5.low, AQI_RANGES.R5.high, PM10_RANGES.R5.low, PM10_RANGES.R5.high);
+  return calculateAqi(value, AQI_RANGES.R6.low, AQI_RANGES.R6.high, PM10_RANGES.R6.low, PM10_RANGES.R6.high);
 }
 
-export function calculateVOCAqi(voc: number): number {
-  return calculateAqiFromBreakpoints(voc, VOC_BREAKPOINTS);
+export function calculateHCHOAqi(value: number): number {
+  if (value < HCHO_RANGES.R2.low) return calculateAqi(value, AQI_RANGES.R1.low, AQI_RANGES.R1.high, HCHO_RANGES.R1.low, HCHO_RANGES.R1.high);
+  if (value < HCHO_RANGES.R3.low) return calculateAqi(value, AQI_RANGES.R2.low, AQI_RANGES.R2.high, HCHO_RANGES.R2.low, HCHO_RANGES.R2.high);
+  if (value < HCHO_RANGES.R4.low) return calculateAqi(value, AQI_RANGES.R3.low, AQI_RANGES.R3.high, HCHO_RANGES.R3.low, HCHO_RANGES.R3.high);
+  if (value < HCHO_RANGES.R5.low) return calculateAqi(value, AQI_RANGES.R4.low, AQI_RANGES.R4.high, HCHO_RANGES.R4.low, HCHO_RANGES.R4.high);
+  if (value < HCHO_RANGES.R6.low) return calculateAqi(value, AQI_RANGES.R5.low, AQI_RANGES.R5.high, HCHO_RANGES.R5.low, HCHO_RANGES.R5.high);
+  return calculateAqi(value, AQI_RANGES.R6.low, AQI_RANGES.R6.high, HCHO_RANGES.R6.low, HCHO_RANGES.R6.high);
 }
 
-export function calculateHCHOAqi(hcho: number): number {
-  return calculateAqiFromBreakpoints(hcho, HCHO_BREAKPOINTS);
+export function calculateVOCAqi(value: number): number {
+  if (value < VOC_RANGES.R2.low) return calculateAqi(value, AQI_RANGES.R1.low, AQI_RANGES.R1.high, VOC_RANGES.R1.low, VOC_RANGES.R1.high);
+  if (value < VOC_RANGES.R3.low) return calculateAqi(value, AQI_RANGES.R2.low, AQI_RANGES.R2.high, VOC_RANGES.R2.low, VOC_RANGES.R2.high);
+  if (value < VOC_RANGES.R4.low) return calculateAqi(value, AQI_RANGES.R3.low, AQI_RANGES.R3.high, VOC_RANGES.R3.low, VOC_RANGES.R3.high);
+  if (value < VOC_RANGES.R5.low) return calculateAqi(value, AQI_RANGES.R4.low, AQI_RANGES.R4.high, VOC_RANGES.R4.low, VOC_RANGES.R4.high);
+  if (value < VOC_RANGES.R6.low) return calculateAqi(value, AQI_RANGES.R5.low, AQI_RANGES.R5.high, VOC_RANGES.R5.low, VOC_RANGES.R5.high);
+  return calculateAqi(value, AQI_RANGES.R6.low, AQI_RANGES.R6.high, VOC_RANGES.R6.low, VOC_RANGES.R6.high);
 }
 
-export function calculateNOxAqi(nox: number): number {
-  return calculateAqiFromBreakpoints(nox, NOX_BREAKPOINTS);
+export function calculateNOxAqi(value: number): number {
+  if (value < NOX_RANGES.R2.low) return calculateAqi(value, AQI_RANGES.R1.low, AQI_RANGES.R1.high, NOX_RANGES.R1.low, NOX_RANGES.R1.high);
+  if (value < NOX_RANGES.R3.low) return calculateAqi(value, AQI_RANGES.R2.low, AQI_RANGES.R2.high, NOX_RANGES.R2.low, NOX_RANGES.R2.high);
+  if (value < NOX_RANGES.R4.low) return calculateAqi(value, AQI_RANGES.R3.low, AQI_RANGES.R3.high, NOX_RANGES.R3.low, NOX_RANGES.R3.high);
+  if (value < NOX_RANGES.R5.low) return calculateAqi(value, AQI_RANGES.R4.low, AQI_RANGES.R4.high, NOX_RANGES.R4.low, NOX_RANGES.R4.high);
+  if (value < NOX_RANGES.R6.low) return calculateAqi(value, AQI_RANGES.R5.low, AQI_RANGES.R5.high, NOX_RANGES.R5.low, NOX_RANGES.R5.high);
+  return calculateAqi(value, AQI_RANGES.R6.low, AQI_RANGES.R6.high, NOX_RANGES.R6.low, NOX_RANGES.R6.high);
 }
 
 // Deterministic variation function using timestamp as seed

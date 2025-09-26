@@ -10,7 +10,9 @@ import { DeviceView } from '@/pages/DeviceView'
 import { DeviceDetail } from '@/pages/DeviceDetail'
 import Management from '@/pages/Management'
 import { Settings } from '@/pages/Settings'
-import Reports from '@/pages/Reports'
+import Reports from '@/pages/Reports';
+import Alerts from '@/pages/Alerts';
+import UserManagement from '@/pages/UserManagement';
 
 function App() {
   return (
@@ -68,6 +70,22 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Reports />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/alerts"
+              element={
+                <ProtectedRoute>
+                  <Alerts />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/users"
+              element={
+                <ProtectedRoute requireAdmin>
+                  <UserManagement />
                 </ProtectedRoute>
               }
             />

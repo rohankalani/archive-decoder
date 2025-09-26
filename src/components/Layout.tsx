@@ -9,7 +9,9 @@ import {
   User,
   ArrowLeft,
   Activity,
-  FileText
+  FileText,
+  AlertTriangle,
+  Users
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -102,6 +104,30 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
                 Reports
               </Link>
             </Button>
+            
+            <Button
+              variant={isActive('/alerts') ? 'default' : 'ghost'}
+              size="sm"
+              asChild
+            >
+              <Link to="/alerts" className="gap-2">
+                <AlertTriangle className="h-4 w-4" />
+                Alerts
+              </Link>
+            </Button>
+
+            {isAdmin && (
+              <Button
+                variant={isActive('/users') ? 'default' : 'ghost'}
+                size="sm"
+                asChild
+              >
+                <Link to="/users" className="gap-2">
+                  <Users className="h-4 w-4" />
+                  Users
+                </Link>
+              </Button>
+            )}
             
             <Button
               variant={isActive('/settings') ? 'default' : 'ghost'}

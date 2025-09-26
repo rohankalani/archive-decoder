@@ -1,13 +1,10 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from "npm:resend@2.0.0";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const resendApiKey = Deno.env.get('RESEND_API_KEY');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -127,58 +124,11 @@ serve(async (req) => {
 
     console.log(`Found ${prolongedAlerts.length} prolonged alerts`);
 
-    // Send email notifications if there are prolonged alerts and resend is configured
-    if (prolongedAlerts.length > 0 && resend) {
-      const emailContent = `
-Air Quality Alert - Prolonged Critical Levels Detected
-
-The following sensors have been in the critical/hazardous range for more than ${thresholdHours} hour(s):
-
-${prolongedAlerts.map(alert => `
-• Device: ${alert.deviceName}
-  Sensor: ${alert.sensorType.toUpperCase()}
-  Current Value: ${alert.value.toFixed(2)} ${alert.unit}
-  Critical Threshold: ${alert.threshold} ${alert.unit}
-  Duration: ${alert.duration.toFixed(1)} hours
-`).join('\n')}
-
-Please investigate and take appropriate action immediately.
-
-This is an automated alert from the Air Quality Monitoring System.
-Generated at: ${new Date().toLocaleString()}
-      `.trim();
-
-      const emailPromises = [];
-
-      if (adminEmail) {
-        emailPromises.push(
-          resend.emails.send({
-            from: 'Air Quality System <alerts@yourdomain.com>',
-            to: [adminEmail],
-            subject: `🚨 Critical Air Quality Alert - ${prolongedAlerts.length} Prolonged Issue(s)`,
-            text: emailContent,
-          })
-        );
-      }
-
-      if (supervisorEmail) {
-        emailPromises.push(
-          resend.emails.send({
-            from: 'Air Quality System <alerts@yourdomain.com>',
-            to: [supervisorEmail],
-            subject: `⚠️ Air Quality Alert - ${prolongedAlerts.length} Prolonged Issue(s)`,
-            text: emailContent,
-          })
-        );
-      }
-
-      try {
-        await Promise.all(emailPromises);
-        console.log('Alert emails sent successfully');
-      } catch (emailError) {
-        console.error('Error sending alert emails:', emailError);
-      }
-
+    // Send email notifications if there are prolonged alerts
+    if (prolongedAlerts.length > 0) {
+      console.log('Would send email alerts for:', prolongedAlerts);
+      // TODO: Implement email sending with Resend when configured
+      
       // Create in-app notifications for admins and supervisors
       const { data: adminUsers } = await supabase
         .from('profiles')
@@ -202,7 +152,7 @@ Generated at: ${new Date().toLocaleString()}
     return new Response(JSON.stringify({ 
       success: true,
       prolongedAlerts: prolongedAlerts.length,
-      emailsSent: prolongedAlerts.length > 0 && resend ? 'yes' : 'no',
+      emailsSent: 'not_configured',
       message: `Found ${prolongedAlerts.length} prolonged critical alerts`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

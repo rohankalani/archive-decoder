@@ -59,9 +59,14 @@ export function useUserManagement() {
       // to create the user account. For now, we'll just create the profile.
       // You would need to set up proper user invitation flow.
       
+      // Note: In a real implementation, you'd use Supabase Auth Admin API
+      // For demo purposes, we'll create a profile entry directly
+      const userId = crypto.randomUUID();
+      
       const { data, error } = await supabase
         .from('profiles')
         .insert({
+          id: userId,
           email: userData.email,
           first_name: userData.first_name,
           last_name: userData.last_name,

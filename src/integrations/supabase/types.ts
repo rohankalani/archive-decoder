@@ -584,7 +584,7 @@ export type Database = {
         | "o3"
         | "voc"
         | "pressure"
-      user_role: "super_admin" | "admin" | "viewer"
+      user_role: "super_admin" | "admin" | "viewer" | "supervisor"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -726,7 +726,7 @@ export const Constants = {
         "voc",
         "pressure",
       ],
-      user_role: ["super_admin", "admin", "viewer"],
+      user_role: ["super_admin", "admin", "viewer", "supervisor"],
     },
   },
 } as const

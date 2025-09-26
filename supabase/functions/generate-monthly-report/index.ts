@@ -1,14 +1,11 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
-import { Resend } from "npm:resend@2.0.0";
 
 const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
 const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
-const resendApiKey = Deno.env.get('RESEND_API_KEY');
 const geminiApiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY');
 
 const supabase = createClient(supabaseUrl, supabaseKey);
-const resend = resendApiKey ? new Resend(resendApiKey) : null;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -97,13 +94,16 @@ serve(async (req) => {
       return acc;
     }, {} as Record<string, number[]>);
 
-    const sensorBreakdown = Object.entries(sensorGroups).map(([type, values]) => ({
-      sensorType: type,
-      average: values.reduce((sum, val) => sum + val, 0) / values.length,
-      max: Math.max(...values),
-      min: Math.min(...values),
-      count: values.length,
-    }));
+    const sensorBreakdown = Object.entries(sensorGroups).map(([type, values]) => {
+      const numericValues = values as number[];
+      return {
+        sensorType: type,
+        average: numericValues.reduce((sum: number, val: number) => sum + val, 0) / numericValues.length,
+        max: Math.max(...numericValues),
+        min: Math.min(...numericValues),
+        count: numericValues.length,
+      };
+    });
 
     const reportData = {
       totalReadings: readings.length,
@@ -190,48 +190,17 @@ Format as a professional monthly report suitable for university administrators a
 
     const supervisorEmail = emailSettings?.find(s => s.setting_key === 'supervisor_email')?.setting_value;
 
-    // Send email report if configured
-    if (supervisorEmail && resend) {
-      const monthName = lastMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
-      
-      let emailContent = `Monthly Air Quality Report - ${monthName}
-
-${aiSummary || 'Automated monthly air quality report'}
-
-=== DATA SUMMARY ===
-• Total Readings: ${reportData.totalReadings}
-• Average AQI: ${reportData.averageAqi?.toFixed(1) || 'N/A'}
-• Total Alerts: ${reportData.alertCount}
-• Peak Pollution: ${reportData.peakPollution?.value?.toFixed(2) || 'N/A'} ${reportData.peakPollution?.unit || ''}
-
-=== SENSOR BREAKDOWN ===
-${reportData.sensorBreakdown.map(sensor => 
-  `• ${sensor.sensorType.toUpperCase()}: Avg ${sensor.average.toFixed(2)}, Range ${sensor.min.toFixed(2)}-${sensor.max.toFixed(2)} (${sensor.count} readings)`
-).join('\n')}
-
-Report Period: ${lastMonth.toLocaleDateString()} - ${lastMonthEnd.toLocaleDateString()}
-Generated: ${new Date().toLocaleString()}
-
-This is an automated monthly report from the Air Quality Monitoring System.`;
-
-      try {
-        await resend.emails.send({
-          from: 'Air Quality System <reports@yourdomain.com>',
-          to: [supervisorEmail],
-          subject: `📊 Monthly Air Quality Report - ${monthName}`,
-          text: emailContent,
-        });
-        console.log('Monthly report email sent successfully');
-      } catch (emailError) {
-        console.error('Error sending monthly report email:', emailError);
-      }
+    // Send email report if configured (placeholder for now)
+    if (supervisorEmail) {
+      console.log('Would send monthly report to:', supervisorEmail);
+      // TODO: Implement email sending with Resend when configured
     }
 
     return new Response(JSON.stringify({ 
       success: true,
       reportData,
       aiSummary,
-      emailSent: supervisorEmail && resend ? 'yes' : 'no',
+      emailSent: 'not_configured',
       period: `${lastMonth.toLocaleDateString()} - ${lastMonthEnd.toLocaleDateString()}`
     }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },

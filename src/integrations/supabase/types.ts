@@ -591,23 +591,17 @@ export type Database = {
         | "pm25"
         | "pm10"
         | "co2"
-        | "co"
         | "no2"
-        | "o3"
         | "voc"
-        | "pressure"
-        | "pm01"
         | "pm03"
         | "pm05"
         | "pm1"
         | "pm5"
-        | "pc01"
         | "pc03"
         | "pc05"
         | "pc1"
         | "pc25"
         | "pc5"
-        | "pc10"
         | "hcho"
         | "nox"
         | "aqi_overall"
@@ -748,23 +742,17 @@ export const Constants = {
         "pm25",
         "pm10",
         "co2",
-        "co",
         "no2",
-        "o3",
         "voc",
-        "pressure",
-        "pm01",
         "pm03",
         "pm05",
         "pm1",
         "pm5",
-        "pc01",
         "pc03",
         "pc05",
         "pc1",
         "pc25",
         "pc5",
-        "pc10",
         "hcho",
         "nox",
         "aqi_overall",

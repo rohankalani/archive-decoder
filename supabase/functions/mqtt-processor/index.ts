@@ -46,11 +46,12 @@ serve(async (req) => {
 
     // Batch insert sensor readings for better performance
     const readings = [];
-    const sensorTypes = ['pm03', 'pm05', 'pm1', 'pm5', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'hcho', 'pc03', 'pc05', 'pc1', 'pc25', 'pc5', 'aqi_overall'];
+    const sensorTypes = ['pm03', 'pm05', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'hcho', 'pc03', 'pc05', 'pc1', 'pc25', 'pc5', 'aqi_overall'];
     const units: Record<string, string> = {
       pm03: 'µg/m³',
       pm05: 'µg/m³',
       pm1: 'µg/m³',
+      pm25: 'µg/m³',
       pm5: 'µg/m³',
       pm10: 'µg/m³', 
       co2: 'ppm',

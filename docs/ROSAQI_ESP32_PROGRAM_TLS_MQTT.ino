@@ -251,13 +251,13 @@ unsigned int wifi_strength_disconnect_count=0;
 unsigned int server_no_resp=0;
 
 IpsSensor ips_sensor;
-uint32_t pc01=0,pc03=0,pc05=0,pc1=0,pc25=0,pc5=0,pc10=0;
-uint32_t pc01_avg=0,pc03_avg=0,pc05_avg=0,pc1_avg=0,pc25_avg=0,pc5_avg=0,pc10_avg=0;
-uint32_t pc01_avg_disp=0,pc03_avg_disp=0,pc05_avg_disp=0,pc1_avg_disp=0,pc25_avg_disp=0,pc5_avg_disp,pc10_avg_disp=0;
-float pm01=0,pm03=0,pm05=0,pm1=0,pm25=0,pm5=0,pm10=0;
-float pm01_avg=0,pm03_avg=0,pm05_avg=0,pm1_avg=0,pm25_avg=0,pm5_avg=0,pm10_avg=0;
-float pm01_avg_disp=0,pm03_avg_disp=0,pm05_avg_disp=0,pm1_avg_disp=0,pm25_avg_disp=0,pm5_avg_disp,pm10_avg_disp=0;
-float pm01_avg_cld=0,pm03_avg_cld=0,pm05_avg_cld=0,pm1_avg_cld=0,pm25_avg_cld=0,pm5_avg_cld,pm10_avg_cld=0;
+uint32_t pc03=0,pc05=0,pc1=0,pc25=0,pc5=0;
+uint32_t pc03_avg=0,pc05_avg=0,pc1_avg=0,pc25_avg=0,pc5_avg=0;
+uint32_t pc03_avg_disp=0,pc05_avg_disp=0,pc1_avg_disp=0,pc25_avg_disp=0,pc5_avg_disp;
+float pm03=0,pm05=0,pm1=0,pm25=0,pm5=0,pm10=0;
+float pm03_avg=0,pm05_avg=0,pm1_avg=0,pm25_avg=0,pm5_avg=0,pm10_avg=0;
+float pm03_avg_disp=0,pm05_avg_disp=0,pm1_avg_disp=0,pm25_avg_disp=0,pm5_avg_disp,pm10_avg_disp=0;
+float pm03_avg_cld=0,pm05_avg_cld=0,pm1_avg_cld=0,pm25_avg_cld=0,pm5_avg_cld,pm10_avg_cld=0;
 uint32_t check_pm25_disp=0;
 uint32_t sen_pm25_disp=0;
 uint8_t ips_read_flag = 1;//pm sensor
@@ -349,14 +349,11 @@ boolean sam_data_received = false;
 int a[60] ={0};
 int aqi[10] ={0};
 int aqi_avg_array[8] ={0};
-uint32_t pc01_mvg_avg[8] ={0};
 uint32_t pc03_mvg_avg[8] ={0};
 uint32_t pc05_mvg_avg[8] ={0};
 uint32_t pc1_mvg_avg[8] ={0};
 uint32_t pc25_mvg_avg[8] ={0};
 uint32_t pc5_mvg_avg[8] ={0};
-uint32_t pc10_mvg_avg[8] ={0};
-float pm01_mvg_avg[8] ={0};
 float pm03_mvg_avg[8] ={0};
 float pm05_mvg_avg[8] ={0};
 float pm1_mvg_avg[8] ={0};
@@ -433,14 +430,11 @@ uint8_t fram_co2_disp=0;
 uint8_t fram_vocIndex_disp=0;
 uint8_t fram_noxIndex_disp=0;
 uint8_t fram_actual_aqi=0;
-uint32_t fram_pc01_avg_disp=0;
 uint32_t fram_pc03_avg_disp=0;
 uint32_t fram_pc05_avg_disp=0;
 uint32_t fram_pc1_avg_disp=0;
 uint32_t fram_pc25_avg_disp=0;
 uint32_t fram_pc5_avg_disp=0;
-uint32_t fram_pc10_avg_disp=0;
-float fram_pm01_avg_cld=0.0;
 float fram_pm03_avg_cld=0.0;
 float fram_pm05_avg_cld=0.0;
 float fram_pm1_avg_cld=0.0;
@@ -1213,17 +1207,7 @@ void read_ips_data()
   { 
     uint32_t uint32_temp_add=0; float float_temp_add=0;
     ips_sensor.update(); 
-    pc01 = ips_sensor.getPC01(); 
-    //if(pc01>0)  && (pc01<100)
-    {
-      uint32_temp_add = 0;
-      for (ai=1; ai<4; ai++) { pc01_mvg_avg[ai] = pc01_mvg_avg[ai+1]; } pc01_mvg_avg[4]=pc01;
-      for (ai=1; ai<=4; ai++) { uint32_temp_add = uint32_temp_add + pc01_mvg_avg[ai] ;}
-      pc01_avg = uint32_temp_add/4;
-      pc01_avg_disp = pc01_avg;  
-    }           
-    
-    pc03 = ips_sensor.getPC03(); 
+    pc03 = ips_sensor.getPC03();
     //if(pc03>0)  && (pc03<100)
     {
       uint32_temp_add = 0;
@@ -1268,25 +1252,7 @@ void read_ips_data()
     pc5_avg = uint32_temp_add/4;
     }
 
-    pc10 = ips_sensor.getPC100();
-    //if(pc10>0)  && (pc10<100)
-    {
-    uint32_temp_add = 0;
-    for (ai=1; ai<4; ai++) { pc10_mvg_avg[ai] = pc10_mvg_avg[ai+1]; } pc10_mvg_avg[4]=pc10;
-    for (ai=1; ai<=4; ai++) { uint32_temp_add = uint32_temp_add + pc10_mvg_avg[ai] ;}
-    pc10_avg = uint32_temp_add/4;
-    }
-          
-    pm01 = ips_sensor.getPM01(); 
-    //if(pm01>0)  && (pm01<100)
-    {
-      float_temp_add = 0;
-      for (ai=1; ai<4; ai++) { pm01_mvg_avg[ai] = pm01_mvg_avg[ai+1]; } pm01_mvg_avg[4]=pm01;
-      for (ai=1; ai<=4; ai++) { float_temp_add = float_temp_add + pm01_mvg_avg[ai] ;}
-      pm01_avg = (float)(float_temp_add/4);
-    }           
-    
-    pm03 = ips_sensor.getPM03(); 
+    pm03 = ips_sensor.getPM03();
     //if(pm03>0)  && (pm03<100)
     {
       float_temp_add = 0;
@@ -1349,15 +1315,12 @@ void read_ips_data()
 
     Serial.println("----------------IPS VALUES Particle Count----------------"); Serial.println();
     if(pm_unit==0) { Serial.println("---CURRENT PM UNIT IS ft3----"); } else if(pm_unit==1) { Serial.println("---CURRENT PM UNIT IS m3----"); } Serial.println();
-    Serial.print("PC0.1:    ");    Serial.print(pc01);       Serial.print("\t");   Serial.print(pc01_avg);  Serial.print("\t");  Serial.print(int32_t(pc01-pc01_avg));  Serial.println();
     Serial.print("PC0.3:    ");    Serial.print(pc03);       Serial.print("\t");   Serial.print(pc03_avg);  Serial.print("\t");  Serial.print(int32_t(pc03-pc03_avg));  Serial.println(); 
     Serial.print("PC0.5:    ");    Serial.print(pc05);       Serial.print("\t");   Serial.print(pc05_avg);  Serial.print("\t");  Serial.print(int32_t(pc05-pc05_avg));  Serial.println();  
     Serial.print("PC1  :    ");    Serial.print(pc1);        Serial.print("\t");   Serial.print(pc1_avg);   Serial.print("\t");  Serial.print(int32_t(pc1-pc1_avg));    Serial.println();  
     Serial.print("PC2.5:    ");    Serial.print(pc25);       Serial.print("\t");   Serial.print(pc25_avg);  Serial.print("\t");  Serial.print(int32_t(pc25-pc25_avg));  Serial.println();  
     Serial.print("PC5  :    ");    Serial.print(pc5);        Serial.print("\t");   Serial.print(pc5_avg);   Serial.print("\t");  Serial.print(int32_t(pc5-pc5_avg));    Serial.println();  
-    Serial.print("PC10 :    ");    Serial.print(pc10);       Serial.print("\t");   Serial.print(pc10_avg);  Serial.print("\t"); Serial.print(int32_t(pc10-pc10_avg)); Serial.println(); 
     Serial.println("----------------IPS VALUES Particle Mass----------------");  
-    Serial.print("PM0.1:    ");   Serial.print(pm01,3);     Serial.print("\t");   Serial.print(pm01_avg,3);  Serial.print("\t");  Serial.print(float(pm01-pm01_avg),3);   Serial.println();
     Serial.print("PM0.3:    ");   Serial.print(pm03,3);     Serial.print("\t");   Serial.print(pm03_avg,3);  Serial.print("\t");  Serial.print(float(pm03-pm03_avg),3);   Serial.println();
     Serial.print("PM0.5:    ");   Serial.print(pm05,3);     Serial.print("\t");   Serial.print(pm05_avg,3);  Serial.print("\t");  Serial.print(float(pm05-pm05_avg),3);   Serial.println();
     Serial.print("PM1  :    ");   Serial.print(pm1,3);      Serial.print("\t");   Serial.print(pm1_avg,3);   Serial.print("\t");  Serial.print(float(pm1-pm1_avg),3);     Serial.println();
@@ -1366,15 +1329,11 @@ void read_ips_data()
     Serial.print("PM10 :    ");   Serial.print(pm10,3);     Serial.print("\t");   Serial.print(pm10_avg,3);  Serial.print("\t");  Serial.print(float(pm10-pm10_avg),3);   Serial.println();
     Serial.print("----------------------------------------------------------");
     Serial.println("\n");
-    pc01_avg_disp = pc01_avg;
     pc03_avg_disp = pc03_avg;
     pc05_avg_disp = pc05_avg;
     pc1_avg_disp  = pc1_avg;
     pc25_avg_disp = pc25_avg;
     pc5_avg_disp  = pc5_avg;
-    pc10_avg_disp  = pc10_avg;
-    pm01_avg_cld = pm01_avg;
-    pm01_avg_disp=pm01_avg_cld*1000;
     pm03_avg_cld = pm03_avg;
     pm03_avg_disp=pm03_avg_cld*1000;
     pm05_avg_cld = pm05_avg;
@@ -2700,7 +2659,6 @@ String createMQTTPayload() {
   doc["timestamp"] = timeClient.getFormattedTime(); // Use your existing time client
   
   // Add all PM sensor readings (mass concentration)
-  if (pm01_avg_disp > 0) doc["pm01"] = pm01_avg_disp;
   if (pm03_avg_disp > 0) doc["pm03"] = pm03_avg_disp;
   if (pm05_avg_disp > 0) doc["pm05"] = pm05_avg_disp;
   if (pm1_avg_disp > 0) doc["pm1"] = pm1_avg_disp;
@@ -2709,13 +2667,11 @@ String createMQTTPayload() {
   if (pm10_avg_disp > 0) doc["pm10"] = pm10_avg_disp;
   
   // Add all particle count readings
-  if (pc01_avg_disp > 0) doc["pc01"] = pc01_avg_disp;
   if (pc03_avg_disp > 0) doc["pc03"] = pc03_avg_disp;
   if (pc05_avg_disp > 0) doc["pc05"] = pc05_avg_disp;
   if (pc1_avg_disp > 0) doc["pc1"] = pc1_avg_disp;
   if (pc25_avg_disp > 0) doc["pc25"] = pc25_avg_disp;
   if (pc5_avg_disp > 0) doc["pc5"] = pc5_avg_disp;
-  if (pc10_avg_disp > 0) doc["pc10"] = pc10_avg_disp;
   
   // Gas sensors
   if (co2_disp > 0) doc["co2"] = co2_disp;

@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 
@@ -49,6 +49,7 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
   const [consolidatedSummary, setConsolidatedSummary] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isGeneratingReport, setIsGeneratingReport] = useState(false);
+  const fetchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Simple AQI calculation (PM2.5 based)
   const calculateAqi = useCallback((pm25: number): number => {
@@ -416,8 +417,24 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
   }, [classroomsData, params.dateRange, params.operatingHours]);
 
   useEffect(() => {
-    fetchClassroomReports();
-  }, [fetchClassroomReports]);
+    if (!params.dateRange?.from || !params.dateRange?.to) return; // Don't fetch without valid dates
+    
+    // Clear any existing timeout
+    if (fetchTimeoutRef.current) {
+      clearTimeout(fetchTimeoutRef.current);
+    }
+    
+    // Debounce the fetch call to prevent rapid successive calls
+    fetchTimeoutRef.current = setTimeout(() => {
+      fetchClassroomReports();
+    }, 300); // 300ms debounce
+    
+    return () => {
+      if (fetchTimeoutRef.current) {
+        clearTimeout(fetchTimeoutRef.current);
+      }
+    };
+  }, [fetchClassroomReports, params.dateRange?.from?.getTime(), params.dateRange?.to?.getTime()]);
 
   return {
     classroomsData,

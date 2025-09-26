@@ -76,11 +76,14 @@ export default function Reports() {
     locationId: selectedLocation === 'all' ? undefined : selectedLocation,
   });
 
-  const { classroomsData, consolidatedSummary, isLoading: isLoadingClassrooms, generateConsolidatedReport, isGeneratingReport: isGeneratingConsolidated } = useMultiClassroomReportData({
+  // Memoize hook parameters to prevent infinite re-renders
+  const memoizedHookParams = useMemo(() => ({
     dateRange,
     operatingHours: { start: 8, end: 18 },
     selectedBuildings: selectedLocation === 'all' ? undefined : [selectedLocation]
-  });
+  }), [dateRange.from.getTime(), dateRange.to.getTime(), selectedLocation]);
+
+  const { classroomsData, consolidatedSummary, isLoading: isLoadingClassrooms, generateConsolidatedReport, isGeneratingReport: isGeneratingConsolidated } = useMultiClassroomReportData(memoizedHookParams);
 
   const handlePeriodChange = (value: string) => {
     setSelectedPeriod(value);

@@ -64,10 +64,18 @@ export function DeviceDetail() {
     
     if (!deviceSensorData) {
       console.log('No deviceSensorData, returning empty data');
-      return { line: [], bar: [] };
+      return { 
+        aqi: [], 
+        environmental: [], 
+        airQuality: [], 
+        particulateMatter: [], 
+        particleCount: [],
+        bar: [] 
+      };
     }
 
-    const lineData = historicalData.map(item => {
+    // Process historical data for time-based charts
+    const processedData = historicalData.map(item => {
       const time = new Date(item.timestamp);
       const timeLabel = time.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
@@ -75,7 +83,7 @@ export function DeviceDetail() {
         hour12: true 
       });
       
-      // Calculate sub-indices for line chart
+      // Calculate sub-indices for AQI chart
       const pm25Aqi = item.pm25 ? calculatePM25Aqi(item.pm25) : 0;
       const pm10Aqi = item.pm10 ? calculatePM10Aqi(item.pm10) : 0;
       const hchoAqi = item.hcho ? calculateHCHOAqi(item.hcho) : 0;
@@ -87,16 +95,38 @@ export function DeviceDetail() {
       
       return {
         time: timeLabel,
+        // AQI data
         overallAqi,
         pm25Aqi,
         pm10Aqi,
         hchoAqi,
         vocAqi,
-        noxAqi
+        noxAqi,
+        // Environmental data
+        temperature: item.temperature || 0,
+        humidity: item.humidity || 0,
+        co2: item.co2 || 0,
+        // Air quality pollutants
+        voc: item.voc || 0,
+        hcho: item.hcho || 0,
+        nox: item.nox || 0,
+        // Particulate matter (assume we have current device data for missing historical PM values)
+        pm25: item.pm25 || deviceSensorData.pm25 || 0,
+        pm10: item.pm10 || deviceSensorData.pm10 || 0,
+        pm03: deviceSensorData.pm03 || 0,
+        pm1: deviceSensorData.pm1 || 0,
+        pm5: deviceSensorData.pm5 || 0,
+        // Particle count
+        pc03: deviceSensorData.pc03 || 0,
+        pc05: deviceSensorData.pc05 || 0,
+        pc1: deviceSensorData.pc1 || 0,
+        pc25: deviceSensorData.pc25 || 0,
+        pc5: deviceSensorData.pc5 || 0,
+        pc10: deviceSensorData.pc10 || 0
       };
     });
 
-    // Calculate current averaged values for bar chart
+    // Calculate current averaged values for bar chart (keeping this for summary)
     const latestData = historicalData[historicalData.length - 1] || {} as any;
     const barData = [
       {
@@ -122,37 +152,18 @@ export function DeviceDetail() {
         value: latestData.voc || deviceSensorData.voc || 0,
         unit: 'index',
         aqi: (latestData.voc || deviceSensorData.voc) ? calculateVOCAqi(latestData.voc || deviceSensorData.voc || 0) : 0
-      },
-      {
-        name: 'NOx',
-        value: latestData.nox || deviceSensorData.nox || 0,
-        unit: 'index',
-        aqi: (latestData.nox || deviceSensorData.nox) ? calculateNOxAqi(latestData.nox || deviceSensorData.nox || 0) : 0
-      },
-      {
-        name: 'CO₂',
-        value: latestData.co2 || deviceSensorData.co2 || 0,
-        unit: 'ppm',
-        aqi: 50 // CO2 doesn't have AQI sub-index, use neutral
-      },
-      {
-        name: 'Temp',
-        value: latestData.temperature || deviceSensorData.temperature || 0,
-        unit: '°C',
-        aqi: 50 // Temperature doesn't have AQI sub-index, use neutral
-      },
-      {
-        name: 'Humidity',
-        value: latestData.humidity || deviceSensorData.humidity || 0,
-        unit: '%',
-        aqi: 50 // Humidity doesn't have AQI sub-index, use neutral
       }
     ];
 
-    return { line: lineData, bar: barData };
+    return { 
+      aqi: processedData,
+      environmental: processedData,
+      airQuality: processedData,
+      particulateMatter: processedData,
+      particleCount: processedData,
+      bar: barData 
+    };
   }, [historicalData, deviceSensorData, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi]);
-
-  const getBarColor = (aqi: number): string => {
     const level = getQualityFromAqi(aqi);
     return getQualityColor(level);
   };
@@ -451,6 +462,231 @@ export function DeviceDetail() {
             </CardContent>
           </Card>
 
+          {/* Pollutant Time Series Charts */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Pollutant Time Series (Averaged {timePeriod})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs defaultValue="environmental">
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="environmental">Environmental</TabsTrigger>
+                  <TabsTrigger value="airquality">Air Quality</TabsTrigger>
+                  <TabsTrigger value="pm">Particulate Matter</TabsTrigger>
+                  <TabsTrigger value="pc">Particle Count</TabsTrigger>
+                </TabsList>
+                
+                <TabsContent value="environmental" className="mt-4">
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={generateChartData.environmental}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="time" 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="temperature" 
+                          stroke="#f97316" 
+                          strokeWidth={2}
+                          name="Temperature (°C)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="humidity" 
+                          stroke="#06b6d4" 
+                          strokeWidth={2}
+                          name="Humidity (%)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="co2" 
+                          stroke="#3b82f6" 
+                          strokeWidth={2}
+                          name="CO₂ (ppm)"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="airquality" className="mt-4">
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={generateChartData.airQuality}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="time" 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="voc" 
+                          stroke="#8b5cf6" 
+                          strokeWidth={2}
+                          name="VOC (index)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="hcho" 
+                          stroke="#10b981" 
+                          strokeWidth={2}
+                          name="HCHO (ppb)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="nox" 
+                          stroke="#f59e0b" 
+                          strokeWidth={2}
+                          name="NOx (index)"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="pm" className="mt-4">
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={generateChartData.particulateMatter}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="time" 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pm03" 
+                          stroke="#84cc16" 
+                          strokeWidth={2}
+                          name="PM0.3 (μg/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pm1" 
+                          stroke="#eab308" 
+                          strokeWidth={2}
+                          name="PM1 (μg/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pm25" 
+                          stroke="#ef4444" 
+                          strokeWidth={2}
+                          name="PM2.5 (μg/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pm5" 
+                          stroke="#f97316" 
+                          strokeWidth={2}
+                          name="PM5 (μg/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pm10" 
+                          stroke="#dc2626" 
+                          strokeWidth={2}
+                          name="PM10 (μg/m³)"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="pc" className="mt-4">
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={generateChartData.particleCount}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis 
+                          dataKey="time" 
+                          stroke="hsl(var(--muted-foreground))"
+                          fontSize={12}
+                          interval="preserveStartEnd"
+                        />
+                        <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                        <Legend />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pc03" 
+                          stroke="#84cc16" 
+                          strokeWidth={2}
+                          name="PC0.3 (#/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pc05" 
+                          stroke="#8b5cf6" 
+                          strokeWidth={2}
+                          name="PC0.5 (#/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pc1" 
+                          stroke="#06b6d4" 
+                          strokeWidth={2}
+                          name="PC1 (#/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pc25" 
+                          stroke="#10b981" 
+                          strokeWidth={2}
+                          name="PC2.5 (#/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pc5" 
+                          stroke="#f59e0b" 
+                          strokeWidth={2}
+                          name="PC5 (#/m³)"
+                          dot={false}
+                        />
+                        <Line 
+                          type="monotone" 
+                          dataKey="pc10" 
+                          stroke="#ef4444" 
+                          strokeWidth={2}
+                          name="PC10 (#/m³)"
+                          dot={false}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                  </div>
+                </TabsContent>
+              </Tabs>
+            </CardContent>
+          </Card>
+
           {/* AQI & Sub-Indices Chart */}
           <Card>
             <CardHeader className="pb-2">
@@ -459,7 +695,7 @@ export function DeviceDetail() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateChartData.line}>
+                  <LineChart data={generateChartData.aqi}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="time" 
@@ -523,10 +759,10 @@ export function DeviceDetail() {
             </CardContent>
           </Card>
 
-          {/* Current Pollutant Levels - Bar Chart */}
+          {/* Current Pollutant Summary - Bar Chart */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Current Pollutant Levels (Averaged {timePeriod})</CardTitle>
+              <CardTitle className="text-base">Current Key Pollutant Levels (AQI Color-Coded)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64">
@@ -554,41 +790,6 @@ export function DeviceDetail() {
                     <div className="text-muted-foreground">{item.unit}</div>
                   </div>
                 ))}
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Overall AQI Bar */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Overall AQI</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-32">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart 
-                    data={[{ 
-                      name: 'Overall AQI', 
-                      value: deviceSensorData.aqi || 0,
-                      aqi: deviceSensorData.aqi || 0
-                    }]} 
-                    layout="horizontal"
-                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <YAxis 
-                      type="category" 
-                      dataKey="name" 
-                      stroke="hsl(var(--muted-foreground))" 
-                      fontSize={12}
-                      width={80}
-                    />
-                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
-                      <Cell fill={getBarColor(deviceSensorData.aqi || 0)} />
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
               </div>
             </CardContent>
           </Card>

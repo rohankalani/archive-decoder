@@ -22,20 +22,31 @@ interface ReportData {
     min: number;
     count: number;
   }>;
-  occupancyInsights?: {
+  activityInsights?: {
     averageCO2: number;
-    peakOccupancyHours: Array<{ hour: number; avgCO2: number; estimatedOccupancy: number }>;
-    classroomUtilization: number;
-    busyDays: Array<{ day: string; avgCO2: number; occupancyScore: number }>;
+    peakActivityHours: Array<{ hour: number; avgCO2: number; activityLevel: string; intensity: number }>;
+    spaceUtilization: number;
+    busyDays: Array<{ day: string; avgCO2: number; activityScore: number }>;
     airQualityDuringClasses: {
       classHours: { avgCO2: number; avgAQI: number };
       offHours: { avgCO2: number; avgAQI: number };
     };
     spaceEfficiency: {
-      underutilizedRooms: number;
-      overCrowdedPeriods: number;
-      optimalCapacityPercentage: number;
+      lowActivityPeriods: number;
+      highActivityPeriods: number;
+      optimalActivityPercentage: number;
     };
+    ventilationEffectiveness: {
+      recoveryTimeMinutes: number;
+      maxCO2Reached: number;
+      ventilationScore: number;
+    };
+  };
+  externalComparison?: {
+    outdoorPM25: number;
+    indoorAdvantage: number;
+    protectionValue: string;
+    airQualityAdvantage: number;
   };
 }
 
@@ -103,27 +114,49 @@ Period: ${fromDate} to ${toDate}`;
       contextInfo += `\nLocation: All locations`;
     }
 
-    // Prepare occupancy insights section
-    let occupancySection = '';
-    if (reportData.occupancyInsights) {
-      const insights = reportData.occupancyInsights;
-      occupancySection = `
+    // Prepare activity insights and external comparison sections
+    let activitySection = '';
+    if (reportData.activityInsights) {
+      const insights = reportData.activityInsights;
+      activitySection = `
 
-🏫 **OCCUPANCY & SPACE UTILIZATION ANALYSIS** (CO2-Based Intelligence):
+🏫 **SPACE ACTIVITY & INTELLIGENCE ANALYSIS** (Advanced CO2-Based Analytics):
 - Average CO2 Levels: ${insights.averageCO2.toFixed(0)} ppm
-- Classroom Utilization Rate: ${insights.classroomUtilization.toFixed(1)}%
-- Peak Activity Hours: ${insights.peakOccupancyHours.slice(0, 3).map(h => `${h.hour}:00 (${h.estimatedOccupancy} people, ${h.avgCO2.toFixed(0)} ppm)`).join(', ')}
+- Space Utilization Rate: ${insights.spaceUtilization.toFixed(1)}%
+- Peak Activity Hours: ${insights.peakActivityHours.slice(0, 3).map(h => `${h.hour}:00 (${h.activityLevel}, ${h.avgCO2.toFixed(0)} ppm)`).join(', ')}
+
+🎯 **VENTILATION EFFECTIVENESS INTELLIGENCE**:
+- Ventilation Performance Score: ${insights.ventilationEffectiveness.ventilationScore}/100
+- Maximum CO2 Reached: ${insights.ventilationEffectiveness.maxCO2Reached.toFixed(0)} ppm
+- Estimated Recovery Time: ${insights.ventilationEffectiveness.recoveryTimeMinutes} minutes
 
 📊 Space Efficiency Metrics:
-- Optimal Capacity Periods: ${insights.spaceEfficiency.optimalCapacityPercentage}%
-- Under-utilized Rooms: ${insights.spaceEfficiency.underutilizedRooms}% of readings
-- Overcrowded Periods: ${insights.spaceEfficiency.overCrowdedPeriods}% of readings
+- Optimal Activity Periods: ${insights.spaceEfficiency.optimalActivityPercentage}%
+- Low Activity Periods: ${insights.spaceEfficiency.lowActivityPeriods}% of readings
+- High Activity Periods: ${insights.spaceEfficiency.highActivityPeriods}% of readings
 
-📅 Busiest Days: ${insights.busyDays.slice(0, 3).map(d => `${d.day} (${d.occupancyScore.toFixed(0)}% utilization)`).join(', ')}
+📅 Peak Activity Days: ${insights.busyDays.slice(0, 3).map(d => `${d.day} (${d.activityScore.toFixed(0)}% activity)`).join(', ')}
 
 🕐 Class Hours vs Off-Hours Air Quality:
 - During Classes (8AM-6PM): ${insights.airQualityDuringClasses.classHours.avgCO2.toFixed(0)} ppm CO2, AQI ${insights.airQualityDuringClasses.classHours.avgAQI.toFixed(0)}
 - Off-Hours: ${insights.airQualityDuringClasses.offHours.avgCO2.toFixed(0)} ppm CO2, AQI ${insights.airQualityDuringClasses.offHours.avgAQI.toFixed(0)}`;
+    }
+
+    let externalSection = '';
+    if (reportData.externalComparison) {
+      const ext = reportData.externalComparison;
+      externalSection = `
+
+🌍 **EXTERNAL AIR QUALITY ADVANTAGE ANALYSIS**:
+- Abu Dhabi Outdoor PM2.5: ${ext.outdoorPM25.toFixed(1)} µg/m³
+- Indoor Air Quality Advantage: ${ext.airQualityAdvantage.toFixed(0)}% cleaner than outdoor
+- Protection Multiplier: ${ext.indoorAdvantage}x cleaner indoor environment
+- Value Proposition: ${ext.protectionValue}
+
+💰 **QUANTIFIED BUSINESS BENEFITS**:
+- Reduced exposure to outdoor pollutants saves estimated health costs
+- Enhanced productivity environment with controlled air quality
+- Compliance with international indoor air quality standards`;
     }
 
     const prompt = `${contextInfo}
@@ -139,26 +172,30 @@ Data Summary:
 Sensor Breakdown:
 ${reportData.sensorBreakdown.map(sensor => 
   `- ${sensor.sensorType.toUpperCase()}: Average ${sensor.average.toFixed(2)}, Range ${sensor.min.toFixed(2)} - ${sensor.max.toFixed(2)} (${sensor.count} readings)`
-).join('\n')}${occupancySection}
+).join('\n')}${activitySection}${externalSection}
 
 **ANALYSIS REQUIREMENTS FOR TOP MANAGEMENT:**
 
 Please provide a comprehensive, executive-level air quality and occupancy intelligence report that demonstrates clear ROI for sensor deployment expansion. Include:
 
-1. **💼 EXECUTIVE DASHBOARD**: Key performance indicators that matter to university leadership
-2. **🎯 BUSINESS IMPACT**: How air quality correlates with student performance, class attendance, and facility efficiency
-3. **💰 COST-BENEFIT ANALYSIS**: Potential savings from optimized HVAC, reduced sick days, improved productivity
-4. **📊 OCCUPANCY INTELLIGENCE**: Detailed insights on space utilization, peak hours, classroom efficiency
-5. **⚠️ COMPLIANCE & LIABILITY**: Risk mitigation and regulatory compliance status
-6. **🏗️ EXPANSION RECOMMENDATIONS**: Specific recommendations for additional sensor deployment with ROI projections
-7. **📈 PERFORMANCE METRICS**: Baseline establishment for measuring improvement after sensor network expansion
-8. **🎓 STUDENT HEALTH & PERFORMANCE**: Direct correlation between air quality and academic environment quality
+1. **💼 EXECUTIVE DASHBOARD**: Key performance indicators and ROI metrics for university leadership
+2. **🎯 COMPETITIVE AIR QUALITY ADVANTAGE**: How our indoor environment compares to Abu Dhabi outdoor conditions  
+3. **💰 QUANTIFIED BUSINESS VALUE**: HVAC optimization savings, productivity gains, health cost avoidance calculations
+4. **📊 SPACE INTELLIGENCE**: Advanced activity patterns, ventilation effectiveness, room-specific performance metrics
+5. **⚠️ RISK MITIGATION**: Compliance status, liability reduction, proactive health protection measures
+6. **🏗️ STRATEGIC EXPANSION ROADMAP**: Data-driven sensor deployment priorities with specific ROI projections
+7. **📈 PERFORMANCE BENCHMARKING**: Establish measurable KPIs for continuous improvement tracking
+8. **🎓 ACADEMIC EXCELLENCE CORRELATION**: Direct link between optimal air quality and enhanced learning environments
+9. **🌍 SUSTAINABILITY LEADERSHIP**: Environmental responsibility and energy efficiency achievements
+10. **🚀 INNOVATION SHOWCASE**: Smart building capabilities and IoT infrastructure value demonstration
 
-**Special Focus Areas:**
-- Demonstrate how CO2 data reveals classroom overcrowding and scheduling inefficiencies
-- Show correlation between poor air quality and potential health/productivity impacts
-- Highlight revenue opportunities (energy savings, space optimization, health cost reduction)
-- Present compelling case for scaling the sensor network across more locations
+**Executive Focus Areas:**
+- **Air Quality Advantage**: Quantify how much cleaner indoor air is vs. Abu Dhabi outdoor pollution
+- **HVAC Intelligence**: Show CO2 patterns reveal optimal ventilation schedules and energy savings opportunities  
+- **Space Optimization**: Identify underutilized areas and overcrowding patterns for better space planning
+- **Health Cost Avoidance**: Calculate potential healthcare savings from maintaining superior indoor air quality
+- **Expansion ROI**: Present compelling financial case for scaling sensor network with specific payback periods
+- **Predictive Insights**: Use AI to forecast maintenance needs and prevent air quality issues before they occur
 
 Use professional language suitable for C-suite executives, university board members, and facility investment committees. Include specific ROI calculations and implementation timeline recommendations.
 

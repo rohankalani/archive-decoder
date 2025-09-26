@@ -30,20 +30,31 @@ interface ReportData {
     min: number;
     count: number;
   }>;
-  occupancyInsights?: {
+  activityInsights?: {
     averageCO2: number;
-    peakOccupancyHours: Array<{ hour: number; avgCO2: number; estimatedOccupancy: number }>;
-    classroomUtilization: number;
-    busyDays: Array<{ day: string; avgCO2: number; occupancyScore: number }>;
+    peakActivityHours: Array<{ hour: number; avgCO2: number; activityLevel: string; intensity: number }>;
+    spaceUtilization: number;
+    busyDays: Array<{ day: string; avgCO2: number; activityScore: number }>;
     airQualityDuringClasses: {
       classHours: { avgCO2: number; avgAQI: number };
       offHours: { avgCO2: number; avgAQI: number };
     };
     spaceEfficiency: {
-      underutilizedRooms: number;
-      overCrowdedPeriods: number;
-      optimalCapacityPercentage: number;
+      lowActivityPeriods: number;
+      highActivityPeriods: number;
+      optimalActivityPercentage: number;
     };
+    ventilationEffectiveness: {
+      recoveryTimeMinutes: number;
+      maxCO2Reached: number;
+      ventilationScore: number;
+    };
+  };
+  externalComparison?: {
+    outdoorPM25: number;
+    indoorAdvantage: number;
+    protectionValue: string;
+    airQualityAdvantage: number;
   };
 }
 
@@ -155,18 +166,19 @@ export function useReportData(params: ReportDataParams) {
         count: values.length,
       }));
 
-      // Enhanced CO2 Occupancy Analysis
+      // Enhanced Activity & Space Intelligence Analysis
       const co2Readings = readings.filter(r => r.sensor_type === 'co2');
-      let occupancyInsights = undefined;
+      let activityInsights = undefined;
 
       if (co2Readings.length > 0) {
         const averageCO2 = co2Readings.reduce((sum, r) => sum + Number(r.value), 0) / co2Readings.length;
         
-        // Estimate occupancy based on CO2 levels (400ppm = baseline, each person adds ~100ppm in classroom)
-        const estimateOccupancy = (co2Level: number): number => {
-          const baselineCO2 = 400;
-          const co2PerPerson = 100;
-          return Math.max(0, Math.round((co2Level - baselineCO2) / co2PerPerson));
+        // Determine activity level based on CO2 patterns (no people counting)
+        const getActivityLevel = (co2Level: number): { level: string; intensity: number } => {
+          if (co2Level < 500) return { level: 'Low Activity', intensity: 20 };
+          if (co2Level < 800) return { level: 'Moderate Activity', intensity: 50 };
+          if (co2Level < 1200) return { level: 'High Activity', intensity: 80 };
+          return { level: 'Peak Activity', intensity: 100 };
         };
 
         // Analyze hourly patterns
@@ -177,13 +189,15 @@ export function useReportData(params: ReportDataParams) {
           return acc;
         }, {} as Record<number, number[]>);
 
-        const peakOccupancyHours = Object.entries(hourlyData)
+        const peakActivityHours = Object.entries(hourlyData)
           .map(([hour, values]) => {
             const avgCO2 = values.reduce((s, v) => s + v, 0) / values.length;
+            const activity = getActivityLevel(avgCO2);
             return {
               hour: parseInt(hour),
               avgCO2,
-              estimatedOccupancy: estimateOccupancy(avgCO2)
+              activityLevel: activity.level,
+              intensity: activity.intensity
             };
           })
           .sort((a, b) => b.avgCO2 - a.avgCO2)
@@ -200,10 +214,10 @@ export function useReportData(params: ReportDataParams) {
         const busyDays = Object.entries(dailyData)
           .map(([day, values]) => {
             const avgCO2 = values.reduce((s, v) => s + v, 0) / values.length;
-            const occupancyScore = Math.min(100, ((avgCO2 - 400) / 1000) * 100);
-            return { day, avgCO2, occupancyScore: Math.max(0, occupancyScore) };
+            const activityScore = Math.min(100, ((avgCO2 - 400) / 1000) * 100);
+            return { day, avgCO2, activityScore: Math.max(0, activityScore) };
           })
-          .sort((a, b) => b.occupancyScore - a.occupancyScore);
+          .sort((a, b) => b.activityScore - a.activityScore);
 
         // Class hours vs off-hours analysis (assuming 8AM-6PM are class hours)
         const classHoursReadings = co2Readings.filter(r => {
@@ -235,23 +249,47 @@ export function useReportData(params: ReportDataParams) {
           }
         };
 
-        // Space efficiency calculations
-        const highCO2Readings = co2Readings.filter(r => Number(r.value) > 1000).length;
-        const lowCO2Readings = co2Readings.filter(r => Number(r.value) < 600).length;
+        // Activity efficiency calculations
+        const highActivityReadings = co2Readings.filter(r => Number(r.value) > 1000).length;
+        const lowActivityReadings = co2Readings.filter(r => Number(r.value) < 600).length;
         const totalCO2Readings = co2Readings.length;
 
-        occupancyInsights = {
+        // Calculate ventilation effectiveness
+        const sortedCO2 = co2Readings.map(r => Number(r.value)).sort((a, b) => b - a);
+        const maxCO2 = sortedCO2[0] || 400;
+        const medianCO2 = sortedCO2[Math.floor(sortedCO2.length / 2)] || 400;
+        const ventilationScore = Math.max(0, 100 - ((maxCO2 - 400) / 20)); // Score based on peak management
+
+        activityInsights = {
           averageCO2,
-          peakOccupancyHours,
-          classroomUtilization: Math.min(100, ((averageCO2 - 400) / 800) * 100),
+          peakActivityHours,
+          spaceUtilization: Math.min(100, ((averageCO2 - 400) / 800) * 100),
           busyDays,
           airQualityDuringClasses,
           spaceEfficiency: {
-            underutilizedRooms: Math.round((lowCO2Readings / totalCO2Readings) * 100),
-            overCrowdedPeriods: Math.round((highCO2Readings / totalCO2Readings) * 100),
-            optimalCapacityPercentage: Math.round(((totalCO2Readings - highCO2Readings - lowCO2Readings) / totalCO2Readings) * 100)
+            lowActivityPeriods: Math.round((lowActivityReadings / totalCO2Readings) * 100),
+            highActivityPeriods: Math.round((highActivityReadings / totalCO2Readings) * 100),
+            optimalActivityPercentage: Math.round(((totalCO2Readings - highActivityReadings - lowActivityReadings) / totalCO2Readings) * 100)
+          },
+          ventilationEffectiveness: {
+            recoveryTimeMinutes: Math.round((maxCO2 - medianCO2) / 10), // Estimated based on CO2 decay
+            maxCO2Reached: maxCO2,
+            ventilationScore: Math.round(ventilationScore)
           }
         };
+      }
+
+      // Fetch external air quality comparison
+      let externalComparison = undefined;
+      try {
+        const { data: externalData } = await supabase.functions.invoke('fetch-external-air-quality', {
+          body: { location: 'abu-dhabi', indoorPM25: averagePm25 }
+        });
+        if (externalData) {
+          externalComparison = externalData;
+        }
+      } catch (error) {
+        console.warn('Could not fetch external air quality data:', error);
       }
 
       setReportData({
@@ -260,7 +298,8 @@ export function useReportData(params: ReportDataParams) {
         peakPollution,
         alertCount: alerts?.length || 0,
         sensorBreakdown,
-        occupancyInsights,
+        activityInsights,
+        externalComparison,
       });
 
     } catch (error) {

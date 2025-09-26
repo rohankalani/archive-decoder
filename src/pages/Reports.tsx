@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users } from 'lucide-react';
+import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users, Shield } from 'lucide-react';
 import { format, subDays, subWeeks, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useReportData } from '@/hooks/useReportData';
@@ -13,7 +13,8 @@ import { useDevices } from '@/hooks/useDevices';
 import { useLocations } from '@/hooks/useLocations';
 import { Layout } from '@/components/Layout';
 import { useUnifiedMockData } from '@/contexts/UnifiedMockDataContext';
-import { OccupancyInsights } from '@/components/reports/OccupancyInsights';
+import { ActivityInsights } from '@/components/reports/ActivityInsights';
+import { ExternalComparison } from '@/components/reports/ExternalComparison';
 
 interface DateRange {
   from: Date;
@@ -353,20 +354,41 @@ Generated on: ${format(new Date(), 'PPP')}
         </div>
       )}
 
-      {/* Occupancy Insights */}
-      {reportData?.occupancyInsights && (
+      {/* External Air Quality Comparison */}
+      {reportData?.externalComparison && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Shield className="w-5 h-5" />
+              🌍 Air Quality Advantage Analysis
+            </CardTitle>
+            <CardDescription>
+              Real-time comparison with Abu Dhabi outdoor conditions and business value quantification
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <ExternalComparison 
+              externalComparison={reportData.externalComparison}
+              indoorPM25={reportData.sensorBreakdown.find(s => s.sensorType === 'pm25')?.average}
+            />
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Activity Intelligence */}
+      {reportData?.activityInsights && (
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Users className="w-5 h-5" />
-              🏫 Occupancy & Space Intelligence
+              🏫 Space Activity & Intelligence Analysis
             </CardTitle>
             <CardDescription>
-              Advanced CO₂-based occupancy analysis and space utilization insights for management decision-making
+              Advanced CO₂-based activity patterns, ventilation effectiveness, and space optimization insights
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <OccupancyInsights occupancyInsights={reportData.occupancyInsights} />
+            <ActivityInsights activityInsights={reportData.activityInsights} />
           </CardContent>
         </Card>
       )}

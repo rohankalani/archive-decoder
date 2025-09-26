@@ -19,14 +19,28 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Lege
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function DeviceDetail() {
+  console.log('DeviceDetail function start');
+  
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('1hr');
+  
+  console.log('DeviceDetail basic hooks ok', { deviceId, timePeriod });
+  
   const { sensorData, loading: sensorLoading } = useLiveSensorData();
+  console.log('useLiveSensorData ok');
+  
   const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(deviceId || '', timePeriod);
+  console.log('useHistoricalSensorData ok');
+  
   const { devices, loading: devicesLoading } = useDevices();
+  console.log('useDevices ok');
+  
   const { floors, getFloorLocation } = useLocations();
+  console.log('useLocations ok');
+  
   const { getQualityFromAqi, getQualityColor, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi } = useSettings();
+  console.log('useSettings ok');
 
   const device = devices.find(d => d.id === deviceId);
   const deviceSensorData = sensorData.find(s => s.device_id === deviceId);
@@ -41,7 +55,17 @@ export function DeviceDetail() {
 
   // Generate chart data with AQI calculations and color coding
   const generateChartData = useMemo(() => {
-    if (!deviceSensorData) return { line: [], bar: [] };
+    console.log('generateChartData called', { 
+      deviceSensorData: !!deviceSensorData, 
+      historicalDataLength: historicalData.length,
+      calculatePM25Aqi: typeof calculatePM25Aqi,
+      calculatePM10Aqi: typeof calculatePM10Aqi 
+    });
+    
+    if (!deviceSensorData) {
+      console.log('No deviceSensorData, returning empty data');
+      return { line: [], bar: [] };
+    }
 
     const lineData = historicalData.map(item => {
       const time = new Date(item.timestamp);

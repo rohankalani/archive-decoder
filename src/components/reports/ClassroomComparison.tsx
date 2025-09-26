@@ -107,52 +107,6 @@ export const ClassroomComparison = React.memo(({ classrooms, operatingHours }: C
   return (
     <TooltipProvider>
       <div className="space-y-8">
-        {/* Executive Summary Dashboard */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-            <Card className="glass-card hover-lift border-primary/30 bg-gradient-to-br from-primary/10 to-primary/20 glow-primary">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-primary-glow">📊 Campus Overview</CardTitle>
-                <Building className="h-4 w-4 text-primary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-primary mb-2">{executiveInsights.totalClassrooms}</div>
-                <p className="text-xs text-primary/70">Active Classrooms Monitored</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card hover-lift border-secondary/30 bg-gradient-to-br from-secondary/10 to-secondary/20 glow-secondary">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-secondary-glow">🏆 Top Performer</CardTitle>
-                <Star className="h-4 w-4 text-secondary" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-lg font-bold text-secondary mb-1">{executiveInsights.topPerformer.classroomName}</div>
-                <p className="text-xs text-secondary/70">{executiveInsights.topPerformer.roomEfficiencyScore}% Efficiency</p>
-              </CardContent>
-            </Card>
-
-            <Card className="glass-card hover-lift border-accent/30 bg-gradient-to-br from-accent/10 to-accent/20">
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-accent">📈 Average Efficiency</CardTitle>
-                <TrendingUp className="h-4 w-4 text-accent" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-accent mb-2">{executiveInsights.averageEfficiency.toFixed(1)}%</div>
-                <p className="text-xs text-accent/70">Campus Space Utilization</p>
-              </CardContent>
-            </Card>
-
-            <Card className={`glass-card hover-lift border-warning/30 bg-gradient-to-br from-warning/10 to-warning/20 ${executiveInsights.needsAttention.length > 0 ? 'animate-pulse-glow' : ''}`}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <CardTitle className="text-sm font-semibold text-warning-glow">⚠️ Needs Attention</CardTitle>
-                <AlertTriangle className="h-4 w-4 text-warning" />
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-bold text-warning mb-2">{executiveInsights.needsAttention.length}</div>
-                <p className="text-xs text-warning/70">Classrooms Requiring Action</p>
-              </CardContent>
-            </Card>
-        </div>
 
         {/* Classroom Performance Comparison Chart */}
         <Card className="glass-card hover-lift border-primary/20">

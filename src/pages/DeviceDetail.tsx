@@ -53,6 +53,12 @@ export function DeviceDetail() {
     return { label: 'Unhealthy', color: 'destructive' };
   };
 
+  const getBarColor = (aqi: number) => {
+    if (aqi <= 50) return 'hsl(var(--success))';
+    if (aqi <= 100) return 'hsl(var(--warning))';
+    return 'hsl(var(--destructive))';
+  };
+
   // Generate chart data with AQI calculations and color coding
   const generateChartData = useMemo(() => {
     console.log('generateChartData called', { 
@@ -164,9 +170,6 @@ export function DeviceDetail() {
       bar: barData 
     };
   }, [historicalData, deviceSensorData, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi]);
-    const level = getQualityFromAqi(aqi);
-    return getQualityColor(level);
-  };
 
   if (sensorLoading || devicesLoading || historicalLoading) {
     return (

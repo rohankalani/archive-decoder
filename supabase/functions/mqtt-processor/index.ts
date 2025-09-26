@@ -8,8 +8,6 @@ const corsHeaders = {
 
 interface SensorData {
   device_id: string;
-  pm03?: number;
-  pm05?: number;
   pm1?: number;
   pm5?: number;
   pm10?: number;
@@ -19,11 +17,11 @@ interface SensorData {
   voc?: number;
   no2?: number;  // ESP incorrectly sends nox as no2
   hcho?: number;
-  pc03?: number;
-  pc05?: number;
   pc1?: number;
   pc25?: number;
   pc5?: number;
+  aqi_overall?: number;
+  dominant_pollutant?: string;
   timestamp: string;
   [key: string]: any;
 }
@@ -44,10 +42,8 @@ serve(async (req) => {
 
     // Batch insert sensor readings for better performance
     const readings = [];
-    const sensorTypes = ['pm03', 'pm05', 'pm1', 'pm5', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'hcho', 'pc03', 'pc05', 'pc1', 'pc25', 'pc5', 'aqi_overall'];
+    const sensorTypes = ['pm1', 'pm5', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'hcho', 'pc1', 'pc25', 'pc5', 'aqi_overall'];
     const units: Record<string, string> = {
-      pm03: 'µg/m³',
-      pm05: 'µg/m³',
       pm1: 'µg/m³',
       pm5: 'µg/m³',
       pm10: 'µg/m³', 
@@ -56,8 +52,6 @@ serve(async (req) => {
       humidity: '%',
       voc: 'ppb',
       hcho: 'µg/m³',
-      pc03: 'particles/cm³',
-      pc05: 'particles/cm³',
       pc1: 'particles/cm³',
       pc25: 'particles/cm³',
       pc5: 'particles/cm³',

@@ -22,6 +22,12 @@ export function DeviceDetail() {
   const navigate = useNavigate();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('1hr');
   
+  // Toggle states for each chart type
+  const [environmentalParam, setEnvironmentalParam] = useState<'temperature' | 'humidity' | 'co2'>('temperature');
+  const [pollutantParam, setPollutantParam] = useState<'voc' | 'hcho' | 'nox'>('voc');
+  const [pmMassParam, setPmMassParam] = useState<'pm03' | 'pm1' | 'pm25' | 'pm5' | 'pm10'>('pm25');
+  const [pmCountParam, setPmCountParam] = useState<'pc03' | 'pc05' | 'pc1' | 'pc25' | 'pc5' | 'pc10'>('pc25');
+  
   const { sensorData, loading: sensorLoading } = useLiveSensorData();
   const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(deviceId || '', timePeriod);
   const { devices, loading: devicesLoading } = useDevices();
@@ -474,7 +480,32 @@ export function DeviceDetail() {
             {/* Environmental Conditions Bar Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Environmental Conditions</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  Environmental Conditions
+                  <div className="flex gap-1">
+                    <Button 
+                      variant={environmentalParam === 'temperature' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setEnvironmentalParam('temperature')}
+                    >
+                      Temp
+                    </Button>
+                    <Button 
+                      variant={environmentalParam === 'humidity' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setEnvironmentalParam('humidity')}
+                    >
+                      Humidity
+                    </Button>
+                    <Button 
+                      variant={environmentalParam === 'co2' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setEnvironmentalParam('co2')}
+                    >
+                      CO₂
+                    </Button>
+                  </div>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -483,10 +514,16 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Legend />
-                      <Bar dataKey="temperature" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="Temperature (°C)" />
-                      <Bar dataKey="humidity" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="Humidity (%)" />
-                      <Bar dataKey="co2" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="CO₂ (ppm)" />
+                      <Bar 
+                        dataKey={environmentalParam} 
+                        fill="hsl(var(--primary))" 
+                        radius={[4, 4, 0, 0]} 
+                        name={
+                          environmentalParam === 'temperature' ? 'Temperature (°C)' :
+                          environmentalParam === 'humidity' ? 'Humidity (%)' :
+                          'CO₂ (ppm)'
+                        }
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -496,7 +533,32 @@ export function DeviceDetail() {
             {/* Pollutants Bar Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Pollutants</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  Pollutants
+                  <div className="flex gap-1">
+                    <Button 
+                      variant={pollutantParam === 'voc' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPollutantParam('voc')}
+                    >
+                      VOC
+                    </Button>
+                    <Button 
+                      variant={pollutantParam === 'hcho' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPollutantParam('hcho')}
+                    >
+                      HCHO
+                    </Button>
+                    <Button 
+                      variant={pollutantParam === 'nox' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPollutantParam('nox')}
+                    >
+                      NOx
+                    </Button>
+                  </div>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -505,10 +567,16 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Legend />
-                      <Bar dataKey="voc" fill="hsl(var(--success))" radius={[4, 4, 0, 0]} name="VOC (index)" />
-                      <Bar dataKey="hcho" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="HCHO (ppb)" />
-                      <Bar dataKey="nox" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="NOx (index)" />
+                      <Bar 
+                        dataKey={pollutantParam} 
+                        fill="hsl(var(--accent))" 
+                        radius={[4, 4, 0, 0]} 
+                        name={
+                          pollutantParam === 'voc' ? 'VOC (index)' :
+                          pollutantParam === 'hcho' ? 'HCHO (ppb)' :
+                          'NOx (index)'
+                        }
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -518,7 +586,46 @@ export function DeviceDetail() {
             {/* Particulate Matter (Mass) Bar Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Particulate Matter (Mass)</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  Particulate Matter (Mass)
+                  <div className="flex gap-1">
+                    <Button 
+                      variant={pmMassParam === 'pm03' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmMassParam('pm03')}
+                    >
+                      PM0.3
+                    </Button>
+                    <Button 
+                      variant={pmMassParam === 'pm1' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmMassParam('pm1')}
+                    >
+                      PM1
+                    </Button>
+                    <Button 
+                      variant={pmMassParam === 'pm25' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmMassParam('pm25')}
+                    >
+                      PM2.5
+                    </Button>
+                    <Button 
+                      variant={pmMassParam === 'pm5' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmMassParam('pm5')}
+                    >
+                      PM5
+                    </Button>
+                    <Button 
+                      variant={pmMassParam === 'pm10' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmMassParam('pm10')}
+                    >
+                      PM10
+                    </Button>
+                  </div>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -527,12 +634,12 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Legend />
-                      <Bar dataKey="pm03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="PM0.3 (μg/m³)" />
-                      <Bar dataKey="pm1" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} name="PM1 (μg/m³)" />
-                      <Bar dataKey="pm25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="PM2.5 (μg/m³)" />
-                      <Bar dataKey="pm5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="PM5 (μg/m³)" />
-                      <Bar dataKey="pm10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="PM10 (μg/m³)" />
+                      <Bar 
+                        dataKey={pmMassParam} 
+                        fill="hsl(var(--destructive))" 
+                        radius={[4, 4, 0, 0]} 
+                        name={`${pmMassParam.toUpperCase()} (μg/m³)`}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -542,7 +649,53 @@ export function DeviceDetail() {
             {/* Particulate Matter (Count) Bar Chart */}
             <Card>
               <CardHeader>
-                <CardTitle>Particulate Matter (Count)</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  Particulate Matter (Count)
+                  <div className="flex gap-1">
+                    <Button 
+                      variant={pmCountParam === 'pc03' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmCountParam('pc03')}
+                    >
+                      PC0.3
+                    </Button>
+                    <Button 
+                      variant={pmCountParam === 'pc05' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmCountParam('pc05')}
+                    >
+                      PC0.5
+                    </Button>
+                    <Button 
+                      variant={pmCountParam === 'pc1' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmCountParam('pc1')}
+                    >
+                      PC1
+                    </Button>
+                    <Button 
+                      variant={pmCountParam === 'pc25' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmCountParam('pc25')}
+                    >
+                      PC2.5
+                    </Button>
+                    <Button 
+                      variant={pmCountParam === 'pc5' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmCountParam('pc5')}
+                    >
+                      PC5
+                    </Button>
+                    <Button 
+                      variant={pmCountParam === 'pc10' ? 'default' : 'outline'} 
+                      size="sm"
+                      onClick={() => setPmCountParam('pc10')}
+                    >
+                      PC10
+                    </Button>
+                  </div>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-64">
@@ -551,13 +704,12 @@ export function DeviceDetail() {
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                      <Legend />
-                      <Bar dataKey="pc03" fill="hsl(var(--muted))" radius={[4, 4, 0, 0]} name="PC0.3 (#/m³)" />
-                      <Bar dataKey="pc05" fill="hsl(var(--secondary))" radius={[4, 4, 0, 0]} name="PC0.5 (#/m³)" />
-                      <Bar dataKey="pc1" fill="hsl(var(--accent))" radius={[4, 4, 0, 0]} name="PC1 (#/m³)" />
-                      <Bar dataKey="pc25" fill="hsl(var(--destructive))" radius={[4, 4, 0, 0]} name="PC2.5 (#/m³)" />
-                      <Bar dataKey="pc5" fill="hsl(var(--warning))" radius={[4, 4, 0, 0]} name="PC5 (#/m³)" />
-                      <Bar dataKey="pc10" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} name="PC10 (#/m³)" />
+                      <Bar 
+                        dataKey={pmCountParam} 
+                        fill="hsl(var(--warning))" 
+                        radius={[4, 4, 0, 0]} 
+                        name={`${pmCountParam.toUpperCase()} (#/m³)`}
+                      />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

@@ -1,11 +1,13 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/Layout';
 import { useLiveSensorData } from '@/hooks/useLiveSensorData';
+import { useHistoricalSensorData, TimePeriod } from '@/hooks/useHistoricalSensorData';
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
+import { useSettings } from '@/contexts/SettingsContext';
 import { 
   ArrowLeft,
   Activity,
@@ -13,14 +15,18 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, BarChart, Bar, Cell } from 'recharts';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 
 export function DeviceDetail() {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
+  const [timePeriod, setTimePeriod] = useState<TimePeriod>('1hr');
   const { sensorData, loading: sensorLoading } = useLiveSensorData();
+  const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(deviceId || '', timePeriod);
   const { devices, loading: devicesLoading } = useDevices();
   const { floors, getFloorLocation } = useLocations();
+  const { getQualityFromAqi, getQualityColor, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi } = useSettings();
 
   const device = devices.find(d => d.id === deviceId);
   const deviceSensorData = sensorData.find(s => s.device_id === deviceId);
@@ -33,46 +39,101 @@ export function DeviceDetail() {
     return { label: 'Unhealthy', color: 'destructive' };
   };
 
-  // Generate mock historical data for charts
-  const generateHistoricalData = useMemo(() => {
-    const data = [];
-    const now = new Date();
-    
-    for (let i = 23; i >= 0; i--) {
-      const time = new Date(now.getTime() - i * 60 * 60 * 1000);
-      const hour = time.getHours();
+  // Generate chart data with AQI calculations and color coding
+  const generateChartData = useMemo(() => {
+    if (!deviceSensorData) return { line: [], bar: [] };
+
+    const lineData = historicalData.map(item => {
+      const time = new Date(item.timestamp);
       const timeLabel = time.toLocaleTimeString('en-US', { 
         hour: '2-digit', 
         minute: '2-digit',
         hour12: true 
       });
       
-      data.push({
+      // Calculate sub-indices for line chart
+      const pm25Aqi = item.pm25 ? calculatePM25Aqi(item.pm25) : 0;
+      const pm10Aqi = item.pm10 ? calculatePM10Aqi(item.pm10) : 0;
+      const hchoAqi = item.hcho ? calculateHCHOAqi(item.hcho) : 0;
+      const vocAqi = item.voc ? calculateVOCAqi(item.voc) : 0;
+      const noxAqi = item.nox ? calculateNOxAqi(item.nox) : 0;
+      
+      // Overall AQI is max of all sub-indices
+      const overallAqi = Math.max(pm25Aqi, pm10Aqi, hchoAqi, vocAqi, noxAqi);
+      
+      return {
         time: timeLabel,
-        aqi: 30 + Math.random() * 120 + Math.sin(hour / 24 * Math.PI * 2) * 20,
-        pm25: 10 + Math.random() * 40 + Math.sin(hour / 24 * Math.PI * 2) * 10,
-        pm10: 15 + Math.random() * 50 + Math.sin(hour / 24 * Math.PI * 2) * 15,
-        co2: 400 + Math.random() * 800 + Math.sin(hour / 24 * Math.PI * 2) * 200,
-        temperature: 20 + Math.random() * 10 + Math.sin(hour / 24 * Math.PI * 2) * 5,
-        humidity: 30 + Math.random() * 40 + Math.sin(hour / 24 * Math.PI * 2) * 15,
-        voc: 50 + Math.random() * 200 + Math.sin(hour / 24 * Math.PI * 2) * 50,
-        hcho: (0.01 + Math.random() * 0.05 + Math.sin(hour / 24 * Math.PI * 2) * 0.02) * 1000,
-        pm03: 1 + Math.random() * 5,
-        pm1: 1 + Math.random() * 8,
-        pm5: 12 + Math.random() * 45,
-        pc03: (10000 + Math.random() * 80000) / 1000, // Convert to thousands for better display
-        pc05: (5000 + Math.random() * 40000) / 1000,
-        pc1: (500 + Math.random() * 2000) / 100, // Convert to hundreds
-        pc25: (100 + Math.random() * 800) / 10,
-        pc5: 10 + Math.random() * 80,
-        pc10: 5 + Math.random() * 150
-      });
-    }
-    
-    return data;
-  }, []);
+        overallAqi,
+        pm25Aqi,
+        pm10Aqi,
+        hchoAqi,
+        vocAqi,
+        noxAqi
+      };
+    });
 
-  if (sensorLoading || devicesLoading) {
+    // Calculate current averaged values for bar chart
+    const latestData = historicalData[historicalData.length - 1] || {} as any;
+    const barData = [
+      {
+        name: 'PM2.5',
+        value: latestData.pm25 || deviceSensorData.pm25 || 0,
+        unit: 'μg/m³',
+        aqi: (latestData.pm25 || deviceSensorData.pm25) ? calculatePM25Aqi(latestData.pm25 || deviceSensorData.pm25 || 0) : 0
+      },
+      {
+        name: 'PM10',
+        value: latestData.pm10 || deviceSensorData.pm10 || 0,
+        unit: 'μg/m³',
+        aqi: (latestData.pm10 || deviceSensorData.pm10) ? calculatePM10Aqi(latestData.pm10 || deviceSensorData.pm10 || 0) : 0
+      },
+      {
+        name: 'HCHO',
+        value: latestData.hcho || deviceSensorData.hcho || 0,
+        unit: 'ppb',
+        aqi: (latestData.hcho || deviceSensorData.hcho) ? calculateHCHOAqi(latestData.hcho || deviceSensorData.hcho || 0) : 0
+      },
+      {
+        name: 'VOC',
+        value: latestData.voc || deviceSensorData.voc || 0,
+        unit: 'index',
+        aqi: (latestData.voc || deviceSensorData.voc) ? calculateVOCAqi(latestData.voc || deviceSensorData.voc || 0) : 0
+      },
+      {
+        name: 'NOx',
+        value: latestData.nox || deviceSensorData.nox || 0,
+        unit: 'index',
+        aqi: (latestData.nox || deviceSensorData.nox) ? calculateNOxAqi(latestData.nox || deviceSensorData.nox || 0) : 0
+      },
+      {
+        name: 'CO₂',
+        value: latestData.co2 || deviceSensorData.co2 || 0,
+        unit: 'ppm',
+        aqi: 50 // CO2 doesn't have AQI sub-index, use neutral
+      },
+      {
+        name: 'Temp',
+        value: latestData.temperature || deviceSensorData.temperature || 0,
+        unit: '°C',
+        aqi: 50 // Temperature doesn't have AQI sub-index, use neutral
+      },
+      {
+        name: 'Humidity',
+        value: latestData.humidity || deviceSensorData.humidity || 0,
+        unit: '%',
+        aqi: 50 // Humidity doesn't have AQI sub-index, use neutral
+      }
+    ];
+
+    return { line: lineData, bar: barData };
+  }, [historicalData, deviceSensorData, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi]);
+
+  const getBarColor = (aqi: number): string => {
+    const level = getQualityFromAqi(aqi);
+    return getQualityColor(level);
+  };
+
+  if (sensorLoading || devicesLoading || historicalLoading) {
     return (
       <Layout showBackButton>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -209,13 +270,13 @@ export function DeviceDetail() {
                 <div className="text-lg font-bold text-purple-500">
                   {deviceSensorData.voc ? Math.round(deviceSensorData.voc) : '--'}
                 </div>
-                <div className="text-xs text-muted-foreground">VOC (ppb)</div>
+                <div className="text-xs text-muted-foreground">VOC (index)</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-green-500">
-                  {deviceSensorData.hcho ? (deviceSensorData.hcho * 1000).toFixed(0) : '--'}
+                  {deviceSensorData.hcho ? Math.round(deviceSensorData.hcho) : '--'}
                 </div>
-                <div className="text-xs text-muted-foreground">HCHO (μg/m³)</div>
+                <div className="text-xs text-muted-foreground">HCHO (ppb)</div>
               </div>
               <div className="text-center">
                 <div className="text-lg font-bold text-yellow-500">
@@ -349,15 +410,32 @@ export function DeviceDetail() {
 
         {/* Charts Section */}
         <div className="space-y-4">
+          {/* Time Period Selector */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Data Analysis Period</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <Tabs value={timePeriod} onValueChange={(value) => setTimePeriod(value as TimePeriod)}>
+                <TabsList className="grid w-full grid-cols-4">
+                  <TabsTrigger value="10min">10 Minutes</TabsTrigger>
+                  <TabsTrigger value="1hr">1 Hour</TabsTrigger>
+                  <TabsTrigger value="8hr">8 Hours</TabsTrigger>
+                  <TabsTrigger value="24hr">24 Hours</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </CardContent>
+          </Card>
+
           {/* AQI & Sub-Indices Chart */}
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">AQI & Sub-Indices</CardTitle>
+              <CardTitle className="text-base">AQI & Sub-Indices Over Time</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateHistoricalData}>
+                  <LineChart data={generateChartData.line}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="time" 
@@ -369,229 +447,123 @@ export function DeviceDetail() {
                     <Legend />
                     <Line 
                       type="monotone" 
-                      dataKey="aqi" 
-                      stroke="#8884d8" 
-                      strokeWidth={2}
-                      name="AQI"
+                      dataKey="overallAqi" 
+                      stroke="hsl(var(--primary))" 
+                      strokeWidth={3}
+                      name="Overall AQI"
                       dot={false}
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="pm25" 
+                      dataKey="pm25Aqi" 
                       stroke="#ef4444" 
                       strokeWidth={2}
-                      name="PM2.5"
+                      name="PM2.5 AQI"
                       dot={false}
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="pm10" 
+                      dataKey="pm10Aqi" 
                       stroke="#f97316" 
                       strokeWidth={2}
-                      name="PM10"
+                      name="PM10 AQI"
                       dot={false}
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="co2" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2}
-                      name="CO₂"
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Environmental Conditions Chart */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Environmental Conditions</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateHistoricalData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="time" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="temperature" 
-                      stroke="#f97316" 
-                      strokeWidth={2}
-                      name="Temp (°C)"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="humidity" 
-                      stroke="#06b6d4" 
-                      strokeWidth={2}
-                      name="Humidity (%)"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="voc" 
-                      stroke="#8b5cf6" 
-                      strokeWidth={2}
-                      name="VOC (ppb)"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="hcho" 
+                      dataKey="hchoAqi" 
                       stroke="#10b981" 
                       strokeWidth={2}
-                      name="HCHO (μg/m³)"
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Particulate Matter Chart */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Particulate Matter (μg/m³)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateHistoricalData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="time" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pm03" 
-                      stroke="#84cc16" 
-                      strokeWidth={2}
-                      name="PM0.3"
+                      name="HCHO AQI"
                       dot={false}
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="pm1" 
-                      stroke="#eab308" 
-                      strokeWidth={2}
-                      name="PM1"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pm25" 
-                      stroke="#ef4444" 
-                      strokeWidth={2}
-                      name="PM2.5"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pm5" 
-                      stroke="#f97316" 
-                      strokeWidth={2}
-                      name="PM5"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pm10" 
-                      stroke="#dc2626" 
-                      strokeWidth={2}
-                      name="PM10"
-                      dot={false}
-                    />
-                  </LineChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          {/* Particle Count Chart */}
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Particle Count (#/m³)</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateHistoricalData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis 
-                      dataKey="time" 
-                      stroke="hsl(var(--muted-foreground))"
-                      fontSize={12}
-                      interval="preserveStartEnd"
-                    />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
-                    <Legend />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pc03" 
-                      stroke="#3b82f6" 
-                      strokeWidth={2}
-                      name="PC0.3 (k)"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pc05" 
+                      dataKey="vocAqi" 
                       stroke="#8b5cf6" 
                       strokeWidth={2}
-                      name="PC0.5 (k)"
+                      name="VOC AQI"
                       dot={false}
                     />
                     <Line 
                       type="monotone" 
-                      dataKey="pc1" 
+                      dataKey="noxAqi" 
                       stroke="#06b6d4" 
                       strokeWidth={2}
-                      name="PC1 (h)"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pc25" 
-                      stroke="#10b981" 
-                      strokeWidth={2}
-                      name="PC2.5 (10s)"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pc5" 
-                      stroke="#f59e0b" 
-                      strokeWidth={2}
-                      name="PC5"
-                      dot={false}
-                    />
-                    <Line 
-                      type="monotone" 
-                      dataKey="pc10" 
-                      stroke="#ef4444" 
-                      strokeWidth={2}
-                      name="PC10"
+                      name="NOx AQI"
                       dot={false}
                     />
                   </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Current Pollutant Levels - Bar Chart */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Current Pollutant Levels (Averaged {timePeriod})</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={generateChartData.bar} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis 
+                      dataKey="name" 
+                      stroke="hsl(var(--muted-foreground))"
+                      fontSize={12}
+                    />
+                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                      {generateChartData.bar.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={getBarColor(entry.aqi)} />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="mt-4 grid grid-cols-4 gap-2 text-xs">
+                {generateChartData.bar.map((item, index) => (
+                  <div key={index} className="text-center">
+                    <div className="font-medium">{item.value.toFixed(1)}</div>
+                    <div className="text-muted-foreground">{item.unit}</div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Overall AQI Bar */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-base">Overall AQI</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-32">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart 
+                    data={[{ 
+                      name: 'Overall AQI', 
+                      value: deviceSensorData.aqi || 0,
+                      aqi: deviceSensorData.aqi || 0
+                    }]} 
+                    layout="horizontal"
+                    margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis type="number" stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis 
+                      type="category" 
+                      dataKey="name" 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12}
+                      width={80}
+                    />
+                    <Bar dataKey="value" radius={[0, 4, 4, 0]}>
+                      <Cell fill={getBarColor(deviceSensorData.aqi || 0)} />
+                    </Bar>
+                  </BarChart>
                 </ResponsiveContainer>
               </div>
             </CardContent>

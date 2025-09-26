@@ -160,12 +160,12 @@ export function UnifiedMockDataProvider({ children }: { children: ReactNode }) {
     setAlerts(prev => [newAlert, ...prev]);
   };
 
-  // Initialize on mount and when mock data is enabled
+  // Initialize on mount and when mock data is enabled (but not on every dependency change)
   useEffect(() => {
-    if (isUsingMockData) {
+    if (isUsingMockData && devices.length === 0) { // Only generate if we don't have data
       generateNewData();
     }
-  }, [isUsingMockData]);
+  }, [isUsingMockData]); // Remove other dependencies to prevent continuous generation
 
   // Simulate real-time updates every 2 minutes when using mock data (reduced frequency)
   useEffect(() => {

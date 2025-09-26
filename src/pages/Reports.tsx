@@ -23,7 +23,7 @@ interface DateRange {
   to: Date;
 }
 
-export default function Reports() {
+const ReportsComponent = React.memo(function ReportsComponent() {
   const [selectedPeriod, setSelectedPeriod] = useState<string>('7d');
   const [selectedDevice, setSelectedDevice] = useState<string>('all');
   const [selectedLocation, setSelectedLocation] = useState<string>('all');
@@ -33,7 +33,9 @@ export default function Reports() {
 
   const { devices } = useDevices();
   const { sites, buildings } = useLocations();
-  const { isUsingMockData, reports: mockReports } = useUnifiedMockData();
+  
+  // Only get isUsingMockData flag, don't subscribe to the actual mock data to prevent re-renders
+  const { isUsingMockData } = useUnifiedMockData();
 
   // Calculate date range based on selected period with stable references
   const dateRange = useMemo((): DateRange => {
@@ -549,4 +551,8 @@ Generated on: ${format(new Date(), 'PPP')}
       </div>
     </Layout>
   );
-}
+});
+
+ReportsComponent.displayName = 'Reports';
+
+export default ReportsComponent;

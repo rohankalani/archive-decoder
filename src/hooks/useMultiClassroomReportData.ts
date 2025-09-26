@@ -119,6 +119,9 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
   const fetchClassroomReports = useCallback(async () => {
     if (isLoading) return; // Prevent multiple concurrent fetches
     
+    // Stable reference check - don't fetch if params haven't actually changed
+    const currentParamsKey = `${params.dateRange.from.getTime()}-${params.dateRange.to.getTime()}-${params.operatingHours.start}-${params.operatingHours.end}-${params.selectedBuildings?.join(',') || 'all'}`;
+    
     setIsLoading(true);
     try {
       // Get all devices with their location information  
@@ -417,24 +420,31 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
   }, [classroomsData, params.dateRange, params.operatingHours]);
 
   useEffect(() => {
-    if (!params.dateRange?.from || !params.dateRange?.to) return; // Don't fetch without valid dates
+    // Don't fetch if we don't have valid date ranges
+    if (!params.dateRange?.from || !params.dateRange?.to) return;
     
     // Clear any existing timeout
     if (fetchTimeoutRef.current) {
       clearTimeout(fetchTimeoutRef.current);
     }
     
-    // Debounce the fetch call to prevent rapid successive calls
+    // Only fetch after component has settled (debounce)
     fetchTimeoutRef.current = setTimeout(() => {
       fetchClassroomReports();
-    }, 300); // 300ms debounce
+    }, 100); // Reduced debounce time
     
     return () => {
       if (fetchTimeoutRef.current) {
         clearTimeout(fetchTimeoutRef.current);
       }
     };
-  }, [fetchClassroomReports, params.dateRange?.from?.getTime(), params.dateRange?.to?.getTime()]);
+  }, [
+    params.dateRange.from.getTime(), 
+    params.dateRange.to.getTime(), 
+    params.operatingHours.start, 
+    params.operatingHours.end,
+    params.selectedBuildings?.join(',')
+  ]); // More stable dependencies
 
   return {
     classroomsData,

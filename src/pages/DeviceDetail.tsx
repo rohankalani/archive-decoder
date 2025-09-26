@@ -51,6 +51,28 @@ export function DeviceDetail() {
     return 'hsl(var(--destructive))';
   };
 
+  // Additional AQI calculation functions for missing parameters
+  const calculatePMAqi = (value: number, type: string) => {
+    // Simple AQI calculation for PM parameters not covered
+    if (type === 'pm03' || type === 'pm1' || type === 'pm5') {
+      if (value <= 10) return 25;
+      if (value <= 20) return 50;
+      if (value <= 50) return 100;
+      if (value <= 100) return 150;
+      return 200;
+    }
+    return 0;
+  };
+
+  const calculatePCAqi = (value: number) => {
+    // Simple AQI calculation for particle count
+    if (value <= 1000) return 25;
+    if (value <= 5000) return 50;
+    if (value <= 15000) return 100;
+    if (value <= 50000) return 150;
+    return 200;
+  };
+
   // Generate chart data with AQI calculations and color coding
   const generateChartData = useMemo(() => {
     if (!deviceSensorData) {
@@ -516,14 +538,25 @@ export function DeviceDetail() {
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Bar 
                         dataKey={environmentalParam} 
-                        fill="hsl(var(--primary))" 
                         radius={[4, 4, 0, 0]} 
                         name={
                           environmentalParam === 'temperature' ? 'Temperature (°C)' :
                           environmentalParam === 'humidity' ? 'Humidity (%)' :
                           'CO₂ (ppm)'
                         }
-                      />
+                      >
+                        {generateChartData.environmental.map((entry, index) => {
+                          let aqi = 0;
+                          if (environmentalParam === 'temperature') {
+                            aqi = entry.temperature > 30 ? 150 : entry.temperature > 25 ? 100 : 50;
+                          } else if (environmentalParam === 'humidity') {
+                            aqi = entry.humidity > 70 || entry.humidity < 30 ? 150 : entry.humidity > 60 || entry.humidity < 40 ? 100 : 50;
+                          } else {
+                            aqi = entry.co2 > 1000 ? 150 : entry.co2 > 800 ? 100 : 50;
+                          }
+                          return <Cell key={`cell-${index}`} fill={getBarColor(aqi)} />;
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -569,14 +602,25 @@ export function DeviceDetail() {
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Bar 
                         dataKey={pollutantParam} 
-                        fill="hsl(var(--accent))" 
                         radius={[4, 4, 0, 0]} 
                         name={
                           pollutantParam === 'voc' ? 'VOC (index)' :
                           pollutantParam === 'hcho' ? 'HCHO (ppb)' :
                           'NOx (index)'
                         }
-                      />
+                      >
+                        {generateChartData.pollutants.map((entry, index) => {
+                          let aqi = 0;
+                          if (pollutantParam === 'voc') {
+                            aqi = calculateVOCAqi(entry.voc);
+                          } else if (pollutantParam === 'hcho') {
+                            aqi = calculateHCHOAqi(entry.hcho);
+                          } else {
+                            aqi = calculateNOxAqi(entry.nox);
+                          }
+                          return <Cell key={`cell-${index}`} fill={getBarColor(aqi)} />;
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -636,10 +680,21 @@ export function DeviceDetail() {
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Bar 
                         dataKey={pmMassParam} 
-                        fill="hsl(var(--destructive))" 
                         radius={[4, 4, 0, 0]} 
                         name={`${pmMassParam.toUpperCase()} (μg/m³)`}
-                      />
+                      >
+                        {generateChartData.particulateMass.map((entry, index) => {
+                          let aqi = 0;
+                          if (pmMassParam === 'pm25') {
+                            aqi = calculatePM25Aqi(entry.pm25);
+                          } else if (pmMassParam === 'pm10') {
+                            aqi = calculatePM10Aqi(entry.pm10);
+                          } else {
+                            aqi = calculatePMAqi(entry[pmMassParam], pmMassParam);
+                          }
+                          return <Cell key={`cell-${index}`} fill={getBarColor(aqi)} />;
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
@@ -706,10 +761,14 @@ export function DeviceDetail() {
                       <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                       <Bar 
                         dataKey={pmCountParam} 
-                        fill="hsl(var(--warning))" 
                         radius={[4, 4, 0, 0]} 
                         name={`${pmCountParam.toUpperCase()} (#/m³)`}
-                      />
+                      >
+                        {generateChartData.particulateCount.map((entry, index) => {
+                          const aqi = calculatePCAqi(entry[pmCountParam]);
+                          return <Cell key={`cell-${index}`} fill={getBarColor(aqi)} />;
+                        })}
+                      </Bar>
                     </BarChart>
                   </ResponsiveContainer>
                 </div>

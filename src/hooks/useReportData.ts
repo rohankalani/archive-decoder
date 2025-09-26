@@ -154,7 +154,7 @@ export function useReportData(params: ReportDataParams) {
     } finally {
       setIsLoading(false);
     }
-  }, [params.dateRange, params.deviceId, params.locationId]);
+  }, [params.dateRange.from, params.dateRange.to, params.deviceId, params.locationId]);
 
   const generateReport = useCallback(async () => {
     if (!reportData) {
@@ -188,7 +188,7 @@ export function useReportData(params: ReportDataParams) {
     } finally {
       setIsGeneratingReport(false);
     }
-  }, [reportData, params]);
+  }, [reportData, params.dateRange, params.deviceId, params.locationId]);
 
   useEffect(() => {
     fetchReportData();

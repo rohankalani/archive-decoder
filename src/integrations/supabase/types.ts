@@ -561,6 +561,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_latest_sensor_readings_optimized: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          device_id: string
+          device_name: string
+          device_status: Database["public"]["Enums"]["device_status"]
+          reading_timestamp: string
+          sensor_type: Database["public"]["Enums"]["sensor_type"]
+          unit: string
+          value: number
+        }[]
+      }
       get_user_role: {
         Args: { user_id: string }
         Returns: Database["public"]["Enums"]["user_role"]

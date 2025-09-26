@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Calendar } from '@/components/ui/calendar';
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users, Shield } from 'lucide-react';
+import { CalendarIcon, Download, FileText, TrendingUp, AlertTriangle, Users, Shield, Building } from 'lucide-react';
 import { format, subDays, subWeeks, subMonths } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { useReportData } from '@/hooks/useReportData';
@@ -440,20 +440,20 @@ Generated on: ${format(new Date(), 'PPP')}
         </Card>
       )}
 
-      {/* Premium Activity Intelligence */}
+      {/* Smart Real Estate & Facilities Intelligence */}
       {reportData?.activityInsights && (
         <Card className="glass-card hover-lift border-tertiary/30 bg-gradient-to-br from-tertiary/5 via-primary/5 to-accent/5 shadow-2xl animate-fade-in">
           <CardHeader className="bg-gradient-to-r from-tertiary/10 via-primary/10 to-accent/10 rounded-t-lg">
             <CardTitle className="flex items-center gap-3 text-2xl">
               <div className="p-3 rounded-xl bg-tertiary/20 glow-primary animate-float">
-                <Users className="w-6 h-6 text-tertiary" />
+                <Building className="w-6 h-6 text-tertiary" />
               </div>
               <span className="bg-gradient-to-r from-tertiary via-primary to-accent bg-clip-text text-transparent">
-                🏫 Space Intelligence & Activity Analytics
+                🏢 Real Estate & Facilities Intelligence
               </span>
             </CardTitle>
             <CardDescription className="text-base ml-12">
-              Advanced CO₂-based activity patterns, HVAC performance scoring, and strategic space optimization
+              Smart building analytics, space utilization efficiency, and operational cost optimization insights
             </CardDescription>
           </CardHeader>
           <CardContent className="p-6">

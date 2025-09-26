@@ -32,22 +32,26 @@ interface ReportData {
   }>;
   activityInsights?: {
     averageCO2: number;
-    peakActivityHours: Array<{ hour: number; avgCO2: number; activityLevel: string; intensity: number }>;
-    spaceUtilization: number;
-    busyDays: Array<{ day: string; avgCO2: number; activityScore: number }>;
+    realEstateMetrics: {
+      roomUsageHours: number;
+      peakOccupancyPeriod: { start: number; end: number; description: string };
+      roomEfficiencyScore: number;
+      actualOccupancyRate: number;
+    };
+    occupancyTimeline: Array<{ hour: number; avgCO2: number; occupancyLevel: string; isOccupied: boolean }>;
     airQualityDuringClasses: {
       classHours: { avgCO2: number; avgAQI: number };
       offHours: { avgCO2: number; avgAQI: number };
-    };
-    spaceEfficiency: {
-      lowActivityPeriods: number;
-      highActivityPeriods: number;
-      optimalActivityPercentage: number;
     };
     ventilationEffectiveness: {
       recoveryTimeMinutes: number;
       maxCO2Reached: number;
       ventilationScore: number;
+    };
+    facilitiesInsights: {
+      energyCostPerHour: number;
+      hvacEfficiencyRating: string;
+      maintenanceStatus: string;
     };
   };
   externalComparison?: {
@@ -173,15 +177,15 @@ export function useReportData(params: ReportDataParams) {
       if (co2Readings.length > 0) {
         const averageCO2 = co2Readings.reduce((sum, r) => sum + Number(r.value), 0) / co2Readings.length;
         
-        // Determine activity level based on CO2 patterns (no people counting)
-        const getActivityLevel = (co2Level: number): { level: string; intensity: number } => {
-          if (co2Level < 500) return { level: 'Low Activity', intensity: 20 };
-          if (co2Level < 800) return { level: 'Moderate Activity', intensity: 50 };
-          if (co2Level < 1200) return { level: 'High Activity', intensity: 80 };
-          return { level: 'Peak Activity', intensity: 100 };
+        // Determine occupancy level based on CO2 patterns
+        const getOccupancyLevel = (co2Level: number): { level: string; isOccupied: boolean } => {
+          if (co2Level < 500) return { level: 'Unoccupied', isOccupied: false };
+          if (co2Level < 800) return { level: 'Light Occupancy', isOccupied: true };
+          if (co2Level < 1200) return { level: 'Active Use', isOccupied: true };
+          return { level: 'High Occupancy', isOccupied: true };
         };
 
-        // Analyze hourly patterns
+        // Analyze hourly patterns for occupancy timeline
         const hourlyData = co2Readings.reduce((acc, reading) => {
           const hour = new Date(reading.timestamp).getHours();
           if (!acc[hour]) acc[hour] = [];
@@ -189,35 +193,41 @@ export function useReportData(params: ReportDataParams) {
           return acc;
         }, {} as Record<number, number[]>);
 
-        const peakActivityHours = Object.entries(hourlyData)
+        const occupancyTimeline = Object.entries(hourlyData)
           .map(([hour, values]) => {
             const avgCO2 = values.reduce((s, v) => s + v, 0) / values.length;
-            const activity = getActivityLevel(avgCO2);
+            const occupancy = getOccupancyLevel(avgCO2);
             return {
               hour: parseInt(hour),
               avgCO2,
-              activityLevel: activity.level,
-              intensity: activity.intensity
+              occupancyLevel: occupancy.level,
+              isOccupied: occupancy.isOccupied
             };
           })
-          .sort((a, b) => b.avgCO2 - a.avgCO2)
-          .slice(0, 8);
+          .sort((a, b) => a.hour - b.hour);
 
-        // Analyze daily patterns
-        const dailyData = co2Readings.reduce((acc, reading) => {
-          const day = new Date(reading.timestamp).toLocaleDateString('en-US', { weekday: 'long' });
-          if (!acc[day]) acc[day] = [];
-          acc[day].push(Number(reading.value));
-          return acc;
-        }, {} as Record<string, number[]>);
+        // Calculate real estate metrics
+        const occupiedHours = occupancyTimeline.filter(h => h.isOccupied).length;
+        const roomUsageHours = (occupiedHours / 24) * 12; // Assume 12 hour work day
+        
+        // Find peak occupancy period
+        const sortedByOccupancy = occupancyTimeline
+          .filter(h => h.isOccupied)
+          .sort((a, b) => b.avgCO2 - a.avgCO2);
+        
+        const peakStart = sortedByOccupancy[0]?.hour || 9;
+        const peakEnd = Math.min(peakStart + 3, 18); // 3-hour peak period, max at 6PM
+        
+        const peakOccupancyPeriod = {
+          start: peakStart,
+          end: peakEnd,
+          description: sortedByOccupancy[0] ? `${sortedByOccupancy[0].occupancyLevel}` : 'Normal Usage'
+        };
 
-        const busyDays = Object.entries(dailyData)
-          .map(([day, values]) => {
-            const avgCO2 = values.reduce((s, v) => s + v, 0) / values.length;
-            const activityScore = Math.min(100, ((avgCO2 - 400) / 1000) * 100);
-            return { day, avgCO2, activityScore: Math.max(0, activityScore) };
-          })
-          .sort((a, b) => b.activityScore - a.activityScore);
+        // Calculate room efficiency (how well space is used during scheduled hours)
+        const scheduledHours = 12; // Assume 8AM-8PM schedule
+        const actualUsageRate = (roomUsageHours / scheduledHours) * 100;
+        const roomEfficiencyScore = Math.min(100, Math.max(0, actualUsageRate));
 
         // Class hours vs off-hours analysis (assuming 8AM-6PM are class hours)
         const classHoursReadings = co2Readings.filter(r => {
@@ -249,32 +259,37 @@ export function useReportData(params: ReportDataParams) {
           }
         };
 
-        // Activity efficiency calculations
-        const highActivityReadings = co2Readings.filter(r => Number(r.value) > 1000).length;
-        const lowActivityReadings = co2Readings.filter(r => Number(r.value) < 600).length;
-        const totalCO2Readings = co2Readings.length;
-
         // Calculate ventilation effectiveness
         const sortedCO2 = co2Readings.map(r => Number(r.value)).sort((a, b) => b - a);
         const maxCO2 = sortedCO2[0] || 400;
         const medianCO2 = sortedCO2[Math.floor(sortedCO2.length / 2)] || 400;
         const ventilationScore = Math.max(0, 100 - ((maxCO2 - 400) / 20)); // Score based on peak management
 
+        // Facilities insights
+        const baseEnergyCost = 0.15; // Base cost per hour
+        const energyCostPerHour = baseEnergyCost * (roomUsageHours / 8); // Adjusted for usage
+        const hvacEfficiencyRating = ventilationScore >= 80 ? 'Excellent' : ventilationScore >= 60 ? 'Good' : 'Needs Attention';
+        const maintenanceStatus = ventilationScore >= 90 ? 'Optimal Performance' : 'Regular maintenance recommended';
+
         activityInsights = {
           averageCO2,
-          peakActivityHours,
-          spaceUtilization: Math.min(100, ((averageCO2 - 400) / 800) * 100),
-          busyDays,
-          airQualityDuringClasses,
-          spaceEfficiency: {
-            lowActivityPeriods: Math.round((lowActivityReadings / totalCO2Readings) * 100),
-            highActivityPeriods: Math.round((highActivityReadings / totalCO2Readings) * 100),
-            optimalActivityPercentage: Math.round(((totalCO2Readings - highActivityReadings - lowActivityReadings) / totalCO2Readings) * 100)
+          realEstateMetrics: {
+            roomUsageHours,
+            peakOccupancyPeriod,
+            roomEfficiencyScore,
+            actualOccupancyRate: actualUsageRate
           },
+          occupancyTimeline,
+          airQualityDuringClasses,
           ventilationEffectiveness: {
             recoveryTimeMinutes: Math.round((maxCO2 - medianCO2) / 10), // Estimated based on CO2 decay
             maxCO2Reached: maxCO2,
             ventilationScore: Math.round(ventilationScore)
+          },
+          facilitiesInsights: {
+            energyCostPerHour,
+            hvacEfficiencyRating,
+            maintenanceStatus
           }
         };
       }

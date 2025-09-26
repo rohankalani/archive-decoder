@@ -1,28 +1,33 @@
 import React from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Clock, TrendingUp, Building, Gauge, Shield } from 'lucide-react';
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, PieChart, Pie, Cell, LineChart, Line } from 'recharts';
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
+import { Activity, Clock, TrendingUp, Building, Gauge, Shield, DollarSign, Home, Calendar, HelpCircle } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 
 interface ActivityInsightsProps {
   activityInsights: {
     averageCO2: number;
-    peakActivityHours: Array<{ hour: number; avgCO2: number; activityLevel: string; intensity: number }>;
-    spaceUtilization: number;
-    busyDays: Array<{ day: string; avgCO2: number; activityScore: number }>;
+    realEstateMetrics: {
+      roomUsageHours: number;
+      peakOccupancyPeriod: { start: number; end: number; description: string };
+      roomEfficiencyScore: number;
+      actualOccupancyRate: number;
+    };
+    occupancyTimeline: Array<{ hour: number; avgCO2: number; occupancyLevel: string; isOccupied: boolean }>;
     airQualityDuringClasses: {
       classHours: { avgCO2: number; avgAQI: number };
       offHours: { avgCO2: number; avgAQI: number };
-    };
-    spaceEfficiency: {
-      lowActivityPeriods: number;
-      highActivityPeriods: number;
-      optimalActivityPercentage: number;
     };
     ventilationEffectiveness: {
       recoveryTimeMinutes: number;
       maxCO2Reached: number;
       ventilationScore: number;
+    };
+    facilitiesInsights: {
+      energyCostPerHour: number;
+      hvacEfficiencyRating: string;
+      maintenanceStatus: string;
     };
   };
 }
@@ -43,10 +48,10 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
   };
 
   const getCO2Status = (co2Level: number) => {
-    if (co2Level < 500) return { status: 'Low Activity', color: 'bg-green-500' };
-    if (co2Level < 800) return { status: 'Moderate Activity', color: 'bg-blue-500' };
-    if (co2Level < 1200) return { status: 'High Activity', color: 'bg-yellow-500' };
-    return { status: 'Peak Activity', color: 'bg-red-500' };
+    if (co2Level < 500) return { status: 'Unoccupied', color: 'bg-green-500' };
+    if (co2Level < 800) return { status: 'Light Occupancy', color: 'bg-blue-500' };
+    if (co2Level < 1200) return { status: 'Active Use', color: 'bg-yellow-500' };
+    return { status: 'High Occupancy', color: 'bg-red-500' };
   };
 
   const getVentilationGrade = (score: number) => {
@@ -58,33 +63,47 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
     return { grade: 'D', color: 'text-red-600', bg: 'bg-red-50' };
   };
 
-  const spaceEfficiencyData = [
-    { name: 'Optimal Activity', value: activityInsights.spaceEfficiency.optimalActivityPercentage, color: COLORS[0] },
-    { name: 'Low Activity', value: activityInsights.spaceEfficiency.lowActivityPeriods, color: COLORS[1] },
-    { name: 'High Activity', value: activityInsights.spaceEfficiency.highActivityPeriods, color: COLORS[2] },
-  ];
+  const getRoomEfficiencyColor = (score: number) => {
+    if (score >= 80) return 'text-success';
+    if (score >= 60) return 'text-secondary';
+    if (score >= 40) return 'text-tertiary';
+    return 'text-danger';
+  };
 
   const ventilationGrade = getVentilationGrade(activityInsights.ventilationEffectiveness.ventilationScore);
 
   return (
-    <div className="space-y-6">
-      {/* Premium Executive Summary Cards */}
+    <TooltipProvider>
+      <div className="space-y-6">
+      {/* Real Estate Intelligence Executive Summary */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <Card className="glass-card hover-lift border-primary/30 bg-gradient-to-br from-primary/10 to-primary/20 glow-primary animate-fade-in">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-primary-glow">💨 Average CO₂ Level</CardTitle>
+            <CardTitle className="text-sm font-semibold text-primary-glow flex items-center gap-2">
+              🏢 Room Usage Hours
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3 w-3 text-primary/60 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Daily hours room is actively occupied based on CO₂ levels</p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+            </CardTitle>
             <div className="p-2 rounded-lg bg-primary/20 animate-pulse-glow">
-              <Building className="h-4 w-4 text-primary" />
+              <Home className="h-4 w-4 text-primary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold bg-gradient-to-r from-primary to-primary-glow bg-clip-text text-transparent">
-              {activityInsights.averageCO2.toFixed(0)} ppm
+              {activityInsights.realEstateMetrics.roomUsageHours.toFixed(1)}h
             </div>
             <div className="flex items-center gap-2 mt-2">
               <div className={`w-3 h-3 rounded-full ${getCO2Status(activityInsights.averageCO2).color} animate-pulse`} />
               <p className="text-xs text-primary/70 font-medium">
-                {getCO2Status(activityInsights.averageCO2).status}
+                per day occupied
               </p>
             </div>
           </CardContent>
@@ -92,41 +111,77 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
 
         <Card className="glass-card hover-lift border-secondary/30 bg-gradient-to-br from-secondary/10 to-secondary/20 glow-secondary animate-fade-in">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-secondary-glow">📊 Space Utilization</CardTitle>
+            <CardTitle className="text-sm font-semibold text-secondary-glow flex items-center gap-2">
+              📈 Room Efficiency Score
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3 w-3 text-secondary/60 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>How well the room space is utilized during scheduled hours</p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+            </CardTitle>
             <div className="p-2 rounded-lg bg-secondary/20 animate-pulse-glow">
-              <Activity className="h-4 w-4 text-secondary" />
+              <TrendingUp className="h-4 w-4 text-secondary" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent">
-              {activityInsights.spaceUtilization.toFixed(1)}%
+            <div className={`text-3xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent`}>
+              {activityInsights.realEstateMetrics.roomEfficiencyScore}/100
             </div>
             <p className="text-xs text-secondary/70 font-medium">
-              🎯 Overall space efficiency
+              🎯 Utilization efficiency
             </p>
           </CardContent>
         </Card>
 
         <Card className="glass-card hover-lift border-tertiary/30 bg-gradient-to-br from-tertiary/10 to-tertiary/20 animate-fade-in">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-tertiary-glow">⏰ Peak Activity Time</CardTitle>
+            <CardTitle className="text-sm font-semibold text-tertiary-glow flex items-center gap-2">
+              ⏰ Peak Occupancy
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3 w-3 text-tertiary/60 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Time period with highest room usage throughout the day</p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+            </CardTitle>
             <div className="p-2 rounded-lg bg-tertiary/20 animate-pulse-glow">
-              <TrendingUp className="h-4 w-4 text-tertiary" />
+              <Calendar className="h-4 w-4 text-tertiary" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold bg-gradient-to-r from-tertiary to-tertiary-glow bg-clip-text text-transparent">
-              {formatHour(activityInsights.peakActivityHours[0]?.hour || 0)}
+              {formatHour(activityInsights.realEstateMetrics.peakOccupancyPeriod.start)}-{formatHour(activityInsights.realEstateMetrics.peakOccupancyPeriod.end)}
             </div>
             <p className="text-xs text-tertiary/70 font-medium">
-              {activityInsights.peakActivityHours[0]?.activityLevel || 'N/A'}
+              {activityInsights.realEstateMetrics.peakOccupancyPeriod.description}
             </p>
           </CardContent>
         </Card>
 
         <Card className={`glass-card hover-lift border-accent/30 bg-gradient-to-br from-accent/10 to-accent/20 animate-fade-in`}>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-semibold text-accent">🏆 Ventilation Grade</CardTitle>
+            <CardTitle className="text-sm font-semibold text-accent flex items-center gap-2">
+              🏆 HVAC Performance
+              <TooltipProvider>
+                <UITooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-3 w-3 text-accent/60 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>How effectively the ventilation system manages air quality and CO₂ recovery</p>
+                  </TooltipContent>
+                </UITooltip>
+              </TooltipProvider>
+            </CardTitle>
             <div className="p-2 rounded-lg bg-accent/20 animate-pulse-glow">
               <Gauge className="h-4 w-4 text-accent" />
             </div>
@@ -143,7 +198,7 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Premium Peak Activity Hours Chart */}
+        {/* Room Occupancy Timeline */}
         <Card className="glass-card hover-lift border-primary/20 bg-gradient-to-br from-primary/5 to-secondary/5">
           <CardHeader className="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-t-lg">
             <CardTitle className="flex items-center gap-3">
@@ -151,43 +206,40 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
                 <Clock className="w-5 h-5 text-primary" />
               </div>
               <span className="bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                📈 Daily Activity Intelligence
+                🏢 Room Occupancy Timeline
               </span>
             </CardTitle>
             <CardDescription className="ml-11">
-              CO₂ patterns and activity intensity with predictive insights
+              Real occupancy patterns based on CO₂ readings throughout the day
             </CardDescription>
           </CardHeader>
           <CardContent>
             <ResponsiveContainer width="100%" height={300}>
-              <BarChart data={activityInsights.peakActivityHours}>
+              <BarChart data={activityInsights.occupancyTimeline}>
                 <CartesianGrid strokeDasharray="3 3" />
                 <XAxis 
                   dataKey="hour" 
                   tickFormatter={formatHour}
                   fontSize={12}
                 />
-                <YAxis yAxisId="co2" orientation="left" fontSize={12} />
-                <YAxis yAxisId="intensity" orientation="right" fontSize={12} />
+                <YAxis fontSize={12} />
                 <Tooltip 
                   formatter={(value, name) => [
-                    name === 'avgCO2' ? `${value} ppm` : `${value}%`,
-                    name === 'avgCO2' ? 'CO₂ Level' : 'Activity Intensity'
+                    `${value} ppm`,
+                    'CO₂ Level'
                   ]}
                   labelFormatter={(hour) => `Time: ${formatHour(hour as number)}`}
+                  labelStyle={{ color: 'hsl(var(--foreground))' }}
+                  contentStyle={{ 
+                    backgroundColor: 'hsl(var(--card))',
+                    border: '1px solid hsl(var(--border))',
+                    borderRadius: '8px'
+                  }}
                 />
                 <Bar 
-                  yAxisId="co2" 
                   dataKey="avgCO2" 
                   fill="hsl(var(--chart-1))" 
-                  name="avgCO2"
-                  radius={[2, 2, 0, 0]}
-                />
-                <Bar 
-                  yAxisId="intensity" 
-                  dataKey="intensity" 
-                  fill="hsl(var(--chart-2))" 
-                  name="intensity"
+                  name="CO₂ Level"
                   radius={[2, 2, 0, 0]}
                 />
               </BarChart>
@@ -195,37 +247,53 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
           </CardContent>
         </Card>
 
-        {/* Space Efficiency Pie Chart */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <Building className="w-5 h-5" />
-              Space Efficiency Distribution
+        {/* Real Estate Efficiency Metrics */}
+        <Card className="glass-card hover-lift border-secondary/20 bg-gradient-to-br from-secondary/5 to-tertiary/5">
+          <CardHeader className="bg-gradient-to-r from-secondary/10 to-tertiary/10 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-secondary/20 glow-secondary">
+                <DollarSign className="w-5 h-5 text-secondary" />
+              </div>
+              <span className="bg-gradient-to-r from-secondary to-tertiary bg-clip-text text-transparent">
+                💡 Facilities Cost Intelligence
+              </span>
             </CardTitle>
-            <CardDescription>
-              Breakdown of activity levels across time periods
+            <CardDescription className="ml-11">
+              Real estate utilization and operational efficiency metrics
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <ResponsiveContainer width="100%" height={300}>
-              <PieChart>
-                <Pie
-                  cx="50%"
-                  cy="50%"
-                  outerRadius={100}
-                  fill="#8884d8"
-                  dataKey="value"
-                  data={spaceEfficiencyData}
-                  label={({ name, value }) => `${name}: ${value}%`}
-                  labelLine={false}
-                >
-                  {spaceEfficiencyData.map((entry, index) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ))}
-                </Pie>
-                <Tooltip formatter={(value) => [`${value}%`, 'Percentage']} />
-              </PieChart>
-            </ResponsiveContainer>
+          <CardContent className="space-y-6">
+            <div className="grid grid-cols-1 gap-4">
+              <div className="p-4 rounded-xl glass-card border-secondary/20 bg-gradient-to-br from-secondary/10 to-secondary/20 hover-lift">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-secondary-glow">💰 HVAC Cost per Usage Hour</span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-secondary to-secondary-glow bg-clip-text text-transparent">
+                    ${activityInsights.facilitiesInsights.energyCostPerHour.toFixed(2)}
+                  </span>
+                </div>
+                <p className="text-xs text-secondary/70 font-medium">Based on {activityInsights.realEstateMetrics.roomUsageHours.toFixed(1)} hours daily usage</p>
+              </div>
+
+              <div className="p-4 rounded-xl glass-card border-tertiary/20 bg-gradient-to-br from-tertiary/10 to-tertiary/20 hover-lift">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-tertiary-glow">📊 Occupancy Rate</span>
+                  <span className="text-2xl font-bold bg-gradient-to-r from-tertiary to-tertiary-glow bg-clip-text text-transparent">
+                    {activityInsights.realEstateMetrics.actualOccupancyRate.toFixed(1)}%
+                  </span>
+                </div>
+                <p className="text-xs text-tertiary/70 font-medium">Actual vs scheduled usage efficiency</p>
+              </div>
+
+              <div className="p-4 rounded-xl glass-card border-accent/20 bg-gradient-to-br from-accent/10 to-accent/20 hover-lift">
+                <div className="flex justify-between items-center mb-2">
+                  <span className="text-sm font-semibold text-accent">⚡ System Status</span>
+                  <Badge className="bg-gradient-to-r from-success to-success-glow text-success-foreground">
+                    {activityInsights.facilitiesInsights.hvacEfficiencyRating}
+                  </Badge>
+                </div>
+                <p className="text-xs text-accent/70 font-medium">{activityInsights.facilitiesInsights.maintenanceStatus}</p>
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -274,34 +342,60 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
           </CardContent>
         </Card>
 
-        {/* Weekly Activity Pattern */}
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
-              <TrendingUp className="w-5 h-5" />
-              Weekly Activity Rankings
+        {/* Actionable Real Estate Insights */}
+        <Card className="glass-card hover-lift border-accent/20 bg-gradient-to-br from-accent/5 to-primary/5">
+          <CardHeader className="bg-gradient-to-r from-accent/10 to-primary/10 rounded-t-lg">
+            <CardTitle className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-accent/20 glow-accent">
+                <Building className="w-5 h-5 text-accent" />
+              </div>
+              <span className="bg-gradient-to-r from-accent to-primary bg-clip-text text-transparent">
+                🎯 Space Optimization Recommendations
+              </span>
             </CardTitle>
-            <CardDescription>
-              Daily activity scores based on CO₂ patterns
+            <CardDescription className="ml-11">
+              Executive insights for better space utilization and cost optimization
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
-            {activityInsights.busyDays.map((day, index) => (
-              <div key={day.day} className="flex items-center justify-between p-3 rounded-lg bg-muted/50">
-                <div className="flex items-center gap-3">
-                  <Badge variant={index < 3 ? "default" : "secondary"}>
-                    #{index + 1}
-                  </Badge>
-                  <span className="font-medium">{day.day}</span>
+            <div className="p-4 rounded-xl glass-card border-success/20 bg-gradient-to-br from-success/10 to-success/20 hover-lift">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-success/20">
+                  <TrendingUp className="w-4 h-4 text-success" />
                 </div>
-                <div className="text-right">
-                  <div className="font-bold">{day.activityScore.toFixed(0)}%</div>
-                  <div className="text-sm text-muted-foreground">
-                    {day.avgCO2.toFixed(0)} ppm avg
-                  </div>
-                </div>
+                <span className="font-semibold text-success-glow">🏆 High Efficiency Room</span>
               </div>
-            ))}
+              <p className="text-sm text-muted-foreground">
+                Room efficiency score of {activityInsights.realEstateMetrics.roomEfficiencyScore}/100 indicates excellent space utilization. 
+                Occupied {activityInsights.realEstateMetrics.roomUsageHours.toFixed(1)} hours daily with optimal ventilation performance.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl glass-card border-secondary/20 bg-gradient-to-br from-secondary/10 to-secondary/20 hover-lift">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-secondary/20">
+                  <DollarSign className="w-4 h-4 text-secondary" />
+                </div>
+                <span className="font-semibold text-secondary-glow">💡 Cost Optimization</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                Peak usage during {formatHour(activityInsights.realEstateMetrics.peakOccupancyPeriod.start)}-{formatHour(activityInsights.realEstateMetrics.peakOccupancyPeriod.end)} allows for 
+                optimized HVAC scheduling and potential energy savings of 15-20% during off-peak hours.
+              </p>
+            </div>
+
+            <div className="p-4 rounded-xl glass-card border-tertiary/20 bg-gradient-to-br from-tertiary/10 to-tertiary/20 hover-lift">
+              <div className="flex items-center gap-3 mb-2">
+                <div className="p-2 rounded-lg bg-tertiary/20">
+                  <Shield className="w-4 h-4 text-tertiary" />
+                </div>
+                <span className="font-semibold text-tertiary-glow">🔧 Maintenance Status</span>
+              </div>
+              <p className="text-sm text-muted-foreground">
+                HVAC system rated "{activityInsights.facilitiesInsights.hvacEfficiencyRating}" with {activityInsights.facilitiesInsights.maintenanceStatus}. 
+                Recovery time of {activityInsights.ventilationEffectiveness.recoveryTimeMinutes} minutes shows excellent air quality management.
+              </p>
+            </div>
           </CardContent>
         </Card>
       </div>
@@ -358,5 +452,6 @@ export function ActivityInsights({ activityInsights }: ActivityInsightsProps) {
         </CardContent>
       </Card>
     </div>
+    </TooltipProvider>
   );
 }

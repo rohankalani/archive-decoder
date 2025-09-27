@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
+import { calculateEnhancedOccupancy, OccupancyReading } from '@/utils/occupancyUtils';
 
 interface DateRange {
   from: Date;
@@ -73,9 +74,9 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
   }): string[] => {
     const recommendations: string[] = [];
 
-        if (data.efficiency < 60) {
-          recommendations.push("📊 Consider schedule optimization - room underutilized during peak hours");
-        }
+    if (data.efficiency < 60) {
+      recommendations.push("📊 Consider schedule optimization - room underutilized during peak hours");
+    }
     
     if (data.operatingCO2 > 1000) {
       recommendations.push("🌬️ Increase ventilation during class hours - CO₂ levels elevated");
@@ -242,27 +243,44 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
             }, 0) / (temperatureReadings.length - 1))
           : 0;
 
-        // Calculate occupancy and room efficiency - improved logic
-        const getOccupancyLevel = (co2Level: number): boolean => co2Level >= 500;
-        
-        // Group readings by hour and calculate occupancy more accurately
-        const hourlyData = operatingCO2Readings.reduce((acc, reading) => {
-          const hour = new Date(reading.timestamp).getHours();
-          if (!acc[hour]) acc[hour] = [];
-          acc[hour].push(Number(reading.value));
-          return acc;
-        }, {} as Record<number, number[]>);
+        // Calculate enhanced room occupancy with CO2 decay modeling
+        const occupancyReadings = co2Readings.map(reading => ({
+          timestamp: new Date(reading.timestamp),
+          co2: Number(reading.value),
+          temperature: temperatureReadings.find(r => 
+            Math.abs(new Date(r.timestamp).getTime() - new Date(reading.timestamp).getTime()) < 300000 // 5 min window
+          )?.value,
+          humidity: deviceReadings.find(r => 
+            r.sensor_type === 'humidity' && 
+            Math.abs(new Date(r.timestamp).getTime() - new Date(reading.timestamp).getTime()) < 300000
+          )?.value
+        })) as OccupancyReading[];
 
-        // Count hours where average CO2 indicates occupancy
-        const occupiedHours = Object.entries(hourlyData).filter(([_, values]) => {
-          const avgCO2ForHour = values.reduce((s, v) => s + v, 0) / values.length;
-          return getOccupancyLevel(avgCO2ForHour);
+        const roomCapacity = 30; // Default classroom capacity
+        const roomOccupancyPercentage = calculateEnhancedOccupancy(occupancyReadings, roomCapacity);
+        
+        // Calculate room usage hours based on enhanced occupancy detection
+        const operatingHoursCO2Mapped = operatingCO2Readings.map(reading => ({
+          timestamp: new Date(reading.timestamp),
+          co2: Number(reading.value)
+        })) as OccupancyReading[];
+        
+        // Group by hour and check occupancy for each hour during operating period
+        const hourlyOccupancy = operatingHoursCO2Mapped.reduce((acc, reading) => {
+          const hour = reading.timestamp.getHours();
+          if (!acc[hour]) acc[hour] = [];
+          acc[hour].push(reading);
+          return acc;
+        }, {} as Record<number, OccupancyReading[]>);
+
+        const occupiedHours = Object.values(hourlyOccupancy).filter(hourReadings => {
+          const hourOccupancy = calculateEnhancedOccupancy(hourReadings, roomCapacity);
+          return hourOccupancy > 20; // Consider occupied if >20% capacity
         }).length;
 
         const totalOperatingHours = params.operatingHours.end - params.operatingHours.start;
-        const roomUsageHours = occupiedHours; // Hours actually occupied
-        // Fix calculation: occupiedHours is already the count of occupied hours during operating period
-        const roomEfficiencyScore = Math.min(100, Math.max(0, (occupiedHours / totalOperatingHours) * 100));
+        const roomUsageHours = occupiedHours;
+        const roomEfficiencyScore = roomOccupancyPercentage;
 
         // Calculate ventilation score
         const maxCO2 = Math.max(...co2Readings.map(r => Number(r.value)));

@@ -14,6 +14,7 @@ import { Settings } from '@/pages/Settings'
 import Reports from '@/pages/Reports';
 import Alerts from '@/pages/Alerts';
 import UserManagement from '@/pages/UserManagement';
+import DatabaseChat from '@/pages/DatabaseChat';
 
 function App() {
   return (
@@ -88,6 +89,14 @@ function App() {
               element={
                 <ProtectedRoute requireAdmin>
                   <UserManagement />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/database-chat"
+              element={
+                <ProtectedRoute>
+                  <DatabaseChat />
                 </ProtectedRoute>
               }
             />

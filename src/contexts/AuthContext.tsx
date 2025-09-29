@@ -25,6 +25,8 @@ interface AuthContextType {
   signUp: (email: string, password: string, firstName?: string, lastName?: string) => Promise<{ error: Error | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ error: Error | null }>
+  updatePassword: (password: string) => Promise<{ error: Error | null }>
+  isRecoveringPassword: boolean
   isAdmin: boolean
   isSuperAdmin: boolean
 }
@@ -36,6 +38,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<UserProfile | null>(null)
   const [loading, setLoading] = useState(true)
+  const [isRecoveringPassword, setIsRecoveringPassword] = useState(false)
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin'
   const isSuperAdmin = profile?.role === 'super_admin'
@@ -94,6 +97,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       async (event, session) => {
         if (!isMounted) return
+
+        console.log('Auth event:', event, session)
+
+        // Handle password recovery event
+        if (event === 'PASSWORD_RECOVERY') {
+          setIsRecoveringPassword(true)
+          toast.success('You can now set a new password')
+        } else {
+          setIsRecoveringPassword(false)
+        }
 
         setSession(session)
         setUser(session?.user ?? null)
@@ -234,6 +247,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  const updatePassword = async (password: string) => {
+    try {
+      setLoading(true)
+      const { error } = await supabase.auth.updateUser({
+        password: password
+      })
+
+      if (error) {
+        toast.error('Password update failed: ' + error.message)
+        return { error }
+      }
+
+      toast.success('Password updated successfully!')
+      setIsRecoveringPassword(false)
+      return { error: null }
+    } catch (error) {
+      const authError = error as Error
+      toast.error('Password update failed: ' + authError.message)
+      return { error: authError }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const value: AuthContextType = {
     user,
     session,
@@ -243,6 +280,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signUp,
     signOut,
     resetPassword,
+    updatePassword,
+    isRecoveringPassword,
     isAdmin,
     isSuperAdmin,
   }

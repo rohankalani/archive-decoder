@@ -21,13 +21,25 @@ const signupSchema = z.object({
   lastName: z.string().min(1, 'Last name is required').max(50, 'Last name too long'),
 })
 
+const passwordUpdateSchema = z.object({
+  password: z.string().min(6, 'Password must be at least 6 characters'),
+  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
+})
+
 export default function Auth() {
-  const { signIn, signUp, resetPassword, user, loading } = useAuth()
+  const { signIn, signUp, resetPassword, updatePassword, user, loading, isRecoveringPassword } = useAuth()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
   const [showForgotPassword, setShowForgotPassword] = useState(false)
   const [resetEmail, setResetEmail] = useState('')
+  const [newPasswordData, setNewPasswordData] = useState({
+    password: '',
+    confirmPassword: '',
+  })
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -117,6 +129,35 @@ export default function Auth() {
     }
   }
 
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrors({})
+    
+    try {
+      const validatedData = passwordUpdateSchema.parse(newPasswordData)
+      setIsLoading(true)
+      
+      const { error } = await updatePassword(validatedData.password)
+      
+      if (!error) {
+        setNewPasswordData({ password: '', confirmPassword: '' })
+        navigate('/')
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        const fieldErrors: Record<string, string> = {}
+        error.issues.forEach((err) => {
+          if (err.path[0]) {
+            fieldErrors[err.path[0] as string] = err.message
+          }
+        })
+        setErrors(fieldErrors)
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   const handleForgotPassword = async (e: React.FormEvent) => {
     e.preventDefault()
     setErrors({})
@@ -144,6 +185,89 @@ export default function Auth() {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  // Show password update form if user is in recovery mode
+  if (isRecoveringPassword) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
+        <div className="w-full max-w-md space-y-6">
+          {/* Header */}
+          <div className="text-center space-y-4">
+            <div className="flex items-center justify-center space-x-2">
+              <div className="relative">
+                <Shield className="h-8 w-8 text-primary" />
+                <Activity className="h-4 w-4 text-primary-glow absolute -top-1 -right-1" />
+              </div>
+              <Building2 className="h-8 w-8 text-primary" />
+            </div>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">Set New Password</h1>
+              <p className="text-muted-foreground">Enter your new password below</p>
+            </div>
+          </div>
+
+          <Card className="w-full shadow-lg border-0 bg-card/95 backdrop-blur">
+            <CardHeader className="space-y-1 pb-4">
+              <CardTitle className="text-xl text-center">Update Password</CardTitle>
+              <CardDescription className="text-center">
+                Choose a strong password for your account
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleUpdatePassword} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="Enter new password"
+                    value={newPasswordData.password}
+                    onChange={(e) => setNewPasswordData(prev => ({ ...prev, password: e.target.value }))}
+                    className={errors.password ? 'border-destructive' : ''}
+                    disabled={isLoading}
+                  />
+                  {errors.password && (
+                    <p className="text-sm text-destructive">{errors.password}</p>
+                  )}
+                </div>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-password">Confirm Password</Label>
+                  <Input
+                    id="confirm-password"
+                    type="password"
+                    placeholder="Confirm new password"
+                    value={newPasswordData.confirmPassword}
+                    onChange={(e) => setNewPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
+                    className={errors.confirmPassword ? 'border-destructive' : ''}
+                    disabled={isLoading}
+                  />
+                  {errors.confirmPassword && (
+                    <p className="text-sm text-destructive">{errors.confirmPassword}</p>
+                  )}
+                </div>
+
+                <Button 
+                  type="submit" 
+                  className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity"
+                  disabled={isLoading}
+                >
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Updating Password...
+                    </>
+                  ) : (
+                    'Update Password'
+                  )}
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }

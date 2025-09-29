@@ -22,10 +22,12 @@ const signupSchema = z.object({
 })
 
 export default function Auth() {
-  const { signIn, signUp, user, loading } = useAuth()
+  const { signIn, signUp, resetPassword, user, loading } = useAuth()
   const navigate = useNavigate()
   const [isLoading, setIsLoading] = useState(false)
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const [showForgotPassword, setShowForgotPassword] = useState(false)
+  const [resetEmail, setResetEmail] = useState('')
 
   // Login form state
   const [loginData, setLoginData] = useState({
@@ -115,6 +117,29 @@ export default function Auth() {
     }
   }
 
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setErrors({})
+    
+    try {
+      const email = z.string().email().parse(resetEmail)
+      setIsLoading(true)
+      
+      const { error } = await resetPassword(email)
+      
+      if (!error) {
+        setShowForgotPassword(false)
+        setResetEmail('')
+      }
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        setErrors({ resetEmail: 'Please enter a valid email address' })
+      }
+    } finally {
+      setIsLoading(false)
+    }
+  }
+
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
@@ -187,24 +212,35 @@ export default function Auth() {
                     />
                     {errors.password && (
                       <p className="text-sm text-destructive">{errors.password}</p>
-                    )}
-                  </div>
+                     )}
+                   </div>
 
-                  <Button 
-                    type="submit" 
-                    className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Signing In...
-                      </>
-                    ) : (
-                      'Sign In'
-                    )}
-                  </Button>
-                </form>
+                   <div className="text-center">
+                     <button
+                       type="button"
+                       onClick={() => setShowForgotPassword(true)}
+                       className="text-sm text-primary hover:underline"
+                       disabled={isLoading}
+                     >
+                       Forgot your password?
+                     </button>
+                   </div>
+
+                   <Button 
+                     type="submit" 
+                     className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity"
+                     disabled={isLoading}
+                   >
+                     {isLoading ? (
+                       <>
+                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                         Signing In...
+                       </>
+                     ) : (
+                       'Sign In'
+                     )}
+                   </Button>
+                 </form>
               </TabsContent>
 
               {/* Signup Tab */}
@@ -295,6 +331,69 @@ export default function Auth() {
             </Tabs>
           </CardContent>
         </Card>
+
+        {/* Forgot Password Modal */}
+        {showForgotPassword && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+            <Card className="w-full max-w-md">
+              <CardHeader>
+                <CardTitle>Reset Password</CardTitle>
+                <CardDescription>
+                  Enter your email address and we'll send you a link to reset your password.
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handleForgotPassword} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reset-email">Email</Label>
+                    <Input
+                      id="reset-email"
+                      type="email"
+                      placeholder="your.email@adu.ac.ae"
+                      value={resetEmail}
+                      onChange={(e) => setResetEmail(e.target.value)}
+                      className={errors.resetEmail ? 'border-destructive' : ''}
+                      disabled={isLoading}
+                    />
+                    {errors.resetEmail && (
+                      <p className="text-sm text-destructive">{errors.resetEmail}</p>
+                    )}
+                  </div>
+                  
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => {
+                        setShowForgotPassword(false)
+                        setResetEmail('')
+                        setErrors({})
+                      }}
+                      className="flex-1"
+                      disabled={isLoading}
+                    >
+                      Cancel
+                    </Button>
+                    <Button
+                      type="submit"
+                      className="flex-1"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Sending...
+                        </>
+                      ) : (
+                        'Send Reset Link'
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              </CardContent>
+            </Card>
+          </div>
+        )}
 
         <div className="text-center text-sm text-muted-foreground">
           <p>© 2024 Abu Dhabi University - Air Quality Monitoring</p>

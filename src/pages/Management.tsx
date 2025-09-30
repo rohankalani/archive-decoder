@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import { useAuth } from '@/contexts/AuthContext'
-import { useLocations, Site, Building, Block, Floor, Room } from '@/hooks/useLocations'
+import { useLocations, Site, Building, Floor, Room } from '@/hooks/useLocations'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -22,17 +22,17 @@ import {
   BarChart3
 } from 'lucide-react'
 
-type LocationType = 'site' | 'building' | 'block' | 'floor' | 'room';
+type LocationType = 'site' | 'building' | 'floor' | 'room';
 
 export default function Management() {
   const { profile, isAdmin, isSuperAdmin } = useAuth()
-  const { sites, buildings, blocks, floors, rooms } = useLocations()
+  const { sites, buildings, floors, rooms } = useLocations()
 
   // Simplified state for the wizard
   const [wizardOpen, setWizardOpen] = useState(false)
   const [wizardType, setWizardType] = useState<LocationType>('site')
   const [parentId, setParentId] = useState<string>()
-  const [editItem, setEditItem] = useState<Site | Building | Block | Floor | Room | null>(null)
+  const [editItem, setEditItem] = useState<Site | Building | Floor | Room | null>(null)
 
   // Simplified handlers
   const handleAddLocation = (type: LocationType, parentId?: string) => {
@@ -42,7 +42,7 @@ export default function Management() {
     setWizardOpen(true)
   }
 
-  const handleEditLocation = (type: LocationType, item: Site | Building | Block | Floor | Room) => {
+  const handleEditLocation = (type: LocationType, item: Site | Building | Floor | Room) => {
     setWizardType(type)
     setEditItem(item)
     setParentId(undefined)
@@ -84,18 +84,6 @@ export default function Management() {
                 <div>
                   <p className="text-2xl font-bold">{buildings.length}</p>
                   <p className="text-sm text-muted-foreground">Buildings</p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card className="border-0 bg-gradient-to-br from-warning/5 to-warning/10">
-            <CardContent className="p-4">
-              <div className="flex items-center space-x-3">
-                <Activity className="h-8 w-8 text-warning" />
-                <div>
-                  <p className="text-2xl font-bold">{blocks.length}</p>
-                  <p className="text-sm text-muted-foreground">Blocks</p>
                 </div>
               </div>
             </CardContent>
@@ -160,7 +148,7 @@ export default function Management() {
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-xl font-semibold">Location Hierarchy</h3>
-                <p className="text-muted-foreground">Manage sites, buildings, blocks (optional), floors, and rooms</p>
+                <p className="text-muted-foreground">Manage sites, buildings, floors, and rooms</p>
               </div>
               <Button onClick={() => handleAddLocation('site')}>
                 <Plus className="h-4 w-4 mr-2" />
@@ -173,12 +161,10 @@ export default function Management() {
                 <LocationTree
                   onEditSite={(site) => handleEditLocation('site', site)}
                   onEditBuilding={(building) => handleEditLocation('building', building)}
-                  onEditBlock={(block) => handleEditLocation('block', block)}
                   onEditFloor={(floor) => handleEditLocation('floor', floor)}
                   onEditRoom={(room) => handleEditLocation('room', room)}
                   onAddBuilding={(siteId) => handleAddLocation('building', siteId)}
-                  onAddBlock={(buildingId) => handleAddLocation('block', buildingId)}
-                  onAddFloor={(blockOrBuildingId) => handleAddLocation('floor', blockOrBuildingId)}
+                  onAddFloor={(buildingId) => handleAddLocation('floor', buildingId)}
                   onAddRoom={(floorId) => handleAddLocation('room', floorId)}
                 />
               </CardContent>

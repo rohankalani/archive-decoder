@@ -44,7 +44,6 @@ const DeviceViewContent = memo(() => {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
-  const [selectedBlock, setSelectedBlock] = useState<string>('all');
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const navigate = useNavigate();
@@ -57,11 +56,9 @@ const DeviceViewContent = memo(() => {
   const { 
     sites, 
     buildings, 
-    blocks, 
     floors, 
     loading: locationsLoading,
     getBuildingsBySite,
-    getBlocksByBuilding,
     getFloorsByBuilding,
     getFloorLocation
   } = useLocations();
@@ -72,12 +69,6 @@ const DeviceViewContent = memo(() => {
     if (selectedSite === 'all') return buildings;
     return getBuildingsBySite(selectedSite);
   }, [selectedSite, buildings, getBuildingsBySite]);
-
-  // Filter blocks based on selected building
-  const filteredBlocks = useMemo(() => {
-    if (selectedBuilding === 'all') return blocks;
-    return blocks.filter(block => block.building_id === selectedBuilding);
-  }, [selectedBuilding, blocks]);
 
   // Filter floors based on selected building
   const filteredFloors = useMemo(() => {
@@ -111,11 +102,6 @@ const DeviceViewContent = memo(() => {
 
       // Building filter
       if (selectedBuilding !== 'all' && floorLocation.building.id !== selectedBuilding) {
-        return false;
-      }
-
-      // Block filter
-      if (selectedBlock !== 'all' && floorLocation.block?.id !== selectedBlock) {
         return false;
       }
 
@@ -166,7 +152,7 @@ const DeviceViewContent = memo(() => {
     });
 
     return grouped;
-  }, [sensorData, devices, debouncedSearchQuery, selectedSite, selectedBuilding, selectedBlock, selectedFloor, getFloorLocation]);
+  }, [sensorData, devices, debouncedSearchQuery, selectedSite, selectedBuilding, selectedFloor, getFloorLocation]);
 
   // Get flat list of devices with full data for glance view
   const devicesWithFullData = useMemo(() => {
@@ -185,7 +171,6 @@ const DeviceViewContent = memo(() => {
       // Apply filters
       if (selectedSite !== 'all' && floorLocation.site.id !== selectedSite) return null;
       if (selectedBuilding !== 'all' && floorLocation.building.id !== selectedBuilding) return null;
-      if (selectedBlock !== 'all' && floorLocation.block?.id !== selectedBlock) return null;
       if (selectedFloor !== 'all' && floorLocation.floor.id !== selectedFloor) return null;
       if (debouncedSearchQuery && !sensor.device_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return null;
 
@@ -208,7 +193,7 @@ const DeviceViewContent = memo(() => {
         ...deviceInfo
       };
     }).filter(Boolean);
-  }, [sensorData, devices, floors, getFloorLocation, selectedSite, selectedBuilding, selectedBlock, selectedFloor, debouncedSearchQuery]);
+  }, [sensorData, devices, floors, getFloorLocation, selectedSite, selectedBuilding, selectedFloor, debouncedSearchQuery]);
 
   const selectedDevice = useMemo(() => {
     if (!selectedDeviceId) return null;
@@ -317,20 +302,6 @@ const DeviceViewContent = memo(() => {
                 {filteredBuildings.map((building) => (
                   <SelectItem key={building.id} value={building.id}>
                     {building.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-
-            <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-              <SelectTrigger className="w-[150px]">
-                <SelectValue placeholder="All Blocks" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">All Blocks</SelectItem>
-                {filteredBlocks.map((block) => (
-                  <SelectItem key={block.id} value={block.id}>
-                    {block.name}
                   </SelectItem>
                 ))}
               </SelectContent>

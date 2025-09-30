@@ -18,13 +18,12 @@ import { TimelineChart } from '@/components/dashboard/TimelineChart';
 const Index = () => {
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
-  const [selectedBlock, setSelectedBlock] = useState<string>('all');
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
   const [selectedRoomType, setSelectedRoomType] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
-  const { sites, buildings, blocks, floors, rooms, loading: locationsLoading } = useLocations();
+  const { sites, buildings, floors, rooms, loading: locationsLoading } = useLocations();
   const { devices, loading: devicesLoading } = useDevices();
   const { sensorData, loading: sensorLoading } = useOptimizedLiveSensorData();
 
@@ -40,19 +39,12 @@ const Index = () => {
     return buildings.filter(b => b.site_id === selectedSite);
   }, [buildings, selectedSite]);
 
-  // Filter blocks based on selected building
-  const filteredBlocks = useMemo(() => {
-    if (selectedBuilding === 'all') return blocks;
-    return blocks.filter(b => b.building_id === selectedBuilding);
-  }, [blocks, selectedBuilding]);
-
-  // Filter floors based on selected block or building
+  // Filter floors based on selected building
   const filteredFloors = useMemo(() => {
     if (selectedFloor !== 'all') return floors.filter(f => f.id === selectedFloor);
-    if (selectedBlock !== 'all') return floors.filter(f => f.block_id === selectedBlock);
-    if (selectedBuilding !== 'all') return floors.filter(f => f.building_id === selectedBuilding || f.block?.building_id === selectedBuilding);
+    if (selectedBuilding !== 'all') return floors.filter(f => f.building_id === selectedBuilding);
     return floors;
-  }, [floors, selectedBuilding, selectedBlock, selectedFloor]);
+  }, [floors, selectedBuilding, selectedFloor]);
 
   // Get devices with their locations and sensor data
   const devicesWithData = useMemo(() => {
@@ -62,12 +54,8 @@ const Index = () => {
       const sensor = sensorData.find(s => s.device_id === device.id);
       
       let locationString = '';
-      if (floor) {
-        if (floor.block) {
-          locationString = `${floor.block.building?.site?.name || 'Unknown'} - ${floor.block.building?.name || 'Unknown'}`;
-        } else if (floor.building) {
-          locationString = `${floor.building.site?.name || 'Unknown'} - ${floor.building.name || 'Unknown'}`;
-        }
+      if (floor && floor.building) {
+        locationString = `${floor.building.site?.name || 'Unknown'} - ${floor.building.name || 'Unknown'}`;
       }
 
       return {
@@ -164,20 +152,6 @@ const Index = () => {
                       ))}
                     </SelectContent>
                   </Select>
-
-                  {filteredBlocks.length > 0 && (
-                    <Select value={selectedBlock} onValueChange={setSelectedBlock}>
-                      <SelectTrigger className="w-[180px]">
-                        <SelectValue placeholder="Block" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">All Blocks</SelectItem>
-                        {filteredBlocks.map(block => (
-                          <SelectItem key={block.id} value={block.id}>{block.name}</SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  )}
 
                   <Select value={selectedFloor} onValueChange={setSelectedFloor}>
                     <SelectTrigger className="w-[180px]">

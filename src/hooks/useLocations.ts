@@ -80,16 +80,10 @@ export function useLocations() {
 
       if (buildingsError) throw buildingsError
 
-      // Fetch floors with building info
-      const { data: floorsData, error: floorsError} = await supabase
+      // Fetch floors with building info (optional - may not always need the relation)
+      const { data: floorsData, error: floorsError } = await supabase
         .from('floors')
-        .select(`
-          *,
-          building:buildings(
-            *,
-            site:sites(*)
-          )
-        `)
+        .select('*')
         .order('floor_number')
 
       if (floorsError) throw floorsError
@@ -254,13 +248,7 @@ export function useLocations() {
       const { data: newFloor, error } = await supabase
         .from('floors')
         .insert(data)
-        .select(`
-          *,
-          building:buildings(
-            *,
-            site:sites(*)
-          )
-        `)
+        .select()
         .single()
 
       if (error) throw error
@@ -281,13 +269,7 @@ export function useLocations() {
         .from('floors')
         .update(data)
         .eq('id', id)
-        .select(`
-          *,
-          building:buildings(
-            *,
-            site:sites(*)
-          )
-        `)
+        .select()
         .single()
 
       if (error) throw error

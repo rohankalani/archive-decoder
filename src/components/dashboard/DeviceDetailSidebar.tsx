@@ -60,6 +60,20 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
       unit: 'μg/m³',
       icon: Activity,
       color: 'text-pink-500'
+    },
+    {
+      label: 'VOC',
+      value: sensor?.voc?.toFixed(0) || '--',
+      unit: 'ppb',
+      icon: Wind,
+      color: 'text-amber-500'
+    },
+    {
+      label: 'HCHO',
+      value: sensor?.hcho?.toFixed(0) || '--',
+      unit: 'μg/m³',
+      icon: Activity,
+      color: 'text-red-500'
     }
   ];
 

@@ -11,8 +11,7 @@ import {
   Activity,
   FileText,
   AlertTriangle,
-  Users,
-  LayoutGrid
+  Users
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -32,7 +31,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
   };
 
   const handleBack = () => {
-    navigate(-1);
+    navigate('/devices');
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -60,17 +59,6 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
 
           {/* Center - Navigation */}
           <nav className="flex items-center gap-2">
-            <Button
-              variant={isActive('/') ? 'default' : 'ghost'}
-              size="sm"
-              asChild
-            >
-              <Link to="/" className="gap-2">
-                <LayoutGrid className="h-4 w-4" />
-                Glance
-              </Link>
-            </Button>
-
             <Button
               variant={isActive('/buildings') ? 'default' : 'ghost'}
               size="sm"

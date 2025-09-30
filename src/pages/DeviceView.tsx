@@ -12,6 +12,9 @@ import { useDebounce } from '@/hooks/useDebounce';
 import { DeviceGridSkeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useNavigate } from 'react-router-dom';
+import { GlanceViewCard } from '@/components/devices/GlanceViewCard';
+import { DeviceDetailSidebar } from '@/components/dashboard/DeviceDetailSidebar';
+import { TimelineChart } from '@/components/dashboard/TimelineChart';
 import { 
   Search,
   Grid3X3,
@@ -37,12 +40,13 @@ const getSensorTypeDisplay = (aqi: number) => {
 
 // Main component wrapped with error boundary  
 const DeviceViewContent = memo(() => {
-  const [viewMode, setViewMode] = useState<'glance' | 'detailed'>('detailed');
+  const [viewMode, setViewMode] = useState<'glance' | 'detailed'>('glance');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [selectedBlock, setSelectedBlock] = useState<string>('all');
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Debounce search query for better performance
@@ -164,6 +168,53 @@ const DeviceViewContent = memo(() => {
     return grouped;
   }, [sensorData, devices, debouncedSearchQuery, selectedSite, selectedBuilding, selectedBlock, selectedFloor, getFloorLocation]);
 
+  // Get flat list of devices with full data for glance view
+  const devicesWithFullData = useMemo(() => {
+    if (!sensorData.length || !devices.length) return [];
+    
+    return sensorData.map(sensor => {
+      const deviceInfo = devices.find(d => d.id === sensor.device_id);
+      if (!deviceInfo) return null;
+
+      const floor = floors.find(f => f.id === deviceInfo.floor_id);
+      if (!floor) return null;
+      
+      const floorLocation = getFloorLocation(floor);
+      if (!floorLocation) return null;
+
+      // Apply filters
+      if (selectedSite !== 'all' && floorLocation.site.id !== selectedSite) return null;
+      if (selectedBuilding !== 'all' && floorLocation.building.id !== selectedBuilding) return null;
+      if (selectedBlock !== 'all' && floorLocation.block?.id !== selectedBlock) return null;
+      if (selectedFloor !== 'all' && floorLocation.floor.id !== selectedFloor) return null;
+      if (debouncedSearchQuery && !sensor.device_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return null;
+
+      return {
+        id: sensor.device_id,
+        name: sensor.device_name,
+        status: sensor.status,
+        locationString: `${floorLocation.site.name} > ${floorLocation.building.name} > ${floorLocation.floor.name || `Floor ${floorLocation.floor.floor_number}`}`,
+        sensor: {
+          aqi: sensor.aqi,
+          temperature: sensor.temperature,
+          humidity: sensor.humidity,
+          co2: sensor.co2,
+          pm25: sensor.pm25,
+          pm10: sensor.pm10,
+          voc: sensor.voc,
+          hcho: sensor.hcho,
+          last_updated: sensor.last_updated
+        },
+        ...deviceInfo
+      };
+    }).filter(Boolean);
+  }, [sensorData, devices, floors, getFloorLocation, selectedSite, selectedBuilding, selectedBlock, selectedFloor, debouncedSearchQuery]);
+
+  const selectedDevice = useMemo(() => {
+    if (!selectedDeviceId) return null;
+    return devicesWithFullData.find(d => d.id === selectedDeviceId);
+  }, [selectedDeviceId, devicesWithFullData]);
+
   if (sensorLoading || devicesLoading || locationsLoading) {
     return (
       <Layout>
@@ -208,7 +259,7 @@ const DeviceViewContent = memo(() => {
         {/* Header */}
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Detailed Device View</h1>
+            <h1 className="text-3xl font-bold tracking-tight">Device View</h1>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
@@ -301,186 +352,232 @@ const DeviceViewContent = memo(() => {
           </div>
         </div>
 
-        {/* Device Groups */}
-        <div className="space-y-12">
-          {Object.entries(filteredAndGroupedDevices).map(([siteKey, site]) => (
-            <div key={siteKey} className="space-y-8">
-              {/* Site Header */}
-              <div className="border-b border-border pb-4">
-                <h2 className="text-2xl font-bold text-primary">{site.siteName}</h2>
-              </div>
+        {/* Device Display - Conditional based on view mode */}
+        {viewMode === 'glance' ? (
+          <div className="flex gap-6 h-[calc(100vh-320px)]">
+            {/* Device Cards Grid */}
+            <div className="flex-1 overflow-auto">
+              {devicesWithFullData.length > 0 ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-4">
+                  {devicesWithFullData.map((device) => (
+                    <GlanceViewCard
+                      key={device.id}
+                      device={device}
+                      isSelected={selectedDeviceId === device.id}
+                      onClick={() => setSelectedDeviceId(device.id)}
+                    />
+                  ))}
+                </div>
+              ) : (
+                <Card className="bg-card/95 backdrop-blur">
+                  <CardContent className="p-12 text-center">
+                    <div className="text-lg text-muted-foreground">
+                      No devices found matching the current filters.
+                    </div>
+                  </CardContent>
+                </Card>
+              )}
+            </div>
 
-              {/* Buildings within Site */}
-              {Object.entries(site.buildings).map(([buildingKey, building]) => (
-                <div key={buildingKey} className="space-y-6">
-                  {/* Building Header */}
-                  <div className="space-y-2">
-                    <h3 className="text-xl font-semibold text-foreground">{building.buildingName}</h3>
-                    <div className="h-px bg-border/50"></div>
-                  </div>
+            {/* Right Sidebar */}
+            {selectedDevice && (
+              <DeviceDetailSidebar
+                device={selectedDevice}
+                onClose={() => setSelectedDeviceId(null)}
+              />
+            )}
+          </div>
+        ) : (
+          <div className="space-y-12">
+            {Object.entries(filteredAndGroupedDevices).map(([siteKey, site]) => (
+              <div key={siteKey} className="space-y-8">
+                {/* Site Header */}
+                <div className="border-b border-border pb-4">
+                  <h2 className="text-2xl font-bold text-primary">{site.siteName}</h2>
+                </div>
 
-                  {/* Device Cards */}
-                  <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-                    {building.devices.map((device) => {
-                      const deviceInfo = devices.find(d => d.id === device.device_id);
-                      const floor = deviceInfo ? floors.find(f => f.id === deviceInfo.floor_id) : null;
-                      const floorLocation = floor ? getFloorLocation(floor) : null;
-                      const status = getAqiStatus(device.aqi || 0);
-                      
-                      // Check for smoke/vape detection (high PM2.5 values)
-                      const isSmokeDetected = device.pm25 && device.pm25 > 100;
-                      const isVOCHigh = device.voc && device.voc > 500;
-                      
-                       return (
-                         <Card 
-                           key={device.device_id} 
-                           className="bg-card/95 backdrop-blur border-2 border-border/20 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 group cursor-pointer aspect-[4/3]"
-                           onClick={() => navigate(`/device/${device.device_id}`)}
-                         >
-                          <CardHeader className="pb-3">
-                            <div className="flex items-start justify-between">
-                              <div className="space-y-2">
-                                <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
-                                  {device.device_name}
-                                </CardTitle>
-                                <p className="text-sm font-medium text-muted-foreground">
-                                  {floorLocation?.floor.name || `Floor ${floorLocation?.floor.floor_number}`}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-3">
-                                {/* Smoke/Vape Indicator */}
-                                {(isSmokeDetected || isVOCHigh) && (
-                                  <div className="flex items-center gap-1 bg-destructive/20 text-destructive px-2 py-1 rounded-full">
-                                    <AlertTriangle className="h-3 w-3" />
-                                    <span className="text-xs font-medium">
-                                      {isSmokeDetected ? 'SMOKE' : 'VOC'}
+                {/* Buildings within Site */}
+                {Object.entries(site.buildings).map(([buildingKey, building]) => (
+                  <div key={buildingKey} className="space-y-6">
+                    {/* Building Header */}
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-semibold text-foreground">{building.buildingName}</h3>
+                      <div className="h-px bg-border/50"></div>
+                    </div>
+
+                    {/* Device Cards */}
+                    <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+                      {building.devices.map((device) => {
+                        const deviceInfo = devices.find(d => d.id === device.device_id);
+                        const floor = deviceInfo ? floors.find(f => f.id === deviceInfo.floor_id) : null;
+                        const floorLocation = floor ? getFloorLocation(floor) : null;
+                        const status = getAqiStatus(device.aqi || 0);
+                        
+                        // Check for smoke/vape detection (high PM2.5 values)
+                        const isSmokeDetected = device.pm25 && device.pm25 > 100;
+                        const isVOCHigh = device.voc && device.voc > 500;
+                        
+                         return (
+                           <Card 
+                             key={device.device_id} 
+                             className="bg-card/95 backdrop-blur border-2 border-border/20 transition-all hover:shadow-xl hover:shadow-primary/5 hover:border-primary/30 group cursor-pointer aspect-[4/3]"
+                             onClick={() => navigate(`/device/${device.device_id}`)}
+                           >
+                            <CardHeader className="pb-3">
+                              <div className="flex items-start justify-between">
+                                <div className="space-y-2">
+                                  <CardTitle className="text-lg font-bold text-foreground group-hover:text-primary transition-colors">
+                                    {device.device_name}
+                                  </CardTitle>
+                                  <p className="text-sm font-medium text-muted-foreground">
+                                    {floorLocation?.floor.name || `Floor ${floorLocation?.floor.floor_number}`}
+                                  </p>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                  {/* Smoke/Vape Indicator */}
+                                  {(isSmokeDetected || isVOCHigh) && (
+                                    <div className="flex items-center gap-1 bg-destructive/20 text-destructive px-2 py-1 rounded-full">
+                                      <AlertTriangle className="h-3 w-3" />
+                                      <span className="text-xs font-medium">
+                                        {isSmokeDetected ? 'SMOKE' : 'VOC'}
+                                      </span>
+                                    </div>
+                                  )}
+                                  
+                                  {/* Status Indicator */}
+                                  <div className="flex items-center gap-2">
+                                    <div className={`h-2 w-2 rounded-full ${
+                                      device.status === 'online' ? 'bg-success animate-pulse' : 'bg-muted'
+                                    }`} />
+                                    <span className="text-xs font-medium text-muted-foreground capitalize">
+                                      {device.status}
                                     </span>
                                   </div>
-                                )}
-                                
-                                {/* Status Indicator */}
-                                <div className="flex items-center gap-2">
-                                  <div className={`h-2 w-2 rounded-full ${
-                                    device.status === 'online' ? 'bg-success animate-pulse' : 'bg-muted'
-                                  }`} />
-                                  <span className="text-xs font-medium text-muted-foreground capitalize">
-                                    {device.status}
-                                  </span>
                                 </div>
                               </div>
-                            </div>
-                          </CardHeader>
-                          
-                          <CardContent className="space-y-6">
-                            {/* AQI Display */}
-                            <div className="text-center">
-                              <div className="text-sm font-medium text-muted-foreground mb-2">
-                                AQI ({getSensorTypeDisplay(device.aqi || 0)})
-                              </div>
-                              <div className={`text-5xl font-bold ${
-                                status.color === 'success' ? 'text-success' : 
-                                status.color === 'warning' ? 'text-warning' : 'text-destructive'
-                              }`}>
-                                {device.aqi || '--'}
-                              </div>
-                              <div className={`text-sm font-medium mt-1 ${
-                                status.color === 'success' ? 'text-success' : 
-                                status.color === 'warning' ? 'text-warning' : 'text-destructive'
-                              }`}>
-                                {status.label}
-                              </div>
-                            </div>
-
-                            {/* Sensor Grid */}
-                            {device.status === 'online' && (
-                              <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 rounded-full bg-red-500"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">PM2.5</span>
-                                  </div>
-                                  <div className="text-lg font-bold text-foreground">
-                                    {device.pm25?.toFixed(1) || '--'}
-                                    <span className="text-xs font-normal text-muted-foreground ml-1">μg/m³</span>
-                                  </div>
+                            </CardHeader>
+                            
+                            <CardContent className="space-y-6">
+                              {/* AQI Display */}
+                              <div className="text-center">
+                                <div className="text-sm font-medium text-muted-foreground mb-2">
+                                  AQI ({getSensorTypeDisplay(device.aqi || 0)})
                                 </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 rounded-full bg-blue-500"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">CO₂</span>
-                                  </div>
-                                  <div className="text-lg font-bold text-foreground">
-                                    {device.co2 ? Math.round(device.co2) : '--'}
-                                    <span className="text-xs font-normal text-muted-foreground ml-1">ppm</span>
-                                  </div>
+                                <div className={`text-5xl font-bold ${
+                                  status.color === 'success' ? 'text-success' : 
+                                  status.color === 'warning' ? 'text-warning' : 'text-destructive'
+                                }`}>
+                                  {device.aqi || '--'}
                                 </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 rounded-full bg-orange-500"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">Temp</span>
-                                  </div>
-                                  <div className="text-lg font-bold text-foreground">
-                                    {device.temperature?.toFixed(1) || '--'}
-                                    <span className="text-xs font-normal text-muted-foreground ml-1">°C</span>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 rounded-full bg-cyan-500"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">Humidity</span>
-                                  </div>
-                                  <div className="text-lg font-bold text-foreground">
-                                    {device.humidity ? Math.round(device.humidity) : '--'}
-                                    <span className="text-xs font-normal text-muted-foreground ml-1">%</span>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 rounded-full bg-purple-500"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">VOC</span>
-                                  </div>
-                                  <div className="text-lg font-bold text-foreground">
-                                    {device.voc ? Math.round(device.voc) : '--'}
-                                    <span className="text-xs font-normal text-muted-foreground ml-1">ppb</span>
-                                  </div>
-                                </div>
-
-                                <div className="space-y-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="h-3 w-3 rounded-full bg-green-500"></div>
-                                    <span className="text-sm font-medium text-muted-foreground">HCHO</span>
-                                  </div>
-                                  <div className="text-lg font-bold text-foreground">
-                                    {device.hcho ? (device.hcho * 1000).toFixed(0) : '--'}
-                                    <span className="text-xs font-normal text-muted-foreground ml-1">μg/m³</span>
-                                  </div>
+                                <div className={`text-sm font-medium mt-1 ${
+                                  status.color === 'success' ? 'text-success' : 
+                                  status.color === 'warning' ? 'text-warning' : 'text-destructive'
+                                }`}>
+                                  {status.label}
                                 </div>
                               </div>
-                            )}
-                          </CardContent>
-                        </Card>
-                      );
-                    })}
+
+                              {/* Sensor Grid */}
+                              {device.status === 'online' && (
+                                <div className="grid grid-cols-2 gap-4">
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="h-3 w-3 rounded-full bg-red-500"></div>
+                                      <span className="text-sm font-medium text-muted-foreground">PM2.5</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-foreground">
+                                      {device.pm25?.toFixed(1) || '--'}
+                                      <span className="text-xs font-normal text-muted-foreground ml-1">μg/m³</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="h-3 w-3 rounded-full bg-blue-500"></div>
+                                      <span className="text-sm font-medium text-muted-foreground">CO₂</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-foreground">
+                                      {device.co2 ? Math.round(device.co2) : '--'}
+                                      <span className="text-xs font-normal text-muted-foreground ml-1">ppm</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="h-3 w-3 rounded-full bg-orange-500"></div>
+                                      <span className="text-sm font-medium text-muted-foreground">Temp</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-foreground">
+                                      {device.temperature?.toFixed(1) || '--'}
+                                      <span className="text-xs font-normal text-muted-foreground ml-1">°C</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="h-3 w-3 rounded-full bg-cyan-500"></div>
+                                      <span className="text-sm font-medium text-muted-foreground">Humidity</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-foreground">
+                                      {device.humidity ? Math.round(device.humidity) : '--'}
+                                      <span className="text-xs font-normal text-muted-foreground ml-1">%</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="h-3 w-3 rounded-full bg-purple-500"></div>
+                                      <span className="text-sm font-medium text-muted-foreground">VOC</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-foreground">
+                                      {device.voc ? Math.round(device.voc) : '--'}
+                                      <span className="text-xs font-normal text-muted-foreground ml-1">ppb</span>
+                                    </div>
+                                  </div>
+
+                                  <div className="space-y-2">
+                                    <div className="flex items-center gap-2">
+                                      <div className="h-3 w-3 rounded-full bg-green-500"></div>
+                                      <span className="text-sm font-medium text-muted-foreground">HCHO</span>
+                                    </div>
+                                    <div className="text-lg font-bold text-foreground">
+                                      {device.hcho ? (device.hcho * 1000).toFixed(0) : '--'}
+                                      <span className="text-xs font-normal text-muted-foreground ml-1">μg/m³</span>
+                                    </div>
+                                  </div>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          ))}
+                ))}
+              </div>
+            ))}
 
-          {Object.keys(filteredAndGroupedDevices).length === 0 && (
-            <Card className="bg-card/95 backdrop-blur">
-              <CardContent className="p-12 text-center">
-                <div className="text-lg text-muted-foreground">
-                  No devices found matching the current filters.
-                </div>
-              </CardContent>
-            </Card>
-          )}
-        </div>
+            {Object.keys(filteredAndGroupedDevices).length === 0 && (
+              <Card className="bg-card/95 backdrop-blur">
+                <CardContent className="p-12 text-center">
+                  <div className="text-lg text-muted-foreground">
+                    No devices found matching the current filters.
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+          </div>
+        )}
+
+        {/* Timeline Chart - Only in Glance Mode with selected device */}
+        {viewMode === 'glance' && selectedDevice && (
+          <div className="mt-6">
+            <TimelineChart
+              devices={[selectedDevice]}
+              selectedDeviceId={selectedDeviceId}
+            />
+          </div>
+        )}
       </div>
     </Layout>
   );

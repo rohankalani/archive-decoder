@@ -11,7 +11,8 @@ import {
   Activity,
   FileText,
   AlertTriangle,
-  Users
+  Users,
+  LayoutGrid
 } from 'lucide-react';
 
 interface LayoutProps {
@@ -31,7 +32,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
   };
 
   const handleBack = () => {
-    navigate('/');
+    navigate(-1);
   };
 
   const isActive = (path: string) => location.pathname === path;
@@ -65,6 +66,17 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
               asChild
             >
               <Link to="/" className="gap-2">
+                <LayoutGrid className="h-4 w-4" />
+                Glance
+              </Link>
+            </Button>
+
+            <Button
+              variant={isActive('/buildings') ? 'default' : 'ghost'}
+              size="sm"
+              asChild
+            >
+              <Link to="/buildings" className="gap-2">
                 <Building2 className="h-4 w-4" />
                 Buildings
               </Link>

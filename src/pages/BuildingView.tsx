@@ -213,7 +213,7 @@ const BuildingViewContent = memo(() => {
   }, [filteredBuildings, floors, devices, sensorData, debouncedSearchQuery, sites]);
 
   const handleBuildingClick = (buildingId: string) => {
-    navigate(`/devices?building=${buildingId}`);
+    navigate(`/?building=${buildingId}`);
   };
 
   if (sensorLoading || devicesLoading || locationsLoading) {

@@ -6,6 +6,7 @@ import { UnifiedMockDataProvider } from '@/contexts/UnifiedMockDataContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import Auth from '@/pages/Auth'
+import Index from '@/pages/Index'
 import { BuildingView } from '@/pages/BuildingView'
 import { DeviceView } from '@/pages/DeviceView'
 import { DeviceDetail } from '@/pages/DeviceDetail'
@@ -30,6 +31,14 @@ function App() {
             {/* Protected routes */}
             <Route
               path="/"
+              element={
+                <ProtectedRoute>
+                  <Index />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/buildings"
               element={
                 <ProtectedRoute>
                   <BuildingView />

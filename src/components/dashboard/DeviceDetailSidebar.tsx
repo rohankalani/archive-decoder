@@ -25,6 +25,13 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
     return 'Hazardous';
   };
 
+  const getAqiTextColor = (aqi: number) => {
+    // Use dark text for yellow (Moderate 51-100) for better contrast
+    if (aqi > 50 && aqi <= 100) return 'text-gray-900';
+    // White text for all other colors
+    return 'text-white';
+  };
+
   const metrics = [
     {
       label: 'Temperature',
@@ -86,16 +93,16 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
         </Button>
       </div>
 
-      <div className="p-6 space-y-6">
+      <div className="p-4 space-y-4">
         {/* Device Name & Location */}
         <div>
-          <h4 className="text-xl font-bold mb-1">{device.name}</h4>
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+          <h4 className="text-lg font-bold mb-1">{device.name}</h4>
+          <div className="flex items-center gap-2 text-xs text-muted-foreground">
             <MapPin className="h-3 w-3" />
             <span>{device.locationString}</span>
           </div>
           {device.room && (
-            <Badge variant="outline" className="mt-2">
+            <Badge variant="outline" className="mt-2 text-xs">
               {device.room.name}
             </Badge>
           )}
@@ -105,14 +112,17 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
 
         {/* AQI Score */}
         <div className="text-center">
-          <p className="text-sm font-medium text-muted-foreground mb-2">Air Quality Score</p>
+          <p className="text-xs font-medium text-muted-foreground mb-2">Air Quality Score</p>
           <div
-            className="inline-flex items-center justify-center w-20 h-20 rounded-full text-3xl font-bold text-white"
+            className={cn(
+              "inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold",
+              getAqiTextColor(aqi)
+            )}
             style={{ backgroundColor: getAqiColor(aqi) }}
           >
             {aqi}
           </div>
-          <p className="text-sm font-medium mt-2" style={{ color: getAqiColor(aqi) }}>
+          <p className="text-xs font-medium mt-1" style={{ color: getAqiColor(aqi) }}>
             {getAqiStatus(aqi)}
           </p>
         </div>
@@ -120,52 +130,21 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
         <Separator />
 
         {/* Metrics List */}
-        <div className="space-y-4">
+        <div className="space-y-2.5">
           {metrics.map((metric, index) => (
             <div key={index} className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <metric.icon className={cn('h-4 w-4', metric.color)} />
-                <span className="text-sm font-medium text-muted-foreground">
+              <div className="flex items-center gap-2">
+                <metric.icon className={cn('h-3.5 w-3.5', metric.color)} />
+                <span className="text-xs font-medium text-muted-foreground">
                   {metric.label}
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-lg font-bold">{metric.value}</span>
-                <span className="text-sm text-muted-foreground ml-1">{metric.unit}</span>
+                <span className="text-sm font-bold">{metric.value}</span>
+                <span className="text-xs text-muted-foreground ml-1">{metric.unit}</span>
               </div>
             </div>
           ))}
-        </div>
-
-        <Separator />
-
-        {/* Device Status */}
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm">
-            <span className="text-muted-foreground">Status</span>
-            <Badge
-              variant={device.status === 'online' ? 'default' : 'secondary'}
-              className={cn(
-                device.status === 'online' && 'bg-green-500 hover:bg-green-600'
-              )}
-            >
-              {device.status}
-            </Badge>
-          </div>
-          
-          {device.battery_level && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Battery</span>
-              <span className="font-medium">{device.battery_level}%</span>
-            </div>
-          )}
-          
-          {device.signal_strength && (
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Signal</span>
-              <span className="font-medium">{device.signal_strength}%</span>
-            </div>
-          )}
         </div>
 
         {/* Last Updated */}

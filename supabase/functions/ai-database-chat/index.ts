@@ -108,7 +108,7 @@ serve(async (req) => {
   }
 
   try {
-    const { messages, query } = await req.json();
+    const { messages, queryType, params } = await req.json();
     
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
     const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
@@ -116,47 +116,117 @@ serve(async (req) => {
     
     const supabase = createClient(supabaseUrl, supabaseKey);
     
-    // If user provided a specific query, execute it
+    // Execute safe, predefined queries only
     let queryResult = null;
-    if (query && typeof query === 'string') {
+    if (queryType) {
+      console.log('Executing safe query type:', queryType, 'with params:', params);
+      
       try {
-        console.log('Executing query:', query);
-        const { data, error } = await supabase.rpc('execute_sql', { query });
-        if (error) {
-          console.error('Query error:', error);
-          queryResult = `Query error: ${error.message}`;
-        } else {
-          queryResult = data;
+        switch (queryType) {
+          case 'get_latest_readings':
+            const { data: readings, error: readingsError } = await supabase
+              .rpc('get_latest_sensor_readings_optimized');
+            queryResult = readingsError ? { error: readingsError.message } : readings;
+            break;
+            
+          case 'get_devices':
+            const { data: devices, error: devicesError } = await supabase
+              .from('devices')
+              .select('id, name, status, device_type, floor_id, battery_level, signal_strength');
+            queryResult = devicesError ? { error: devicesError.message } : devices;
+            break;
+            
+          case 'get_alerts':
+            const limit = params?.limit || 10;
+            const { data: alerts, error: alertsError } = await supabase
+              .from('alerts')
+              .select('id, device_id, sensor_type, severity, message, value, threshold_value, created_at, is_resolved')
+              .order('created_at', { ascending: false })
+              .limit(limit);
+            queryResult = alertsError ? { error: alertsError.message } : alerts;
+            break;
+            
+          case 'get_sensor_readings':
+            const deviceId = params?.device_id;
+            const sensorType = params?.sensor_type;
+            const hours = params?.hours || 24;
+            
+            if (!deviceId) {
+              queryResult = { error: 'device_id parameter required' };
+              break;
+            }
+            
+            let query = supabase
+              .from('sensor_readings')
+              .select('timestamp, value, unit, sensor_type, device_id')
+              .eq('device_id', deviceId)
+              .gte('timestamp', new Date(Date.now() - hours * 60 * 60 * 1000).toISOString())
+              .order('timestamp', { ascending: false })
+              .limit(100);
+              
+            if (sensorType) {
+              query = query.eq('sensor_type', sensorType);
+            }
+            
+            const { data: sensorData, error: sensorError } = await query;
+            queryResult = sensorError ? { error: sensorError.message } : sensorData;
+            break;
+            
+          case 'get_locations':
+            const { data: locations, error: locationsError } = await supabase
+              .from('sites')
+              .select(`
+                id, name, address,
+                buildings (
+                  id, name, floor_count,
+                  floors (
+                    id, name, floor_number,
+                    rooms (id, name, room_type, capacity)
+                  )
+                )
+              `);
+            queryResult = locationsError ? { error: locationsError.message } : locations;
+            break;
+            
+          default:
+            queryResult = { error: 'Unknown query type. Available types: get_latest_readings, get_devices, get_alerts, get_sensor_readings, get_locations' };
         }
-      } catch (err) {
-        console.error('Query execution error:', err);
-        queryResult = `Error executing query: ${err instanceof Error ? err.message : 'Unknown error'}`;
+      } catch (error) {
+        console.error('Query execution error:', error);
+        queryResult = { error: error instanceof Error ? error.message : 'Unknown error' };
       }
     }
 
-    // Build system prompt with schema information
-    const systemPrompt = `You are an AI assistant for an air quality monitoring system at Abu Dhabi University. You have access to a database with the following schema:
+    // Build system prompt with available query types
+    const systemPrompt = `You are an AI assistant for an air quality monitoring system at Abu Dhabi University.
 
-DATABASE SCHEMA:
-${SCHEMA_INFO.tables.map(table => 
-  `Table: ${table.name} - ${table.description || ''}
-Columns:
-${table.columns.map(col => `  - ${col.name} (${col.type}): ${col.description || ''}`).join('\n')}`
-).join('\n\n')}
+AVAILABLE QUERY TYPES (use these to guide users):
+1. get_latest_readings - Get the most recent sensor readings from all devices
+2. get_devices - List all devices with their status and location
+3. get_alerts - Get recent alerts (params: { limit: number })
+4. get_sensor_readings - Get historical data for a device (params: { device_id: uuid, sensor_type?: string, hours?: number })
+5. get_locations - Get all sites, buildings, floors, and rooms
 
-IMPORTANT GUIDELINES:
-1. When users ask questions about the data, provide helpful SQL queries they can run
-2. Explain air quality metrics and what they mean
-3. Help interpret sensor readings and alert levels
-4. Provide insights about building occupancy, air quality trends, and environmental conditions
-5. Always use proper SQL syntax for PostgreSQL
-6. Be concise but informative
-7. If asked about specific data, suggest appropriate queries to get that information
+DATABASE STRUCTURE:
+- Sites contain Buildings
+- Buildings contain Floors  
+- Floors contain Rooms and Devices
+- Devices generate Sensor Readings (PM2.5, PM10, CO2, Temperature, Humidity, VOC, NOx, HCHO)
+- Alerts are triggered when readings exceed thresholds
 
-CURRENT QUERY RESULT:
-${queryResult ? JSON.stringify(queryResult, null, 2) : 'No query executed'}
+AIR QUALITY REFERENCE:
+- PM2.5: Good <12, Moderate 12-35, Unhealthy 35-55, Very Unhealthy 55-150, Hazardous >150 μg/m³
+- PM10: Good <54, Moderate 54-154, Unhealthy 154-254, Very Unhealthy 254-354, Hazardous >354 μg/m³
+- CO2: Good <800, Moderate 800-1000, Unhealthy >1000 ppm
+- Temperature: Optimal 20-24°C
+- Humidity: Optimal 30-60%
 
-Answer the user's question based on your knowledge of air quality monitoring and the database schema. If they need specific data, provide them with the appropriate SQL query.`;
+${queryResult ? `QUERY RESULT:
+${JSON.stringify(queryResult, null, 2)}
+
+Analyze this data and provide insights to the user.` : 'No query executed. Help the user understand what data they can access and suggest appropriate queries for their questions.'}
+
+Be helpful, concise, and provide actionable insights. When suggesting queries, explain what information they will provide.`;
 
     const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${geminiApiKey}`, {
       method: 'POST',

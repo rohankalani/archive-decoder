@@ -62,12 +62,31 @@ export function DatabaseChatInterface({ className }: DatabaseChatInterfaceProps)
     setIsLoading(true);
 
     try {
+      // Parse user input to determine appropriate query type
+      let queryType = null;
+      let params = {};
+      
+      const lowerInput = inputValue.toLowerCase();
+      
+      if (lowerInput.includes('latest reading') || lowerInput.includes('current reading') || lowerInput.includes('all sensor')) {
+        queryType = 'get_latest_readings';
+      } else if (lowerInput.includes('device') && (lowerInput.includes('list') || lowerInput.includes('status') || lowerInput.includes('offline'))) {
+        queryType = 'get_devices';
+      } else if (lowerInput.includes('alert') || lowerInput.includes('warning')) {
+        queryType = 'get_alerts';
+        params = { limit: 20 };
+      } else if (lowerInput.includes('location') || lowerInput.includes('building') || lowerInput.includes('site') || lowerInput.includes('room')) {
+        queryType = 'get_locations';
+      }
+
       const { data, error } = await supabase.functions.invoke('ai-database-chat', {
         body: {
           messages: messages.concat(userMessage).map(msg => ({
             role: msg.role,
             content: msg.content
-          }))
+          })),
+          queryType,
+          params
         }
       });
 

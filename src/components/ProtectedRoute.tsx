@@ -11,15 +11,6 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { user, profile, loading, isAdmin } = useAuth()
 
-  // Debug logging
-  console.log('ProtectedRoute Debug:', {
-    user: user?.email,
-    profile,
-    loading,
-    isAdmin,
-    requireAdmin
-  })
-
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">

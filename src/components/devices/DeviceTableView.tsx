@@ -106,26 +106,20 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                             <Checkbox />
                           </TableCell>
                           
-                          {/* AQI Circle */}
+                          {/* AQI Value */}
                           <TableCell>
                             <div className="flex items-center justify-center">
                               {!isOffline ? (
-                                <div className="relative group/aqi">
-                                  <div
-                                    className="w-12 h-12 rounded-full flex items-center justify-center text-sm font-bold text-white shadow-md transition-transform group-hover/aqi:scale-110"
-                                    style={{ backgroundColor: aqiColor }}
-                                  >
-                                    {device.aqi}
-                                  </div>
-                                  <div 
-                                    className="absolute inset-0 rounded-full blur-lg opacity-30 group-hover/aqi:opacity-50 transition-opacity"
-                                    style={{ backgroundColor: aqiColor }}
-                                  />
-                                </div>
+                                <span
+                                  className="text-3xl font-bold transition-transform hover:scale-110"
+                                  style={{ color: aqiColor }}
+                                >
+                                  {device.aqi}
+                                </span>
                               ) : (
-                                <div className="w-12 h-12 rounded-full flex items-center justify-center bg-muted text-muted-foreground text-xs font-medium">
+                                <span className="text-2xl text-muted-foreground font-medium">
                                   --
-                                </div>
+                                </span>
                               )}
                             </div>
                           </TableCell>

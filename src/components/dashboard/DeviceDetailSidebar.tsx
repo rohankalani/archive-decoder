@@ -16,21 +16,32 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
   const sensor = device.sensor;
   const aqi = sensor?.aqi || 0;
   
-  const getAqiStatus = (aqi: number) => {
-    if (aqi <= 50) return 'Good';
-    if (aqi <= 100) return 'Moderate';
-    if (aqi <= 150) return 'Unhealthy for Sensitive';
-    if (aqi <= 200) return 'Unhealthy';
-    if (aqi <= 300) return 'Very Unhealthy';
-    return 'Hazardous';
+  // Determine dominant pollutant
+  const getDominantPollutant = () => {
+    const pollutants = [
+      { name: 'PM2.5', value: sensor?.pm25 || 0, threshold: 35 },
+      { name: 'PM10', value: sensor?.pm10 || 0, threshold: 150 },
+      { name: 'CO₂', value: sensor?.co2 || 0, threshold: 1000 },
+      { name: 'VOC', value: sensor?.voc || 0, threshold: 500 },
+      { name: 'HCHO', value: sensor?.hcho || 0, threshold: 100 },
+    ];
+
+    // Find the pollutant with the highest ratio to its threshold
+    let dominant = pollutants[0];
+    let maxRatio = 0;
+
+    pollutants.forEach(p => {
+      const ratio = p.value / p.threshold;
+      if (ratio > maxRatio) {
+        maxRatio = ratio;
+        dominant = p;
+      }
+    });
+
+    return dominant.name;
   };
 
-  const getAqiTextColor = (aqi: number) => {
-    // Use dark text for yellow (Moderate 51-100) for better contrast
-    if (aqi > 50 && aqi <= 100) return 'text-gray-900 dark:text-gray-900';
-    // White text for all other colors
-    return 'text-white';
-  };
+  const dominantPollutant = getDominantPollutant();
 
   const metrics = [
     {
@@ -110,25 +121,6 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
 
         <Separator />
 
-        {/* AQI Score */}
-        <div className="text-center">
-          <p className="text-xs font-medium text-muted-foreground mb-2">Air Quality Score</p>
-          <div
-            className={cn(
-              "inline-flex items-center justify-center w-16 h-16 rounded-full text-2xl font-bold",
-              getAqiTextColor(aqi)
-            )}
-            style={{ backgroundColor: getAqiColor(aqi) }}
-          >
-            {aqi}
-          </div>
-          <p className="text-xs font-medium mt-1" style={{ color: getAqiColor(aqi) }}>
-            {getAqiStatus(aqi)}
-          </p>
-        </div>
-
-        <Separator />
-
         {/* Metrics List */}
         <div className="space-y-2.5">
           {metrics.map((metric, index) => (
@@ -140,11 +132,19 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
                 </span>
               </div>
               <div className="text-right">
-                <span className="text-sm font-bold">{metric.value}</span>
+                <span className={cn("text-sm font-bold", metric.color)}>{metric.value}</span>
                 <span className="text-xs text-muted-foreground ml-1">{metric.unit}</span>
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Dominant Pollutant */}
+        <div className="text-center pt-2">
+          <p className="text-xs text-muted-foreground">Dominant Pollutant</p>
+          <p className="text-sm font-bold" style={{ color: getAqiColor(aqi) }}>
+            {dominantPollutant}
+          </p>
         </div>
 
         {/* Last Updated */}

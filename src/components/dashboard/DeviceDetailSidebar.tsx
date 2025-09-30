@@ -27,7 +27,7 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
 
   const getAqiTextColor = (aqi: number) => {
     // Use dark text for yellow (Moderate 51-100) for better contrast
-    if (aqi > 50 && aqi <= 100) return 'text-gray-900';
+    if (aqi > 50 && aqi <= 100) return 'text-gray-900 dark:text-gray-900';
     // White text for all other colors
     return 'text-white';
   };
@@ -78,7 +78,7 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
     {
       label: 'HCHO',
       value: sensor?.hcho?.toFixed(0) || '--',
-      unit: 'μg/m³',
+      unit: 'ppb',
       icon: Activity,
       color: 'text-red-500'
     }

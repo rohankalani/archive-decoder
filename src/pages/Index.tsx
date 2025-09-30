@@ -8,7 +8,7 @@ import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices, Device } from '@/hooks/useDevices';
 import { useOptimizedLiveSensorData } from '@/hooks/useOptimizedLiveSensorData';
-import { Download, Plus } from 'lucide-react';
+import { Download, Plus, RefreshCw } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getAqiColor } from '@/utils/chartDataUtils';
 import { DeviceDetailSidebar } from '@/components/dashboard/DeviceDetailSidebar';
@@ -24,8 +24,13 @@ const Index = () => {
   const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   const { sites, buildings, floors, rooms, loading: locationsLoading } = useLocations();
-  const { devices, loading: devicesLoading } = useDevices();
-  const { sensorData, loading: sensorLoading } = useOptimizedLiveSensorData();
+  const { devices, loading: devicesLoading, refetch: refetchDevices } = useDevices();
+  const { sensorData, loading: sensorLoading, refetch: refetchSensorData } = useOptimizedLiveSensorData();
+
+  const handleRefresh = () => {
+    refetchDevices();
+    refetchSensorData();
+  };
 
   // Get unique room types
   const roomTypes = useMemo(() => {
@@ -109,6 +114,10 @@ const Index = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
+              </Button>
               <Button variant="outline" size="sm">
                 <Download className="h-4 w-4 mr-2" />
                 Export

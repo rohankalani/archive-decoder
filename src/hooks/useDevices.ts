@@ -133,6 +133,27 @@ export function useDevices() {
 
   useEffect(() => {
     fetchDevices()
+
+    // Set up real-time subscription for device updates
+    const channel = supabase
+      .channel('devices-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'devices'
+        },
+        () => {
+          // Refetch devices when any change occurs
+          fetchDevices()
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
   }, [])
 
   return {

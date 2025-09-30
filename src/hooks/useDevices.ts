@@ -13,6 +13,7 @@ export interface Device {
   battery_level?: number
   signal_strength?: number
   floor_id: string
+  room_id?: string
   installation_date?: string
   calibration_due_date?: string
   created_at: string

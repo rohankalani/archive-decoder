@@ -213,6 +213,7 @@ export type Database = {
           installation_date: string | null
           mac_address: string | null
           name: string
+          room_id: string | null
           serial_number: string | null
           signal_strength: number | null
           status: Database["public"]["Enums"]["device_status"] | null
@@ -229,6 +230,7 @@ export type Database = {
           installation_date?: string | null
           mac_address?: string | null
           name: string
+          room_id?: string | null
           serial_number?: string | null
           signal_strength?: number | null
           status?: Database["public"]["Enums"]["device_status"] | null
@@ -245,6 +247,7 @@ export type Database = {
           installation_date?: string | null
           mac_address?: string | null
           name?: string
+          room_id?: string | null
           serial_number?: string | null
           signal_strength?: number | null
           status?: Database["public"]["Enums"]["device_status"] | null
@@ -256,6 +259,13 @@ export type Database = {
             columns: ["floor_id"]
             isOneToOne: false
             referencedRelation: "floors"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "devices_room_id_fkey"
+            columns: ["room_id"]
+            isOneToOne: false
+            referencedRelation: "rooms"
             referencedColumns: ["id"]
           },
         ]

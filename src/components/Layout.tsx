@@ -2,6 +2,7 @@ import React from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { MobileNav } from '@/components/MobileNav';
 import { 
   Settings, 
   Building2, 
@@ -40,9 +41,10 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
     <div className="min-h-screen bg-background">
       {/* Top Navigation Bar */}
       <header className="fixed top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="container flex h-16 items-center justify-between">
-          {/* Left side */}
-          <div className="flex items-center gap-4">
+        <div className="container flex h-14 md:h-16 items-center justify-between px-4">
+          {/* Left side - Mobile menu & Back button */}
+          <div className="flex items-center gap-2">
+            <MobileNav />
             {showBackButton && (
               <Button
                 variant="ghost"
@@ -51,14 +53,14 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
                 className="gap-2"
               >
                 <ArrowLeft className="h-4 w-4" />
-                Back
+                <span className="hidden sm:inline">Back</span>
               </Button>
             )}
-            {title && <h1 className="text-xl font-semibold">{title}</h1>}
+            {title && <h1 className="text-base md:text-xl font-semibold truncate">{title}</h1>}
           </div>
 
-          {/* Center - Navigation */}
-          <nav className="flex items-center gap-2">
+          {/* Center - Desktop Navigation */}
+          <nav className="hidden md:flex items-center gap-2">
             <Button
               variant={isActive('/buildings') ? 'default' : 'ghost'}
               size="sm"
@@ -77,7 +79,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
             >
               <Link to="/devices" className="gap-2">
                 <Activity className="h-4 w-4" />
-                Device View
+                Devices
               </Link>
             </Button>
             
@@ -141,11 +143,11 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
             </Button>
           </nav>
 
-          {/* Right side - User menu */}
-          <div className="flex items-center gap-2">
+          {/* Right side - User menu (Desktop only) */}
+          <div className="hidden md:flex items-center gap-2">
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">
+              <span className="hidden lg:inline">
                 {user?.email?.split('@')[0]}
               </span>
               {isAdmin && (
@@ -161,14 +163,14 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
               className="gap-2"
             >
               <LogOut className="h-4 w-4" />
-              <span className="hidden sm:inline">Sign Out</span>
+              <span className="hidden lg:inline">Sign Out</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Main Content */}
-      <main className="container py-6 pt-20">
+      <main className="container py-4 md:py-6 pt-16 md:pt-20 px-4">
         {children}
       </main>
     </div>

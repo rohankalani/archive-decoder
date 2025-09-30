@@ -71,7 +71,7 @@ export function DeviceGrid({ devices, selectedDeviceId, onDeviceSelect, loading 
   };
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-5">
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-5">
       {devices.map((device) => {
         const isSelected = device.id === selectedDeviceId;
         const aqi = device.sensor?.aqi || 0;
@@ -84,7 +84,7 @@ export function DeviceGrid({ devices, selectedDeviceId, onDeviceSelect, loading 
             key={device.id}
             className={cn(
               'group relative cursor-pointer transition-all duration-300 hover-lift overflow-hidden',
-              'backdrop-blur-sm bg-card/50 border-2',
+              'backdrop-blur-sm bg-card/50 border-2 active:scale-95',
               isSelected
                 ? 'border-primary shadow-2xl ring-2 ring-primary/30 scale-105'
                 : 'border-border/50 hover:border-primary/40 hover:shadow-xl'
@@ -101,10 +101,10 @@ export function DeviceGrid({ devices, selectedDeviceId, onDeviceSelect, loading 
               />
             )}
 
-            <CardContent className="relative p-5 space-y-4">
+            <CardContent className="relative p-4 md:p-5 space-y-3 md:space-y-4">
               {/* Header Section */}
-              <div className="flex items-start justify-between gap-3">
-                <div className="flex-1 min-w-0 space-y-2">
+              <div className="flex items-start justify-between gap-2 md:gap-3">
+                <div className="flex-1 min-w-0 space-y-1.5 md:space-y-2">
                   {/* Status Indicator */}
                   <div className="flex items-center gap-2">
                     <div className="relative">
@@ -123,13 +123,13 @@ export function DeviceGrid({ devices, selectedDeviceId, onDeviceSelect, loading 
                   </div>
 
                   {/* Device Name */}
-                  <h3 className="font-semibold text-base leading-tight truncate group-hover:text-primary transition-colors">
+                  <h3 className="font-semibold text-sm md:text-base leading-tight truncate group-hover:text-primary transition-colors">
                     {device.name}
                   </h3>
 
                   {/* Location */}
                   <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                    <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
+                    <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
                     <span className="truncate">{device.locationString}</span>
                   </div>
                 </div>
@@ -138,7 +138,7 @@ export function DeviceGrid({ devices, selectedDeviceId, onDeviceSelect, loading 
                 {device.roomType && (
                   <Badge 
                     variant="secondary" 
-                    className="text-[10px] px-2.5 py-0.5 bg-primary/10 text-primary border-primary/20 font-medium"
+                    className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border-primary/20 font-medium flex-shrink-0"
                   >
                     {device.roomType}
                   </Badge>
@@ -152,10 +152,10 @@ export function DeviceGrid({ devices, selectedDeviceId, onDeviceSelect, loading 
               {isOnline ? (
                 <div className="flex items-center justify-between">
                   {/* Large AQI Circle */}
-                  <div className="flex items-center gap-4">
+                  <div className="flex items-center gap-3 md:gap-4">
                     <div className="relative group/aqi">
                       <div
-                        className="flex items-center justify-center w-16 h-16 rounded-2xl text-2xl font-bold text-white shadow-lg transition-transform duration-300 group-hover/aqi:scale-110"
+                        className="flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-2xl text-xl md:text-2xl font-bold text-white shadow-lg transition-transform duration-300 active:scale-95 group-hover/aqi:scale-110"
                         style={{ backgroundColor: getAqiColor(aqi) }}
                       >
                         {aqi}
@@ -188,10 +188,10 @@ export function DeviceGrid({ devices, selectedDeviceId, onDeviceSelect, loading 
                   )}
                 </div>
               ) : (
-                <div className="flex items-center gap-4 py-2">
+                <div className="flex items-center gap-3 md:gap-4 py-2">
                   {/* Offline Icon */}
-                  <div className="flex items-center justify-center w-16 h-16 rounded-2xl bg-muted/50 backdrop-blur">
-                    <WifiOff className="h-7 w-7 text-muted-foreground" />
+                  <div className="flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 backdrop-blur">
+                    <WifiOff className="h-6 w-6 md:h-7 md:w-7 text-muted-foreground" />
                   </div>
 
                   {/* Offline Status */}

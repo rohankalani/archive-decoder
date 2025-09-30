@@ -105,26 +105,26 @@ const Index = () => {
     <Layout>
       <div className="h-full flex flex-col bg-background">
         {/* Header */}
-        <div className="border-b border-border px-6 py-4">
-          <div className="flex items-center justify-between">
+        <div className="border-b border-border px-4 md:px-6 py-3 md:py-4">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
             <div>
-              <h1 className="text-3xl font-bold text-foreground">Dashboard Overview</h1>
-              <p className="text-sm text-muted-foreground mt-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard Overview</h1>
+              <p className="text-xs md:text-sm text-muted-foreground mt-1">
                 Real-time air quality monitoring across all locations
               </p>
             </div>
-            <div className="flex items-center gap-3">
-              <Button variant="outline" size="sm" onClick={handleRefresh}>
-                <RefreshCw className="h-4 w-4 mr-2" />
-                Refresh
+            <div className="flex items-center gap-2 md:gap-3 overflow-x-auto pb-2 sm:pb-0">
+              <Button variant="outline" size="sm" onClick={handleRefresh} className="flex-shrink-0">
+                <RefreshCw className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Refresh</span>
               </Button>
-              <Button variant="outline" size="sm">
-                <Download className="h-4 w-4 mr-2" />
-                Export
+              <Button variant="outline" size="sm" className="flex-shrink-0">
+                <Download className="h-4 w-4 md:mr-2" />
+                <span className="hidden md:inline">Export</span>
               </Button>
-              <Button size="sm">
-                <Plus className="h-4 w-4 mr-2" />
-                Add Device
+              <Button size="sm" className="flex-shrink-0">
+                <Plus className="h-4 w-4 md:mr-2" />
+                <span className="hidden sm:inline">Add</span>
               </Button>
             </div>
           </div>
@@ -134,72 +134,72 @@ const Index = () => {
           {/* Main Content Area */}
           <div className="flex-1 overflow-auto">
             <div className="p-6 space-y-6">
-              {/* Filters Bar */}
-              <Card className="p-4">
-                <div className="flex flex-wrap items-center gap-4">
-                  {/* Location Filters */}
-                  <Select value={selectedSite} onValueChange={setSelectedSite}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Site" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Sites</SelectItem>
-                      {sites.map(site => (
-                        <SelectItem key={site.id} value={site.id}>{site.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Building" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Buildings</SelectItem>
-                      {filteredBuildings.map(building => (
-                        <SelectItem key={building.id} value={building.id}>{building.name}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={selectedFloor} onValueChange={setSelectedFloor}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Floor" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Floors</SelectItem>
-                      {filteredFloors.map(floor => (
-                        <SelectItem key={floor.id} value={floor.id}>
-                          {floor.name || `Floor ${floor.floor_number}`}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-
-                  <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Status" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Status</SelectItem>
-                      <SelectItem value="online">Online</SelectItem>
-                      <SelectItem value="offline">Offline</SelectItem>
-                      <SelectItem value="alert">Has Alerts</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
-
-                {/* Room Type Tabs */}
-                <Tabs value={selectedRoomType} onValueChange={setSelectedRoomType} className="mt-4">
-                  <TabsList className="w-full justify-start flex-wrap h-auto">
-                    <TabsTrigger value="all">All</TabsTrigger>
-                    {roomTypes.map(type => (
-                      <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
+            {/* Filters Bar */}
+            <Card className="p-3 md:p-4">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 md:gap-4">
+                {/* Location Filters */}
+                <Select value={selectedSite} onValueChange={setSelectedSite}>
+                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                    <SelectValue placeholder="Site" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Sites</SelectItem>
+                    {sites.map(site => (
+                      <SelectItem key={site.id} value={site.id}>{site.name}</SelectItem>
                     ))}
-                    <TabsTrigger value="Untagged">Untagged</TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </Card>
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
+                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                    <SelectValue placeholder="Building" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Buildings</SelectItem>
+                    {filteredBuildings.map(building => (
+                      <SelectItem key={building.id} value={building.id}>{building.name}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedFloor} onValueChange={setSelectedFloor}>
+                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                    <SelectValue placeholder="Floor" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Floors</SelectItem>
+                    {filteredFloors.map(floor => (
+                      <SelectItem key={floor.id} value={floor.id}>
+                        {floor.name || `Floor ${floor.floor_number}`}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                <Select value={selectedStatus} onValueChange={setSelectedStatus}>
+                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                    <SelectValue placeholder="Status" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Status</SelectItem>
+                    <SelectItem value="online">Online</SelectItem>
+                    <SelectItem value="offline">Offline</SelectItem>
+                    <SelectItem value="alert">Has Alerts</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              {/* Room Type Tabs */}
+              <Tabs value={selectedRoomType} onValueChange={setSelectedRoomType} className="mt-3 md:mt-4">
+                <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
+                  <TabsTrigger value="all" className="text-xs md:text-sm">All</TabsTrigger>
+                  {roomTypes.map(type => (
+                    <TabsTrigger key={type} value={type} className="text-xs md:text-sm">{type}</TabsTrigger>
+                  ))}
+                  <TabsTrigger value="Untagged" className="text-xs md:text-sm">Untagged</TabsTrigger>
+                </TabsList>
+              </Tabs>
+            </Card>
 
               {/* Device Grid */}
               <DeviceGrid

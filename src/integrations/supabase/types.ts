@@ -163,41 +163,6 @@ export type Database = {
           },
         ]
       }
-      blocks: {
-        Row: {
-          building_id: string
-          created_at: string | null
-          description: string | null
-          id: string
-          name: string
-          updated_at: string | null
-        }
-        Insert: {
-          building_id: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name: string
-          updated_at?: string | null
-        }
-        Update: {
-          building_id?: string
-          created_at?: string | null
-          description?: string | null
-          id?: string
-          name?: string
-          updated_at?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "blocks_building_id_fkey"
-            columns: ["building_id"]
-            isOneToOne: false
-            referencedRelation: "buildings"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
       buildings: {
         Row: {
           created_at: string | null
@@ -325,8 +290,7 @@ export type Database = {
       floors: {
         Row: {
           area_sqm: number | null
-          block_id: string | null
-          building_id: string | null
+          building_id: string
           created_at: string | null
           floor_number: number
           id: string
@@ -335,8 +299,7 @@ export type Database = {
         }
         Insert: {
           area_sqm?: number | null
-          block_id?: string | null
-          building_id?: string | null
+          building_id: string
           created_at?: string | null
           floor_number: number
           id?: string
@@ -345,23 +308,14 @@ export type Database = {
         }
         Update: {
           area_sqm?: number | null
-          block_id?: string | null
-          building_id?: string | null
+          building_id?: string
           created_at?: string | null
           floor_number?: number
           id?: string
           name?: string | null
           updated_at?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "floors_block_id_fkey"
-            columns: ["block_id"]
-            isOneToOne: false
-            referencedRelation: "blocks"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       notifications: {
         Row: {

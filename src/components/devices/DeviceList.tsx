@@ -80,7 +80,7 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
     if (!floor) return 'Unknown Location'
 
     const location = getFloorLocation(floor)
-    return `${location.site?.name} > ${location.building?.name}${location.block ? ` > ${location.block.name}` : ''} > ${floor.name || `Floor ${floor.floor_number}`}`
+    return `${location.site?.name} > ${location.building?.name} > ${floor.name || `Floor ${floor.floor_number}`}`
   }
 
   const formatDate = (dateString?: string) => {

@@ -24,26 +24,14 @@ export interface Building {
   site?: Site
 }
 
-export interface Block {
-  id: string
-  building_id: string
-  name: string
-  description?: string
-  created_at: string
-  updated_at: string
-  building?: Building
-}
-
 export interface Floor {
   id: string
-  block_id?: string // Make block_id optional for direct floor-to-building relationship
-  building_id?: string // Add building_id for direct relationship when no blocks
+  building_id: string
   floor_number: number
   name?: string
   area_sqm?: number
   created_at: string
   updated_at: string
-  block?: Block
   building?: Building
 }
 
@@ -64,7 +52,6 @@ export interface Room {
 export function useLocations() {
   const [sites, setSites] = useState<Site[]>([])
   const [buildings, setBuildings] = useState<Building[]>([])
-  const [blocks, setBlocks] = useState<Block[]>([])
   const [floors, setFloors] = useState<Floor[]>([])
   const [rooms, setRooms] = useState<Room[]>([])
   const [loading, setLoading] = useState(true)
@@ -93,31 +80,14 @@ export function useLocations() {
 
       if (buildingsError) throw buildingsError
 
-      // Fetch blocks with building info
-      const { data: blocksData, error: blocksError } = await supabase
-        .from('blocks')
+      // Fetch floors with building info
+      const { data: floorsData, error: floorsError} = await supabase
+        .from('floors')
         .select(`
           *,
           building:buildings(
             *,
             site:sites(*)
-          )
-        `)
-        .order('name')
-
-      if (blocksError) throw blocksError
-
-      // Fetch floors with block and building info
-      const { data: floorsData, error: floorsError } = await supabase
-        .from('floors')
-        .select(`
-          *,
-          block:blocks(
-            *,
-            building:buildings(
-              *,
-              site:sites(*)
-            )
           )
         `)
         .order('floor_number')
@@ -134,7 +104,6 @@ export function useLocations() {
 
       setSites(sitesData || [])
       setBuildings(buildingsData || [])
-      setBlocks(blocksData || [])
       setFloors(floorsData || [])
       setRooms(roomsData || [])
     } catch (error) {
@@ -197,11 +166,10 @@ export function useLocations() {
       if (error) throw error
 
       setSites(prev => prev.filter(site => site.id !== id))
-      // Remove dependent buildings, blocks, floors, and rooms
+      // Remove dependent buildings, floors, and rooms
       setBuildings(prev => prev.filter(building => building.site_id !== id))
-      setBlocks(prev => prev.filter(block => block.building?.site_id !== id))
-      setFloors(prev => prev.filter(floor => floor.block?.building?.site_id !== id))
-      setRooms(prev => prev.filter(room => room.floor?.block?.building?.site_id !== id))
+      setFloors(prev => prev.filter(floor => floor.building?.site_id !== id))
+      setRooms(prev => prev.filter(room => room.floor?.building?.site_id !== id))
       
       toast.success('Site deleted successfully')
     } catch (error) {
@@ -269,89 +237,13 @@ export function useLocations() {
       if (error) throw error
 
       setBuildings(prev => prev.filter(building => building.id !== id))
-      setBlocks(prev => prev.filter(block => block.building_id !== id))
-      setFloors(prev => prev.filter(floor => floor.block?.building_id !== id))
-      setRooms(prev => prev.filter(room => room.floor?.block?.building_id !== id))
+      setFloors(prev => prev.filter(floor => floor.building_id !== id))
+      setRooms(prev => prev.filter(room => room.floor?.building_id !== id))
       
       toast.success('Building deleted successfully')
     } catch (error) {
       console.error('Error deleting building:', error)
       toast.error('Failed to delete building')
-      throw error
-    }
-  }
-
-  // Block operations
-  const createBlock = async (data: Omit<Block, 'id' | 'created_at' | 'updated_at'>) => {
-    try {
-      const { data: newBlock, error } = await supabase
-        .from('blocks')
-        .insert([data])
-        .select(`
-          *,
-          building:buildings(
-            *,
-            site:sites(*)
-          )
-        `)
-        .single()
-
-      if (error) throw error
-
-      setBlocks(prev => [...prev, newBlock])
-      toast.success('Block created successfully')
-      return newBlock
-    } catch (error) {
-      console.error('Error creating block:', error)
-      toast.error('Failed to create block')
-      throw error
-    }
-  }
-
-  const updateBlock = async (id: string, data: Partial<Block>) => {
-    try {
-      const { data: updatedBlock, error } = await supabase
-        .from('blocks')
-        .update(data)
-        .eq('id', id)
-        .select(`
-          *,
-          building:buildings(
-            *,
-            site:sites(*)
-          )
-        `)
-        .single()
-
-      if (error) throw error
-
-      setBlocks(prev => prev.map(block => block.id === id ? updatedBlock : block))
-      toast.success('Block updated successfully')
-      return updatedBlock
-    } catch (error) {
-      console.error('Error updating block:', error)
-      toast.error('Failed to update block')
-      throw error
-    }
-  }
-
-  const deleteBlock = async (id: string) => {
-    try {
-      const { error } = await supabase
-        .from('blocks')
-        .delete()
-        .eq('id', id)
-
-      if (error) throw error
-
-      setBlocks(prev => prev.filter(block => block.id !== id))
-      setFloors(prev => prev.filter(floor => floor.block_id !== id))
-      setRooms(prev => prev.filter(room => room.floor?.block_id !== id))
-      
-      toast.success('Block deleted successfully')
-    } catch (error) {
-      console.error('Error deleting block:', error)
-      toast.error('Failed to delete block')
       throw error
     }
   }
@@ -364,12 +256,9 @@ export function useLocations() {
         .insert(data)
         .select(`
           *,
-          block:blocks(
+          building:buildings(
             *,
-            building:buildings(
-              *,
-              site:sites(*)
-            )
+            site:sites(*)
           )
         `)
         .single()
@@ -394,12 +283,9 @@ export function useLocations() {
         .eq('id', id)
         .select(`
           *,
-          block:blocks(
+          building:buildings(
             *,
-            building:buildings(
-              *,
-              site:sites(*)
-            )
+            site:sites(*)
           )
         `)
         .single()
@@ -499,12 +385,6 @@ export function useLocations() {
   const getBuildingsBySite = (siteId: string) => 
     buildings.filter(building => building.site_id === siteId)
 
-  const getBlocksByBuilding = (buildingId: string) => 
-    blocks.filter(block => block.building_id === buildingId)
-
-  const getFloorsByBlock = (blockId: string) => 
-    floors.filter(floor => floor.block_id === blockId)
-
   const getFloorsByBuilding = (buildingId: string) => 
     floors.filter(floor => floor.building_id === buildingId)
 
@@ -520,7 +400,6 @@ export function useLocations() {
     // Data
     sites,
     buildings,
-    blocks,
     floors,
     rooms,
     loading,
@@ -532,9 +411,6 @@ export function useLocations() {
     createBuilding,
     updateBuilding,
     deleteBuilding,
-    createBlock,
-    updateBlock,
-    deleteBlock,
     createFloor,
     updateFloor,
     deleteFloor,
@@ -544,27 +420,12 @@ export function useLocations() {
     
     // Utilities
     getBuildingsBySite,
-    getBlocksByBuilding,
-    getFloorsByBlock,
     getFloorsByBuilding,
     getRoomsByFloor,
     getFloorLocation: (floor: Floor) => {
-      let building = null
-      let block = null
-      let site = null
-
-      if (floor.block_id && floor.block) {
-        // Floor belongs to a block
-        block = floor.block
-        building = buildings.find(b => b.id === block.building_id)
-        site = sites.find(s => s.id === building?.site_id)
-      } else if (floor.building_id) {
-        // Floor belongs directly to a building
-        building = buildings.find(b => b.id === floor.building_id)
-        site = sites.find(s => s.id === building?.site_id)
-      }
-
-      return { site, building, block, floor }
+      const building = buildings.find(b => b.id === floor.building_id)
+      const site = sites.find(s => s.id === building?.site_id)
+      return { site, building, floor }
     },
     fetchLocations,
   }

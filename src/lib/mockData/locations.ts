@@ -1,9 +1,9 @@
 /**
  * Abu Dhabi University Location Structure
- * Aligned with Supabase database structure
+ * Aligned with Supabase database structure - without Blocks
  */
 
-import { Site, Building, Block, Floor, Room } from '@/hooks/useLocations';
+import { Site, Building, Floor, Room } from '@/hooks/useLocations';
 
 export const mockSite: Site = {
   id: 'abu-dhabi-university',
@@ -64,114 +64,58 @@ export const mockBuildings: Building[] = [
   }
 ];
 
-export const mockBlocks: Block[] = [
-  // Academic Building 1 - North and South wings
-  {
-    id: 'block-academic-1-north',
-    building_id: 'building-academic-1',
-    name: 'North Wing',
-    description: 'Mathematics and Science departments',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 'block-academic-1-south',
-    building_id: 'building-academic-1',
-    name: 'South Wing',
-    description: 'Business and Humanities departments',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  // Engineering Building blocks
-  {
-    id: 'block-engineering-lab',
-    building_id: 'building-engineering',
-    name: 'Laboratory Block',
-    description: 'Engineering laboratories and research facilities',
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  }
-];
-
 export const mockFloors: Floor[] = [
-  // Academic Building 1 - North Wing floors
+  // Academic Building 1 floors
   {
-    id: 'floor-academic-1-north-gf',
+    id: 'floor-academic-1-gf',
     building_id: 'building-academic-1',
-    block_id: 'block-academic-1-north',
     floor_number: 0,
-    name: 'Ground Floor - North',
+    name: 'Ground Floor',
     area_sqm: 800,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'floor-academic-1-north-1',
+    id: 'floor-academic-1-1',
     building_id: 'building-academic-1',
-    block_id: 'block-academic-1-north',
     floor_number: 1,
-    name: 'First Floor - North',
+    name: 'First Floor',
     area_sqm: 800,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'floor-academic-1-north-2',
+    id: 'floor-academic-1-2',
     building_id: 'building-academic-1',
-    block_id: 'block-academic-1-north',
     floor_number: 2,
-    name: 'Second Floor - North',
+    name: 'Second Floor',
     area_sqm: 800,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  // Academic Building 1 - South Wing floors
-  {
-    id: 'floor-academic-1-south-gf',
-    building_id: 'building-academic-1',
-    block_id: 'block-academic-1-south',
-    floor_number: 0,
-    name: 'Ground Floor - South',
-    area_sqm: 750,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 'floor-academic-1-south-1',
-    building_id: 'building-academic-1',
-    block_id: 'block-academic-1-south',
-    floor_number: 1,
-    name: 'First Floor - South',
-    area_sqm: 750,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
   // Engineering Building floors
   {
-    id: 'floor-engineering-lab-gf',
+    id: 'floor-engineering-gf',
     building_id: 'building-engineering',
-    block_id: 'block-engineering-lab',
     floor_number: 0,
-    name: 'Ground Floor - Labs',
+    name: 'Ground Floor',
     area_sqm: 1200,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'floor-engineering-lab-1',
+    id: 'floor-engineering-1',
     building_id: 'building-engineering',
-    block_id: 'block-engineering-lab',
     floor_number: 1,
-    name: 'First Floor - Labs',
+    name: 'First Floor',
     area_sqm: 1200,
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
-  // Library floors (without blocks)
+  // Library floors
   {
     id: 'floor-library-gf',
     building_id: 'building-library',
-    block_id: null,
     floor_number: 0,
     name: 'Ground Floor',
     area_sqm: 1000,
@@ -181,7 +125,6 @@ export const mockFloors: Floor[] = [
   {
     id: 'floor-library-1',
     building_id: 'building-library',
-    block_id: null,
     floor_number: 1,
     name: 'First Floor',
     area_sqm: 950,
@@ -191,7 +134,6 @@ export const mockFloors: Floor[] = [
   {
     id: 'floor-library-2',
     building_id: 'building-library',
-    block_id: null,
     floor_number: 2,
     name: 'Second Floor',
     area_sqm: 950,
@@ -201,10 +143,10 @@ export const mockFloors: Floor[] = [
 ];
 
 export const mockRooms: Room[] = [
-  // Academic Building 1 - North Wing Ground Floor
+  // Academic Building 1 Ground Floor
   {
-    id: 'room-academic-1-north-gf-101',
-    floor_id: 'floor-academic-1-north-gf',
+    id: 'room-academic-1-gf-101',
+    floor_id: 'floor-academic-1-gf',
     name: 'Lecture Hall 101',
     description: 'Large lecture hall for mathematics courses',
     room_number: '101',
@@ -215,8 +157,8 @@ export const mockRooms: Room[] = [
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'room-academic-1-north-gf-102',
-    floor_id: 'floor-academic-1-north-gf',
+    id: 'room-academic-1-gf-102',
+    floor_id: 'floor-academic-1-gf',
     name: 'Classroom 102',
     description: 'Standard classroom for small group sessions',
     room_number: '102',
@@ -227,8 +169,8 @@ export const mockRooms: Room[] = [
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'room-academic-1-north-gf-103',
-    floor_id: 'floor-academic-1-north-gf',
+    id: 'room-academic-1-gf-103',
+    floor_id: 'floor-academic-1-gf',
     name: 'Physics Lab',
     description: 'Physics laboratory with experimental equipment',
     room_number: '103',
@@ -238,10 +180,10 @@ export const mockRooms: Room[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
-  // Academic Building 1 - North Wing First Floor
+  // Academic Building 1 First Floor
   {
-    id: 'room-academic-1-north-1-201',
-    floor_id: 'floor-academic-1-north-1',
+    id: 'room-academic-1-1-201',
+    floor_id: 'floor-academic-1-1',
     name: 'Chemistry Lab',
     description: 'Advanced chemistry laboratory with fume hoods',
     room_number: '201',
@@ -252,8 +194,8 @@ export const mockRooms: Room[] = [
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'room-academic-1-north-1-202',
-    floor_id: 'floor-academic-1-north-1',
+    id: 'room-academic-1-1-202',
+    floor_id: 'floor-academic-1-1',
     name: 'Computer Lab',
     description: 'Computer laboratory with 50 workstations',
     room_number: '202',
@@ -263,35 +205,10 @@ export const mockRooms: Room[] = [
     created_at: '2024-01-01T00:00:00Z',
     updated_at: '2024-01-01T00:00:00Z'
   },
-  // Academic Building 1 - South Wing Ground Floor
-  {
-    id: 'room-academic-1-south-gf-301',
-    floor_id: 'floor-academic-1-south-gf',
-    name: 'Business Classroom 301',
-    description: 'Business studies classroom with presentation equipment',
-    room_number: '301',
-    room_type: 'Classroom',
-    capacity: 45,
-    area_sqm: 85,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
-  {
-    id: 'room-academic-1-south-gf-302',
-    floor_id: 'floor-academic-1-south-gf',
-    name: 'Seminar Room 302',
-    description: 'Small seminar room for group discussions',
-    room_number: '302',
-    room_type: 'Seminar Room',
-    capacity: 20,
-    area_sqm: 50,
-    created_at: '2024-01-01T00:00:00Z',
-    updated_at: '2024-01-01T00:00:00Z'
-  },
   // Engineering Building Ground Floor
   {
-    id: 'room-engineering-lab-gf-401',
-    floor_id: 'floor-engineering-lab-gf',
+    id: 'room-engineering-gf-401',
+    floor_id: 'floor-engineering-gf',
     name: 'Mechanical Workshop',
     description: 'Mechanical engineering workshop with machine tools',
     room_number: '401',
@@ -302,8 +219,8 @@ export const mockRooms: Room[] = [
     updated_at: '2024-01-01T00:00:00Z'
   },
   {
-    id: 'room-engineering-lab-gf-402',
-    floor_id: 'floor-engineering-lab-gf',
+    id: 'room-engineering-gf-402',
+    floor_id: 'floor-engineering-gf',
     name: 'Electronics Lab',
     description: 'Electronics laboratory with testing equipment',
     room_number: '402',
@@ -343,7 +260,6 @@ export const mockRooms: Room[] = [
 export const mockLocations = {
   sites: [mockSite],
   buildings: mockBuildings,
-  blocks: mockBlocks,
   floors: mockFloors,
   rooms: mockRooms
 };

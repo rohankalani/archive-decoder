@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LocationWizard } from './LocationWizard';
 import { useLocations } from '@/hooks/useLocations';
-import { Plus, MapPin, Building2, Square, Layers, Zap } from 'lucide-react';
+import { Plus, MapPin, Building2, Layers, Zap } from 'lucide-react';
 
-type LocationType = 'site' | 'building' | 'block' | 'floor';
+type LocationType = 'site' | 'building' | 'floor';
 
 export function QuickActions() {
-  const { sites, buildings, blocks } = useLocations();
+  const { sites, buildings } = useLocations();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardType, setWizardType] = useState<LocationType>('site');
   const [parentId, setParentId] = useState<string>();
@@ -42,17 +42,6 @@ export function QuickActions() {
       requirement: sites.length === 0 ? 'Create a site first' : undefined,
     },
     {
-      id: 'block',
-      title: 'Add Block',
-      description: 'Create a block or wing within a building',
-      icon: Square,
-      color: 'text-warning',
-      bgColor: 'bg-warning/10',
-      action: () => openWizard('block'),
-      enabled: buildings.length > 0,
-      requirement: buildings.length === 0 ? 'Create a building first' : undefined,
-    },
-    {
       id: 'floor',
       title: 'Add Floor',
       description: 'Add a floor where devices can be installed',
@@ -60,8 +49,8 @@ export function QuickActions() {
       color: 'text-accent-foreground',
       bgColor: 'bg-accent/10',
       action: () => openWizard('floor'),
-      enabled: blocks.length > 0,
-      requirement: blocks.length === 0 ? 'Create a block first' : undefined,
+      enabled: buildings.length > 0,
+      requirement: buildings.length === 0 ? 'Create a building first' : undefined,
     },
   ];
 

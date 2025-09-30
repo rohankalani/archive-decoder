@@ -10,7 +10,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Layout } from '@/components/Layout';
 import { useSettings } from '@/contexts/SettingsContext';
 import { useToast } from '@/hooks/use-toast';
-import { RotateCcw, Save, Palette } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { RotateCcw, Save, Palette, Lock } from 'lucide-react';
 import { getAqiColor } from '@/utils/chartDataUtils';
 
 type Pollutant = 'PM2.5' | 'PM10' | 'HCHO' | 'VOC' | 'NOx';
@@ -79,7 +80,11 @@ const AQI_LEVELS = [
 export function Settings() {
   const [selectedPollutant, setSelectedPollutant] = useState<Pollutant>('PM2.5');
   const [ranges, setRanges] = useState<Record<Pollutant, ConcentrationRange>>(ROSAIQ_RANGES);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
   const { toast } = useToast();
+  const { updatePassword } = useAuth();
 
   const handleSave = () => {
     toast({
@@ -110,6 +115,37 @@ export function Settings() {
         }
       }
     }));
+  };
+
+  const handlePasswordChange = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (newPassword.length < 6) {
+      toast({
+        title: "Password too short",
+        description: "Password must be at least 6 characters long.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast({
+        title: "Passwords don't match",
+        description: "Please make sure both passwords are identical.",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    setIsUpdatingPassword(true);
+    const { error } = await updatePassword(newPassword);
+    setIsUpdatingPassword(false);
+
+    if (!error) {
+      setNewPassword('');
+      setConfirmPassword('');
+    }
   };
 
   const getPollutantUnit = (pollutant: Pollutant): string => {
@@ -154,6 +190,7 @@ export function Settings() {
           <TabsList>
             <TabsTrigger value="aqi">AQI Breakpoints</TabsTrigger>
             <TabsTrigger value="colors">Color Scheme</TabsTrigger>
+            <TabsTrigger value="security">Security</TabsTrigger>
             <TabsTrigger value="about">About</TabsTrigger>
           </TabsList>
 
@@ -282,6 +319,54 @@ export function Settings() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="security" className="space-y-4">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Lock className="h-5 w-5" />
+                  Change Password
+                </CardTitle>
+                <CardDescription>
+                  Update your account password
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <form onSubmit={handlePasswordChange} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="newPassword">New Password</Label>
+                    <Input
+                      id="newPassword"
+                      type="password"
+                      value={newPassword}
+                      onChange={(e) => setNewPassword(e.target.value)}
+                      placeholder="Enter new password"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                    <Input
+                      id="confirmPassword"
+                      type="password"
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      placeholder="Confirm new password"
+                      required
+                      minLength={6}
+                    />
+                  </div>
+                  <Button 
+                    type="submit" 
+                    disabled={isUpdatingPassword || !newPassword || !confirmPassword}
+                  >
+                    {isUpdatingPassword ? 'Updating...' : 'Update Password'}
+                  </Button>
+                </form>
               </CardContent>
             </Card>
           </TabsContent>

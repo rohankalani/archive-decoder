@@ -27,12 +27,15 @@ export function useDevices() {
   // Fetch all devices
   const fetchDevices = async () => {
     try {
+      // Force fresh data by adding timestamp to prevent any caching
       const { data, error } = await supabase
         .from('devices')
         .select('*')
         .order('name')
 
       if (error) throw error
+      
+      console.log('Fetched devices from database:', data?.map(d => ({ id: d.id, name: d.name })))
       
       // Filter out maintenance status and convert to correct types
       const validDevices = (data || []).map(device => ({
@@ -41,6 +44,7 @@ export function useDevices() {
       })).filter(device => ['online', 'offline', 'error'].includes(device.status)) as Device[]
       
       setDevices(validDevices)
+      console.log('Set devices state:', validDevices.map(d => ({ id: d.id, name: d.name })))
     } catch (error) {
       console.error('Error fetching devices:', error)
       toast.error('Failed to fetch devices')

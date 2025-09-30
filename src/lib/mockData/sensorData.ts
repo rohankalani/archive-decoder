@@ -49,9 +49,9 @@ export const generateMockDevices = (): MockDevice[] => {
   const devices: MockDevice[] = [];
   let deviceCounter = 1;
 
-  // Create devices for key rooms (not every room to keep it realistic)
+  // Create devices only for classrooms (air quality monitors are only in classrooms)
   const keyRooms = mockRooms.filter(room => 
-    room.room_type && ['Lecture Hall', 'Laboratory', 'Computer Lab', 'Workshop', 'Reading Room'].includes(room.room_type)
+    room.room_type === 'Classroom'
   );
 
   keyRooms.forEach(room => {

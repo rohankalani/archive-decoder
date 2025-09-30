@@ -27,15 +27,15 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
         {device.name}
       </div>
 
-      {/* AQI Score Circle */}
+      {/* AQI Value */}
       {!isOffline ? (
         <div className="flex items-center justify-center my-4">
-          <div
-            className="flex items-center justify-center rounded-full text-white font-bold w-16 h-16 text-2xl"
-            style={{ backgroundColor: getAqiColor(aqi) }}
+          <span
+            className="font-bold text-4xl"
+            style={{ color: getAqiColor(aqi) }}
           >
             {aqi}
-          </div>
+          </span>
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center my-4 text-muted-foreground">

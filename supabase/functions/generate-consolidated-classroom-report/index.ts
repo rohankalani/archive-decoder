@@ -107,14 +107,11 @@ Needs Immediate Attention: ${consolidatedData.bottomPerformer.name} (${consolida
 - Energy Saving Opportunity: ${consolidatedData.temperatureInsights.energySavingOpportunity}
 
 **📈 DETAILED CLASSROOM ANALYSIS:**
-${classroomsData.map((classroom, index) => `
-${index + 1}. ${classroom.classroomName} (${classroom.building}, Floor ${classroom.floor})
-   - Status: ${classroom.status.toUpperCase()}
-   - Efficiency: ${classroom.roomEfficiencyScore}% | Ventilation: ${classroom.ventilationScore}/100
-   - Operating Hours: AQI ${classroom.operatingHoursAqi}, CO₂ ${classroom.operatingHoursCO2.toFixed(0)}ppm, ${classroom.operatingHoursTemp.toFixed(1)}°C
-   - After Hours: AQI ${classroom.afterHoursAqi}, CO₂ ${classroom.afterHoursCO2.toFixed(0)}ppm, ${classroom.afterHoursTemp.toFixed(1)}°C
-   - Temperature Stability: ±${classroom.temperatureStability.toFixed(1)}°C | Alerts: ${classroom.alertCount}
-   - Key Recommendations: ${classroom.recommendations.slice(0, 2).join('; ')}`).join('')}
+${classroomsData.slice(0, 10).map((classroom, index) => `
+${index + 1}. ${classroom.classroomName} - ${classroom.status.toUpperCase()}
+   Efficiency: ${classroom.roomEfficiencyScore}% | Ventilation: ${classroom.ventilationScore}/100 | Alerts: ${classroom.alertCount}
+   Top Rec: ${classroom.recommendations[0] || 'N/A'}`).join('')}
+${classroomsData.length > 10 ? `\n(+${classroomsData.length - 10} more classrooms analyzed)` : ''}
 
 **🎯 STRATEGIC ANALYSIS REQUIREMENTS:**
 
@@ -197,7 +194,7 @@ Use the temperature differential data, after-hours activity patterns, and cross-
             temperature: 0.7,
             topK: 40,
             topP: 0.95,
-            maxOutputTokens: 3000,
+            maxOutputTokens: 4000,
           },
         }),
       }
@@ -211,14 +208,39 @@ Use the temperature differential data, after-hours activity patterns, and cross-
 
     const geminiData = await response.json();
     
-    if (!geminiData.candidates || geminiData.candidates.length === 0 || 
-        !geminiData.candidates[0] || !geminiData.candidates[0].content || 
-        !geminiData.candidates[0].content.parts || geminiData.candidates[0].content.parts.length === 0) {
-      console.error('Unexpected Gemini response structure:', geminiData);
-      throw new Error('Invalid response from Gemini API');
+    let aiSummary = '';
+    
+    // Handle different response structures and finish reasons
+    if (geminiData.candidates && geminiData.candidates.length > 0) {
+      const candidate = geminiData.candidates[0];
+      
+      // Check if we have content with parts
+      if (candidate.content?.parts && candidate.content.parts.length > 0 && candidate.content.parts[0]?.text) {
+        aiSummary = candidate.content.parts[0].text;
+      } 
+      // Handle MAX_TOKENS or empty response
+      else if (candidate.finishReason === 'MAX_TOKENS' || !candidate.content?.parts?.[0]?.text) {
+        console.warn('Response hit MAX_TOKENS or empty, using fallback summary');
+        aiSummary = `# Campus Performance Summary\n\n**Report Period:** ${fromDate} to ${toDate}\n\n` +
+          `## Key Metrics\n` +
+          `- **Total Classrooms:** ${consolidatedData.totalClassrooms}\n` +
+          `- **Average Efficiency:** ${consolidatedData.averageEfficiency.toFixed(1)}%\n` +
+          `- **Excellent Performers:** ${consolidatedData.excellentClassrooms}/${consolidatedData.totalClassrooms}\n` +
+          `- **Need Attention:** ${consolidatedData.needsAttentionClassrooms} classrooms\n` +
+          `- **Total Alerts:** ${consolidatedData.totalAlerts}\n\n` +
+          `## Top Performer\n${consolidatedData.topPerformer.name} achieved ${consolidatedData.topPerformer.efficiency.toFixed(1)}% efficiency.\n\n` +
+          `## Recommendations\n` +
+          `- Review classrooms needing attention\n` +
+          `- Investigate ${consolidatedData.totalAlerts} air quality alerts\n` +
+          `- Optimize HVAC based on temperature differentials\n\n` +
+          `*Note: Detailed analysis truncated. For full insights, analyze smaller date ranges.*`;
+      } else {
+        console.error('Unexpected Gemini response structure:', geminiData);
+        throw new Error('Invalid response from Gemini API');
+      }
+    } else {
+      throw new Error('No candidates in Gemini API response');
     }
-
-    const aiSummary = geminiData.candidates[0].content.parts[0].text;
     
     console.log('Consolidated classroom report generated successfully');
 

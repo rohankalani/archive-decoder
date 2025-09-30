@@ -61,7 +61,7 @@ export const generateMockDevices = (): MockDevice[] => {
     
     devices.push({
       id: deviceId,
-      name: `AirSensor-${room.name}`,
+      name: room.name, // Use actual classroom name like "Classroom 102"
       floor_id: room.floor_id,
       device_type: 'air_quality_sensor',
       status: Math.random() > 0.05 ? 'online' : 'offline', // 95% online

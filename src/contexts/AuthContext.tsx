@@ -159,6 +159,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       })
       
       if (error) {
+        // Log failed login attempt for security monitoring
+        try {
+          await supabase.from('failed_login_attempts').insert({
+            email,
+            user_agent: navigator.userAgent,
+          })
+        } catch (logError) {
+          console.error('Failed to log login attempt:', logError)
+        }
+        
         toast.error('Login failed: ' + error.message)
         return { error }
       }
@@ -166,6 +176,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return { error: null }
     } catch (error) {
       const authError = error as Error
+      
+      // Log failed login attempt for security monitoring
+      try {
+        await supabase.from('failed_login_attempts').insert({
+          email,
+          user_agent: navigator.userAgent,
+        })
+      } catch (logError) {
+        console.error('Failed to log login attempt:', logError)
+      }
+      
       toast.error('Login failed: ' + authError.message)
       return { error: authError }
     } finally {

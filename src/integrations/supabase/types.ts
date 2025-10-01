@@ -297,6 +297,30 @@ export type Database = {
         }
         Relationships: []
       }
+      failed_login_attempts: {
+        Row: {
+          attempted_at: string
+          email: string
+          id: string
+          ip_address: unknown | null
+          user_agent: string | null
+        }
+        Insert: {
+          attempted_at?: string
+          email: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Update: {
+          attempted_at?: string
+          email?: string
+          id?: string
+          ip_address?: unknown | null
+          user_agent?: string | null
+        }
+        Relationships: []
+      }
       floors: {
         Row: {
           area_sqm: number | null
@@ -449,6 +473,36 @@ export type Database = {
         }
         Relationships: []
       }
+      security_events: {
+        Row: {
+          created_at: string
+          details: Json | null
+          event_type: string
+          id: string
+          ip_address: unknown | null
+          severity: string
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          details?: Json | null
+          event_type: string
+          id?: string
+          ip_address?: unknown | null
+          severity: string
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          details?: Json | null
+          event_type?: string
+          id?: string
+          ip_address?: unknown | null
+          severity?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
       sensor_readings: {
         Row: {
           created_at: string | null
@@ -525,6 +579,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      anonymize_ip: {
+        Args: { ip_address: unknown }
+        Returns: unknown
+      }
+      cleanup_old_audit_logs: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
+      cleanup_old_failed_logins: {
+        Args: Record<PropertyKey, never>
+        Returns: undefined
+      }
       get_latest_sensor_readings_optimized: {
         Args: Record<PropertyKey, never>
         Returns: {
@@ -544,6 +610,16 @@ export type Database = {
       is_admin_or_super_admin: {
         Args: { user_id: string }
         Returns: boolean
+      }
+      log_security_event: {
+        Args: {
+          p_details?: Json
+          p_event_type: string
+          p_ip_address?: unknown
+          p_severity: string
+          p_user_id?: string
+        }
+        Returns: string
       }
     }
     Enums: {

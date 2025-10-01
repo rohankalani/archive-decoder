@@ -15,25 +15,32 @@ interface HiveMQWebhookPayload {
 }
 
 interface SensorPayload {
-  mac_address: string;
+  deviceId?: string;
   timestamp?: string;
-  pm25?: number;
-  pm10?: number;
-  co2?: number;
+  // Environmental sensors
   temperature?: number;
   humidity?: number;
-  voc?: number;
-  no2?: number;
-  hcho?: number;
+  pressure?: number;
+  // Air quality sensors
+  pm25?: number;
+  pm10?: number;
+  pm1?: number;
   pm03?: number;
   pm05?: number;
-  pm1?: number;
   pm5?: number;
+  co2?: number;
+  voc?: number;
+  nox?: number;
+  no2?: number;
+  hcho?: number;
+  // Particle counts
   pc03?: number;
   pc05?: number;
   pc1?: number;
   pc25?: number;
   pc5?: number;
+  pc10?: number;
+  // AQI
   aqi_overall?: number;
   dominant_pollutant?: string;
 }
@@ -62,28 +69,48 @@ Deno.serve(async (req) => {
     
     const sensorData: SensorPayload = JSON.parse(decodedPayload);
     
-    if (!sensorData.mac_address) {
-      throw new Error('MAC address is required in payload');
+    // Extract device identifier from topic: sensors/{deviceId}/data
+    const topicParts = webhookPayload.topic.split('/');
+    const deviceIdentifier = topicParts[1]; // Gets "device01" or "DEVICE-{MAC}"
+    
+    console.log('Device identifier from topic:', deviceIdentifier);
+
+    // Try to look up device by name first (for legacy device01 format)
+    let { data: device, error: deviceError } = await supabase
+      .from('devices')
+      .select('id, name, status, mac_address')
+      .eq('name', deviceIdentifier)
+      .maybeSingle();
+
+    // If not found by name, try MAC address lookup (for DEVICE-{MAC} format)
+    if (!device && deviceIdentifier.startsWith('DEVICE-')) {
+      const macAddress = deviceIdentifier.replace('DEVICE-', '');
+      console.log('Trying MAC address lookup:', macAddress);
+      
+      const { data: macDevice, error: macError } = await supabase
+        .from('devices')
+        .select('id, name, status, mac_address')
+        .eq('mac_address', macAddress)
+        .maybeSingle();
+      
+      device = macDevice;
+      deviceError = macError;
     }
 
-    console.log('Processing data from MAC:', sensorData.mac_address);
-
-    // Look up device by MAC address
-    const { data: device, error: deviceError } = await supabase
-      .from('devices')
-      .select('id, name, status')
-      .eq('mac_address', sensorData.mac_address)
-      .single();
-
     if (deviceError || !device) {
-      console.error('Device not found for MAC:', sensorData.mac_address);
+      console.error('Device not found for identifier:', deviceIdentifier);
+      
+      // Extract MAC address for auto-registration
+      const macAddress = deviceIdentifier.startsWith('DEVICE-') 
+        ? deviceIdentifier.replace('DEVICE-', '')
+        : deviceIdentifier;
       
       // Auto-register new device
       const { data: newDevice, error: registerError } = await supabase
         .from('devices')
         .insert({
-          name: `ESP32-${sensorData.mac_address.slice(-8)}`,
-          mac_address: sensorData.mac_address,
+          name: deviceIdentifier,
+          mac_address: macAddress,
           device_type: 'air_quality_sensor',
           status: 'online',
           floor_id: 'f3c5d8b9-4e7a-4f2c-9d1e-8b3c5a7f9e2d' // Default floor - update as needed

@@ -8,6 +8,7 @@ import { useHistoricalSensorData, TimePeriod } from '@/hooks/useHistoricalSensor
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
 import { useSettings } from '@/contexts/SettingsContext';
+import { cn } from '@/lib/utils';
 import { 
   generateDeterministicSensorData, 
   calculateAverageAqiData,
@@ -158,7 +159,8 @@ export function DeviceDetail() {
     pmCountParam: pmCountParam
   });
 
-  if (sensorLoading || devicesLoading || historicalLoading) {
+  // Only show full loading on initial load (not when changing time period)
+  if ((sensorLoading || devicesLoading) && !device) {
     return (
       <Layout showBackButton>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -413,12 +415,24 @@ export function DeviceDetail() {
                   variant={timePeriod === period ? "default" : "outline"}
                   size="sm"
                   onClick={() => setTimePeriod(period)}
+                  disabled={historicalLoading}
                 >
                   {period}
                 </Button>
               ))}
             </div>
           </div>
+
+          {/* Loading overlay for charts */}
+          <div className={cn("relative", historicalLoading && "opacity-50 pointer-events-none")}>
+            {historicalLoading && (
+              <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/50 backdrop-blur-sm rounded-lg">
+                <div className="flex items-center gap-2">
+                  <Activity className="h-5 w-5 animate-spin" />
+                  <span className="text-sm">Updating charts...</span>
+                </div>
+              </div>
+            )}
 
           {/* Key Pollutants Bar Chart - Average AQI for selected time period */}
           <Card>
@@ -759,6 +773,7 @@ export function DeviceDetail() {
                 </div>
               </CardContent>
             </Card>
+          </div>
           </div>
         </div>
       </div>

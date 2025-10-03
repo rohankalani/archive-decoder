@@ -23,7 +23,8 @@ import {
   AlertTriangle,
   CheckCircle,
   Circle,
-  Activity
+  Activity,
+  MapPin
 } from 'lucide-react';
 
 // Helper functions
@@ -200,6 +201,8 @@ const DeviceViewContent = memo(() => {
         name: sensor.device_name,
         status: sensor.status,
         locationString: `${floorLocation.site.name} > ${floorLocation.building.name} > ${floorLocation.floor.name || `Floor ${floorLocation.floor.floor_number}`}`,
+        building: floorLocation.building,
+        floor: floorLocation.floor,
         sensor: {
           aqi: sensor.aqi,
           temperature: sensor.temperature,
@@ -215,6 +218,28 @@ const DeviceViewContent = memo(() => {
       };
     }).filter(Boolean);
   }, [sensorData, devices, floors, getFloorLocation, selectedSite, selectedBuilding, selectedFloor, debouncedSearchQuery]);
+
+  // Group devices by building for glance view
+  const devicesByBuilding = useMemo(() => {
+    const grouped = new Map<string, { buildingName: string; buildingId: string; devices: any[] }>();
+    
+    devicesWithFullData.forEach(device => {
+      const buildingName = device.building?.name || 'Unassigned Building';
+      const buildingId = device.building?.id || 'unassigned';
+      
+      if (!grouped.has(buildingId)) {
+        grouped.set(buildingId, {
+          buildingName,
+          buildingId,
+          devices: []
+        });
+      }
+      
+      grouped.get(buildingId)!.devices.push(device);
+    });
+    
+    return Array.from(grouped.values());
+  }, [devicesWithFullData]);
 
   const selectedDevice = useMemo(() => {
     if (!selectedDeviceId) return null;
@@ -347,17 +372,34 @@ const DeviceViewContent = memo(() => {
         {/* Device Display - Conditional based on view mode */}
         {viewMode === 'glance' ? (
           <div className="flex gap-6 h-[calc(100vh-320px)]">
-            {/* Device Cards Grid */}
+            {/* Device Cards Grid - Grouped by Building */}
             <div className="flex-1 overflow-auto">
-              {devicesWithFullData.length > 0 ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4 pb-4">
-                  {devicesWithFullData.map((device) => (
-                    <GlanceViewCard
-                      key={device.id}
-                      device={device}
-                      isSelected={selectedDeviceId === device.id}
-                      onClick={() => setSelectedDeviceId(device.id)}
-                    />
+              {devicesByBuilding.length > 0 ? (
+                <div className="space-y-6 pb-4">
+                  {devicesByBuilding.map((buildingGroup) => (
+                    <div key={buildingGroup.buildingId} className="space-y-3">
+                      {/* Building Header */}
+                      <div className="flex items-center gap-3 sticky top-0 bg-background/95 backdrop-blur-sm py-2 z-10">
+                        <h2 className="text-lg font-bold text-foreground">
+                          {buildingGroup.buildingName}
+                        </h2>
+                        <Badge variant="secondary">
+                          {buildingGroup.devices.length} {buildingGroup.devices.length === 1 ? 'device' : 'devices'}
+                        </Badge>
+                      </div>
+
+                      {/* Device Cards */}
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                        {buildingGroup.devices.map((device) => (
+                          <GlanceViewCard
+                            key={device.id}
+                            device={device}
+                            isSelected={selectedDeviceId === device.id}
+                            onClick={() => setSelectedDeviceId(device.id)}
+                          />
+                        ))}
+                      </div>
+                    </div>
                   ))}
                 </div>
               ) : (

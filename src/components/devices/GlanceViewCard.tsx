@@ -19,6 +19,10 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
   const humidity = device.sensor?.humidity || 0;
   const isOffline = device.status !== 'online';
 
+  // Extract room/classroom name from device name
+  // e.g., "Engineering Building Classroom 101" -> "Classroom 101"
+  const displayName = device.room?.name || device.name.split(' ').slice(-2).join(' ') || device.name;
+
   return (
     <Card
       className={cn(
@@ -27,9 +31,9 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
       )}
       onClick={onClick}
     >
-      {/* Device Name */}
+      {/* Device Name - Show only room name */}
       <div className="text-sm font-semibold mb-3 truncate">
-        {device.name}
+        {displayName}
       </div>
 
       {!isOffline ? (
@@ -76,9 +80,9 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
         </div>
       )}
 
-      {/* Location Info */}
+      {/* Location Info - Show only floor */}
       <div className="text-xs text-muted-foreground truncate text-center mt-3 pt-2 border-t">
-        {device.locationString}
+        {device.floor?.name || `Floor ${device.floor?.floor_number || 'N/A'}`}
       </div>
     </Card>
   );

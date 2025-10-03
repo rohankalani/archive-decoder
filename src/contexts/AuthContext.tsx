@@ -40,8 +40,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
   const [isRecoveringPassword, setIsRecoveringPassword] = useState(false)
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'super_admin'
-  const isSuperAdmin = profile?.role === 'super_admin'
+  // Fetch roles from user_roles table instead of profiles
+  const [userRole, setUserRole] = useState<UserRole | null>(null)
+  const isAdmin = userRole === 'admin' || userRole === 'super_admin'
+  const isSuperAdmin = userRole === 'super_admin'
 
   useEffect(() => {
     let isMounted = true
@@ -62,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSession(session)
         setUser(session?.user ?? null)
 
-        // If we have a user, fetch their profile immediately
+        // If we have a user, fetch their profile and role immediately
         if (session?.user && isMounted) {
           try {
             const { data: profileData, error: profileError } = await supabase
@@ -79,9 +81,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             } else {
               setProfile(profileData)
             }
+
+            // Fetch user role from user_roles table
+            const { data: roleData, error: roleError } = await supabase
+              .rpc('get_user_highest_role', { _user_id: session.user.id })
+
+            if (!isMounted) return
+
+            if (roleError) {
+              console.error('Error fetching role:', roleError)
+              setUserRole(null)
+            } else {
+              setUserRole(roleData as UserRole)
+            }
           } catch (error) {
-            console.error('Profile fetch error:', error)
+            console.error('Profile/role fetch error:', error)
             setProfile(null)
+            setUserRole(null)
           }
         }
       } catch (error) {
@@ -130,13 +146,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                   setProfile(profileData)
                 }
               }
+
+              // Fetch user role from user_roles table
+              const { data: roleData, error: roleError } = await supabase
+                .rpc('get_user_highest_role', { _user_id: session.user.id })
+
+              if (isMounted) {
+                if (roleError) {
+                  console.error('Error fetching role:', roleError)
+                  setUserRole(null)
+                } else {
+                  setUserRole(roleData as UserRole)
+                }
+              }
             } catch (error) {
-              console.error('Profile fetch error:', error)
-              if (isMounted) setProfile(null)
+              console.error('Profile/role fetch error:', error)
+              if (isMounted) {
+                setProfile(null)
+                setUserRole(null)
+              }
             }
           }, 100)
         } else {
-          if (isMounted) setProfile(null)
+          if (isMounted) {
+            setProfile(null)
+            setUserRole(null)
+          }
         }
       }
     )

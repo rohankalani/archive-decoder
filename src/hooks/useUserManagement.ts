@@ -36,12 +36,12 @@ interface UpdateUserData {
 export function useUserManagement() {
   const [users, setUsers] = useState<User[]>([]);
   const [isLoading, setIsLoading] = useState(true);
-  const { profile } = useAuth();
+  const { isAdmin } = useAuth();
 
   const fetchUsers = async () => {
     try {
       // Security check: Only admins and super_admins can view all profiles
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+      if (!isAdmin) {
         console.error('Unauthorized: User does not have permission to view all profiles');
         toast.error('You do not have permission to view user profiles');
         setIsLoading(false);
@@ -66,15 +66,11 @@ export function useUserManagement() {
   const createUser = async (userData: CreateUserData) => {
     try {
       // Security check: Only admins and super_admins can create users
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+      if (!isAdmin) {
         toast.error('You do not have permission to create users');
         throw new Error('Unauthorized: Insufficient permissions');
       }
 
-      // Note: In a real implementation, you'd typically use Supabase Auth Admin API
-      // to create the user account. For now, we'll just create the profile.
-      // You would need to set up proper user invitation flow.
-      
       // Note: In a real implementation, you'd use Supabase Auth Admin API
       // For demo purposes, we'll create a profile entry directly
       const userId = crypto.randomUUID();
@@ -86,13 +82,25 @@ export function useUserManagement() {
           email: userData.email,
           first_name: userData.first_name,
           last_name: userData.last_name,
-          role: userData.role,
           department: userData.department,
         })
         .select()
         .single();
 
       if (error) throw error;
+
+      // Insert role into user_roles table
+      const { error: roleError } = await supabase
+        .from('user_roles')
+        .insert({
+          user_id: userId,
+          role: userData.role
+        });
+
+      if (roleError) {
+        console.error('Error creating user role:', roleError);
+        throw roleError;
+      }
       
       setUsers(prev => [data, ...prev]);
       return data;
@@ -105,19 +113,40 @@ export function useUserManagement() {
   const updateUser = async (userId: string, userData: UpdateUserData) => {
     try {
       // Security check: Only admins and super_admins can update users
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+      if (!isAdmin) {
         toast.error('You do not have permission to update users');
         throw new Error('Unauthorized: Insufficient permissions');
       }
 
+      // Update profile (excluding role)
+      const { first_name, last_name, department, phone, is_active } = userData;
       const { data, error } = await supabase
         .from('profiles')
-        .update(userData)
+        .update({ first_name, last_name, department, phone, is_active })
         .eq('id', userId)
         .select()
         .single();
 
       if (error) throw error;
+
+      // Update role in user_roles table if role is being changed
+      if (userData.role) {
+        // Delete existing role
+        await supabase
+          .from('user_roles')
+          .delete()
+          .eq('user_id', userId);
+
+        // Insert new role
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: userId,
+            role: userData.role
+          });
+
+        if (roleError) throw roleError;
+      }
       
       setUsers(prev => prev.map(user => 
         user.id === userId ? { ...user, ...data } : user
@@ -133,7 +162,7 @@ export function useUserManagement() {
   const deleteUser = async (userId: string) => {
     try {
       // Security check: Only admins and super_admins can delete users
-      if (!profile || (profile.role !== 'admin' && profile.role !== 'super_admin')) {
+      if (!isAdmin) {
         toast.error('You do not have permission to delete users');
         throw new Error('Unauthorized: Insufficient permissions');
       }
@@ -145,6 +174,7 @@ export function useUserManagement() {
 
       if (error) throw error;
       
+      // user_roles will be deleted automatically via CASCADE
       setUsers(prev => prev.filter(user => user.id !== userId));
     } catch (error) {
       console.error('Error deleting user:', error);

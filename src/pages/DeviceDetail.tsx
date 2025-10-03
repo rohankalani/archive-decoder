@@ -424,7 +424,7 @@ export function DeviceDetail() {
           </div>
 
           {/* Loading overlay for charts */}
-          <div className={cn("relative", historicalLoading && "opacity-50 pointer-events-none")}>
+          <div className="relative">
             {historicalLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/50 backdrop-blur-sm rounded-lg">
                 <div className="flex items-center gap-2">
@@ -434,8 +434,9 @@ export function DeviceDetail() {
               </div>
             )}
 
-          {/* Key Pollutants Bar Chart - Average AQI for selected time period */}
-          <Card>
+            <div className={cn(historicalLoading && "opacity-50 pointer-events-none")}>
+              {/* Key Pollutants Bar Chart - Average AQI for selected time period */}
+              <Card>
             <CardHeader>
               <CardTitle>Key Pollutants - Average AQI ({timePeriod})</CardTitle>
             </CardHeader>
@@ -774,6 +775,7 @@ export function DeviceDetail() {
               </CardContent>
             </Card>
           </div>
+            </div>
           </div>
         </div>
       </div>

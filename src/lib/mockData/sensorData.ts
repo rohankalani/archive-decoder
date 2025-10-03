@@ -64,7 +64,7 @@ export const generateMockDevices = (): MockDevice[] => {
       name: room.name, // Use actual classroom name like "Classroom 102"
       floor_id: room.floor_id,
       device_type: 'air_quality_sensor',
-      status: Math.random() > 0.05 ? 'online' : 'offline', // 95% online
+      status: 'online', // All devices online for mock data
       mac_address: macAddress,
       serial_number: serialNumber,
       firmware_version: '2.1.4',

@@ -49,113 +49,107 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
       className="bg-card hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/30 group"
       onClick={() => onBuildingClick(buildingId)}
     >
-      <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
-              {stats.buildingName}
-            </CardTitle>
-            <p className="text-sm text-muted-foreground font-medium">
-              {stats.siteName}
-            </p>
-          </div>
-          <div className="flex items-center gap-2">
+      <CardContent className="p-6">
+        <div className="flex gap-6">
+          {/* Left Side - Building Info */}
+          <div className="w-80 flex-shrink-0 space-y-4">
+            <div className="space-y-1">
+              <div className="flex items-center justify-between">
+                <CardTitle className="text-xl font-bold group-hover:text-primary transition-colors">
+                  {stats.buildingName}
+                </CardTitle>
+                <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
+              </div>
+              <p className="text-sm text-muted-foreground font-medium">
+                {stats.siteName}
+              </p>
+            </div>
+
             {(stats.smokeDetected || stats.vocDetected || stats.alertCount > 0) && (
-              <div className="flex items-center gap-1 bg-destructive/20 text-destructive px-2 py-1 rounded-full">
-                <AlertTriangle className="h-3 w-3" />
-                <span className="text-xs font-medium">{stats.alertCount}</span>
+              <div className="flex items-center gap-2 bg-destructive/20 text-destructive px-3 py-2 rounded-lg w-fit">
+                <AlertTriangle className="h-4 w-4" />
+                <span className="text-sm font-medium">{stats.alertCount} Alerts</span>
               </div>
             )}
-            <ChevronRight className="h-5 w-5 text-muted-foreground group-hover:text-primary transition-colors" />
-          </div>
-        </div>
-      </CardHeader>
-      
-      <CardContent className="space-y-4">
-        <div className="text-center p-4 rounded-lg bg-muted/30">
-          <div className="text-sm font-medium text-muted-foreground mb-1">
-            Average AQI
-          </div>
-          <div className={`text-3xl font-bold ${
-            status.color === 'success' ? 'text-success' : 
-            status.color === 'warning' ? 'text-warning' : 'text-destructive'
-          }`}>
-            {stats.avgAqi}
-          </div>
-          <div className={`text-sm font-medium ${
-            status.color === 'success' ? 'text-success' : 
-            status.color === 'warning' ? 'text-warning' : 'text-destructive'
-          }`}>
-            {status.label}
-          </div>
-        </div>
 
-        <div className="space-y-3">
-          <div className="flex items-center justify-between">
-            <span className="text-sm font-medium text-muted-foreground">Devices</span>
-            <span className="text-sm font-bold">{stats.totalDevices}</span>
-          </div>
-          
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <Wifi className="h-3 w-3 text-success" />
-                <span className="text-xs font-medium text-muted-foreground">Online</span>
+            <div className="text-center p-4 rounded-lg bg-muted/30">
+              <div className="text-xs font-medium text-muted-foreground mb-1">
+                Average AQI
               </div>
-              <span className="text-sm font-bold text-success">{stats.onlineDevices}</span>
-            </div>
-            
-            <div className="flex items-center gap-2">
-              <div className="flex items-center gap-1">
-                <WifiOff className="h-3 w-3 text-muted-foreground" />
-                <span className="text-xs font-medium text-muted-foreground">Offline</span>
+              <div className={`text-3xl font-bold ${
+                status.color === 'success' ? 'text-success' : 
+                status.color === 'warning' ? 'text-warning' : 'text-destructive'
+              }`}>
+                {stats.avgAqi}
               </div>
-              <span className="text-sm font-bold text-muted-foreground">{stats.offlineDevices}</span>
+              <div className={`text-sm font-medium ${
+                status.color === 'success' ? 'text-success' : 
+                status.color === 'warning' ? 'text-warning' : 'text-destructive'
+              }`}>
+                {status.label}
+              </div>
             </div>
-          </div>
 
-          <div className="flex items-center justify-between pt-2 border-t border-border/50">
-            <span className="text-xs font-medium text-muted-foreground">Peak AQI</span>
-            <span className={`text-sm font-bold ${
-              getAqiStatus(stats.maxAqi).color === 'success' ? 'text-success' : 
-              getAqiStatus(stats.maxAqi).color === 'warning' ? 'text-warning' : 'text-destructive'
-            }`}>
-              {stats.maxAqi}
-            </span>
-          </div>
-        </div>
-
-        {/* Classroom AQI Visual Indicators */}
-        {stats.classrooms && stats.classrooms.length > 0 && (
-          <div className="pt-4 border-t border-border/50">
-            <div className="text-xs font-medium text-muted-foreground mb-3">
-              Classroom Air Quality
-            </div>
-            <div className="grid grid-cols-4 gap-2">
-              {stats.classrooms.slice(0, 8).map((classroom: any, idx: number) => (
-                <div 
-                  key={idx}
-                  className="group/room relative"
-                  title={`${classroom.name}: AQI ${classroom.aqi}`}
-                >
-                  <div className={`h-8 rounded-md ${getAqiColor(classroom.aqi)} transition-all duration-200 hover:scale-110 hover:shadow-md flex items-center justify-center`}>
-                    <span className="text-[10px] font-bold text-white opacity-0 group-hover/room:opacity-100 transition-opacity">
-                      {classroom.aqi}
-                    </span>
-                  </div>
-                  <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover/room:opacity-100 transition-opacity whitespace-nowrap text-[10px] font-medium bg-popover text-popover-foreground px-2 py-1 rounded shadow-lg z-10 pointer-events-none">
-                    {classroom.name}
-                  </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <span className="text-sm font-medium text-muted-foreground">Total Devices</span>
+                <span className="text-sm font-bold">{stats.totalDevices}</span>
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <Wifi className="h-3 w-3 text-success" />
+                  <span className="text-sm font-medium text-muted-foreground">Online</span>
                 </div>
-              ))}
-            </div>
-            {stats.classrooms.length > 8 && (
-              <div className="text-[10px] text-muted-foreground text-center mt-2">
-                +{stats.classrooms.length - 8} more
+                <span className="text-sm font-bold text-success">{stats.onlineDevices}</span>
               </div>
-            )}
+              
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1">
+                  <WifiOff className="h-3 w-3 text-muted-foreground" />
+                  <span className="text-sm font-medium text-muted-foreground">Offline</span>
+                </div>
+                <span className="text-sm font-bold text-muted-foreground">{stats.offlineDevices}</span>
+              </div>
+
+              <div className="flex items-center justify-between pt-2 border-t border-border/50">
+                <span className="text-sm font-medium text-muted-foreground">Peak AQI</span>
+                <span className={`text-sm font-bold ${
+                  getAqiStatus(stats.maxAqi).color === 'success' ? 'text-success' : 
+                  getAqiStatus(stats.maxAqi).color === 'warning' ? 'text-warning' : 'text-destructive'
+                }`}>
+                  {stats.maxAqi}
+                </span>
+              </div>
+            </div>
           </div>
-        )}
+
+          {/* Right Side - Classroom AQI Grid */}
+          {stats.classrooms && stats.classrooms.length > 0 && (
+            <div className="flex-1 border-l border-border/50 pl-6">
+              <div className="text-sm font-medium text-muted-foreground mb-4">
+                Classroom Air Quality ({stats.classrooms.length} rooms)
+              </div>
+              <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+                {stats.classrooms.map((classroom: any, idx: number) => (
+                  <div 
+                    key={idx}
+                    className="flex flex-col gap-1"
+                  >
+                    <div className={`h-12 rounded-lg ${getAqiColor(classroom.aqi)} transition-all duration-200 hover:scale-105 hover:shadow-md flex items-center justify-center`}>
+                      <span className="text-sm font-bold text-foreground">
+                        {classroom.aqi}
+                      </span>
+                    </div>
+                    <div className="text-[10px] font-medium text-muted-foreground text-center truncate">
+                      {classroom.name}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
       </CardContent>
     </Card>
   );
@@ -346,8 +340,8 @@ const BuildingViewContent = memo(() => {
           </Select>
         </div>
 
-        {/* Building Cards Grid */}
-        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Building Cards - Horizontal Layout */}
+        <div className="space-y-4">
           {Object.entries(buildingStats).map(([buildingId, stats]) => (
             <BuildingCard
               key={buildingId}

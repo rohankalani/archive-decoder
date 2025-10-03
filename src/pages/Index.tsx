@@ -100,6 +100,28 @@ const Index = () => {
     });
   }, [devicesWithData, filteredFloors, selectedRoomType, selectedStatus]);
 
+  // Group devices by building
+  const devicesByBuilding = useMemo(() => {
+    const grouped = new Map<string, { buildingName: string; buildingId: string; devices: any[] }>();
+    
+    filteredDevices.forEach(device => {
+      const buildingName = device.floor?.building?.name || 'Unassigned Building';
+      const buildingId = device.floor?.building?.id || 'unassigned';
+      
+      if (!grouped.has(buildingId)) {
+        grouped.set(buildingId, {
+          buildingName,
+          buildingId,
+          devices: []
+        });
+      }
+      
+      grouped.get(buildingId)!.devices.push(device);
+    });
+    
+    return Array.from(grouped.values());
+  }, [filteredDevices]);
+
   const selectedDevice = useMemo(() => {
     return selectedDeviceId ? devicesWithData.find(d => d.id === selectedDeviceId) : null;
   }, [selectedDeviceId, devicesWithData]);
@@ -208,7 +230,7 @@ const Index = () => {
 
               {/* Device Grid */}
               <DeviceGrid
-                devices={filteredDevices}
+                devicesByBuilding={devicesByBuilding}
                 selectedDeviceId={selectedDeviceId}
                 onDeviceSelect={setSelectedDeviceId}
                 loading={loading}

@@ -37,6 +37,13 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
 }) => {
   const status = getAqiStatus(stats.avgAqi);
   
+  // Get AQI color helper
+  const getAqiColor = (aqi: number) => {
+    if (aqi <= 50) return 'bg-success';
+    if (aqi <= 100) return 'bg-warning';
+    return 'bg-destructive';
+  };
+  
   return (
     <Card 
       className="bg-card hover:shadow-lg transition-all duration-200 cursor-pointer border-2 hover:border-primary/30 group"
@@ -117,6 +124,38 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
             </span>
           </div>
         </div>
+
+        {/* Classroom AQI Visual Indicators */}
+        {stats.classrooms && stats.classrooms.length > 0 && (
+          <div className="pt-4 border-t border-border/50">
+            <div className="text-xs font-medium text-muted-foreground mb-3">
+              Classroom Air Quality
+            </div>
+            <div className="grid grid-cols-4 gap-2">
+              {stats.classrooms.slice(0, 8).map((classroom: any, idx: number) => (
+                <div 
+                  key={idx}
+                  className="group/room relative"
+                  title={`${classroom.name}: AQI ${classroom.aqi}`}
+                >
+                  <div className={`h-8 rounded-md ${getAqiColor(classroom.aqi)} transition-all duration-200 hover:scale-110 hover:shadow-md flex items-center justify-center`}>
+                    <span className="text-[10px] font-bold text-white opacity-0 group-hover/room:opacity-100 transition-opacity">
+                      {classroom.aqi}
+                    </span>
+                  </div>
+                  <div className="absolute -bottom-5 left-1/2 -translate-x-1/2 opacity-0 group-hover/room:opacity-100 transition-opacity whitespace-nowrap text-[10px] font-medium bg-popover text-popover-foreground px-2 py-1 rounded shadow-lg z-10 pointer-events-none">
+                    {classroom.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+            {stats.classrooms.length > 8 && (
+              <div className="text-[10px] text-muted-foreground text-center mt-2">
+                +{stats.classrooms.length - 8} more
+              </div>
+            )}
+          </div>
+        )}
       </CardContent>
     </Card>
   );
@@ -165,6 +204,7 @@ const BuildingViewContent = memo(() => {
       alertCount: number;
       smokeDetected: boolean;
       vocDetected: boolean;
+      classrooms: Array<{ name: string; aqi: number; status: string }>;
     }> = {};
 
     filteredBuildings.forEach(building => {
@@ -195,6 +235,19 @@ const BuildingViewContent = memo(() => {
         (s.pm25 && s.pm25 > 100) || (s.voc && s.voc > 500) || (s.aqi && s.aqi > 100)
       ).length;
 
+      // Get classroom/device data with AQI
+      const classrooms = buildingSensorData
+        .filter(s => s.status === 'online')
+        .map(sensor => {
+          const device = buildingDevices.find(d => d.id === sensor.device_id);
+          return {
+            name: device?.name.split(' ').slice(-2).join(' ') || 'Unknown',
+            aqi: Math.round(sensor.aqi || 0),
+            status: sensor.status
+          };
+        })
+        .sort((a, b) => b.aqi - a.aqi); // Sort by AQI descending
+
       stats[building.id] = {
         buildingName: building.name,
         siteName: site?.name || 'Unknown Site',
@@ -205,7 +258,8 @@ const BuildingViewContent = memo(() => {
         maxAqi,
         alertCount,
         smokeDetected,
-        vocDetected
+        vocDetected,
+        classrooms
       };
     });
 

@@ -92,6 +92,11 @@ const Index = () => {
       }
 
       return true;
+    }).sort((a, b) => {
+      // Sort by building name
+      const buildingA = a.floor?.building?.name || '';
+      const buildingB = b.floor?.building?.name || '';
+      return buildingA.localeCompare(buildingB);
     });
   }, [devicesWithData, filteredFloors, selectedRoomType, selectedStatus]);
 

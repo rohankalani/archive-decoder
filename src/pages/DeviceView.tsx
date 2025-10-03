@@ -371,9 +371,9 @@ const DeviceViewContent = memo(() => {
 
         {/* Device Display - Conditional based on view mode */}
         {viewMode === 'glance' ? (
-          <div className="flex gap-6 h-[calc(100vh-320px)]">
+          <div className="relative">
             {/* Device Cards Grid - Grouped by Building */}
-            <div className="flex-1 overflow-auto">
+            <div className="overflow-auto h-[calc(100vh-320px)]">
               {devicesByBuilding.length > 0 ? (
                 <div className="space-y-6 pb-4">
                   {devicesByBuilding.map((buildingGroup) => (
@@ -388,8 +388,10 @@ const DeviceViewContent = memo(() => {
                         </Badge>
                       </div>
 
-                      {/* Device Cards */}
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                      {/* Device Cards - Fixed min-width to prevent distortion */}
+                      <div className="grid gap-4" style={{
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))'
+                      }}>
                         {buildingGroup.devices.map((device) => (
                           <GlanceViewCard
                             key={device.id}
@@ -413,7 +415,7 @@ const DeviceViewContent = memo(() => {
               )}
             </div>
 
-            {/* Right Sidebar */}
+            {/* Right Sidebar - Overlay */}
             {selectedDevice && (
               <DeviceDetailSidebar
                 device={selectedDevice}

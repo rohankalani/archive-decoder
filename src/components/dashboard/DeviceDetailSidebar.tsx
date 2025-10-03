@@ -96,13 +96,21 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
   ];
 
   return (
-    <div className="w-[320px] border-l border-border bg-card overflow-auto">
-      <div className="sticky top-0 z-10 bg-card border-b border-border p-4 flex items-center justify-between">
-        <h3 className="font-semibold text-lg">Device Details</h3>
-        <Button variant="ghost" size="icon" onClick={onClose}>
-          <X className="h-4 w-4" />
-        </Button>
-      </div>
+    <>
+      {/* Backdrop overlay */}
+      <div 
+        className="fixed inset-0 bg-background/80 backdrop-blur-sm z-40"
+        onClick={onClose}
+      />
+      
+      {/* Sidebar */}
+      <div className="fixed right-0 top-0 bottom-0 w-[400px] border-l border-border bg-card overflow-auto z-50 shadow-2xl">
+        <div className="sticky top-0 z-10 bg-card border-b border-border p-4 flex items-center justify-between">
+          <h3 className="font-semibold text-lg">Device Details</h3>
+          <Button variant="ghost" size="icon" onClick={onClose}>
+            <X className="h-4 w-4" />
+          </Button>
+        </div>
 
       <div className="p-4 space-y-4">
         {/* Device Name & Location */}
@@ -157,6 +165,7 @@ export function DeviceDetailSidebar({ device, onClose }: DeviceDetailSidebarProp
           </>
         )}
       </div>
-    </div>
+      </div>
+    </>
   );
 }

@@ -26,7 +26,7 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
   return (
     <Card
       className={cn(
-        'cursor-pointer transition-all hover:shadow-lg p-3 relative',
+        'cursor-pointer transition-all hover:shadow-lg p-3 relative min-w-[180px]',
         isSelected && 'ring-2 ring-primary shadow-lg'
       )}
       onClick={onClick}

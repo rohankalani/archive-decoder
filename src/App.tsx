@@ -12,7 +12,6 @@ import { DeviceDetail } from '@/pages/DeviceDetail'
 import Management from '@/pages/Management'
 import { Settings } from '@/pages/Settings'
 import Reports from '@/pages/Reports';
-import GeneralReports from '@/pages/GeneralReports';
 import Alerts from '@/pages/Alerts';
 import UserManagement from '@/pages/UserManagement';
 import DatabaseChat from '@/pages/DatabaseChat';
@@ -73,17 +72,8 @@ function App() {
                 </ProtectedRoute>
               }
             />
-            <Route path="/reports" element={<Navigate to="/reports/general" replace />} />
             <Route
-              path="/reports/general"
-              element={
-                <ProtectedRoute>
-                  <GeneralReports />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/reports/advanced"
+              path="/reports"
               element={
                 <ProtectedRoute>
                   <Reports />

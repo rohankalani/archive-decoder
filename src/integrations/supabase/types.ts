@@ -443,6 +443,8 @@ export type Database = {
           floor_id: string
           id: string
           name: string
+          operating_hours_end: number | null
+          operating_hours_start: number | null
           room_number: string | null
           room_type: string | null
           updated_at: string | null
@@ -455,6 +457,8 @@ export type Database = {
           floor_id: string
           id?: string
           name: string
+          operating_hours_end?: number | null
+          operating_hours_start?: number | null
           room_number?: string | null
           room_type?: string | null
           updated_at?: string | null
@@ -467,6 +471,8 @@ export type Database = {
           floor_id?: string
           id?: string
           name?: string
+          operating_hours_end?: number | null
+          operating_hours_start?: number | null
           room_number?: string | null
           room_type?: string | null
           updated_at?: string | null

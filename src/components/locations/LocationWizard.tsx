@@ -52,7 +52,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
     areaSqm: '',
     roomNumber: '',
     roomType: '',
-    capacity: ''
+    capacity: '',
+    operatingHoursStart: 8,
+    operatingHoursEnd: 18
   })
 
   const isEditing = !!editItem
@@ -78,7 +80,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               areaSqm: '',
               roomNumber: '',
               roomType: '',
-              capacity: ''
+              capacity: '',
+              operatingHoursStart: 8,
+              operatingHoursEnd: 18
             })
             break
           case 'building':
@@ -94,7 +98,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               areaSqm: '',
               roomNumber: '',
               roomType: '',
-              capacity: ''
+              capacity: '',
+              operatingHoursStart: 8,
+              operatingHoursEnd: 18
             })
             setSelectedSite(building.site_id)
             break
@@ -111,7 +117,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               areaSqm: floor.area_sqm?.toString() || '',
               roomNumber: '',
               roomType: '',
-              capacity: ''
+              capacity: '',
+              operatingHoursStart: 8,
+              operatingHoursEnd: 18
             })
             setSelectedBuilding(floor.building_id)
             const floorBuilding = buildings.find(b => b.id === floor.building_id)
@@ -132,7 +140,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               areaSqm: room.area_sqm?.toString() || '',
               roomNumber: room.room_number || '',
               roomType: room.room_type || '',
-              capacity: room.capacity?.toString() || ''
+              capacity: room.capacity?.toString() || '',
+              operatingHoursStart: room.operating_hours_start ?? 8,
+              operatingHoursEnd: room.operating_hours_end ?? 18
             })
             setSelectedFloor(room.floor_id)
             const roomFloor = floors.find(f => f.id === room.floor_id)
@@ -158,7 +168,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
           areaSqm: '',
           roomNumber: '',
           roomType: '',
-          capacity: ''
+          capacity: '',
+          operatingHoursStart: 8,
+          operatingHoursEnd: 18
         })
         setSelectedSite('')
         setSelectedBuilding('')
@@ -208,7 +220,9 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
         areaSqm: '',
         roomNumber: '',
         roomType: '',
-        capacity: ''
+        capacity: '',
+        operatingHoursStart: 8,
+        operatingHoursEnd: 18
       })
       setSelectedSite('')
       setSelectedBuilding('')
@@ -255,6 +269,8 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
               area_sqm: formData.areaSqm ? parseFloat(formData.areaSqm) : undefined,
               floor_id: selectedFloor,
+              operating_hours_start: formData.operatingHoursStart,
+              operating_hours_end: formData.operatingHoursEnd,
             })
             break
         }
@@ -295,6 +311,8 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
               capacity: formData.capacity ? parseInt(formData.capacity) : undefined,
               area_sqm: formData.areaSqm ? parseFloat(formData.areaSqm) : undefined,
               floor_id: selectedFloor,
+              operating_hours_start: formData.operatingHoursStart,
+              operating_hours_end: formData.operatingHoursEnd,
             })
             break
         }
@@ -316,7 +334,7 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
       case 'floor':
         return !!selectedBuilding
       case 'room':
-        return !!selectedFloor
+        return !!selectedFloor && formData.operatingHoursEnd > formData.operatingHoursStart
       default:
         return false
     }
@@ -519,6 +537,39 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
                   onChange={(e) => setFormData(prev => ({ ...prev, capacity: e.target.value }))}
                 />
               </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="operatingHoursStart">Operating Hours Start (0-23)</Label>
+                  <Input
+                    id="operatingHoursStart"
+                    type="number"
+                    min="0"
+                    max="23"
+                    value={formData.operatingHoursStart}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setFormData(prev => ({ ...prev, operatingHoursStart: Math.min(23, Math.max(0, val)) }));
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="operatingHoursEnd">Operating Hours End (0-23)</Label>
+                  <Input
+                    id="operatingHoursEnd"
+                    type="number"
+                    min="0"
+                    max="23"
+                    value={formData.operatingHoursEnd}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || 0;
+                      setFormData(prev => ({ ...prev, operatingHoursEnd: Math.min(23, Math.max(0, val)) }));
+                    }}
+                  />
+                </div>
+              </div>
+              {formData.operatingHoursEnd <= formData.operatingHoursStart && (
+                <p className="text-sm text-destructive">End hour must be after start hour</p>
+              )}
             </>
           )}
 

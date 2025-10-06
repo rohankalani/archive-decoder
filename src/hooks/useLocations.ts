@@ -44,6 +44,8 @@ export interface Room {
   room_type?: string
   capacity?: number
   area_sqm?: number
+  operating_hours_start?: number
+  operating_hours_end?: number
   created_at: string
   updated_at: string
   floor?: Floor

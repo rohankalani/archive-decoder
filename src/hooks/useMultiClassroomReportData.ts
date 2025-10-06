@@ -31,6 +31,7 @@ interface ClassroomReportData {
   alertCount: number;
   status: 'excellent' | 'good' | 'needs_attention' | 'critical';
   recommendations: string[];
+  operatingHours?: { start: number; end: number };
   peakPollution?: {
     value: number;
     sensorType: string;
@@ -125,12 +126,13 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
     
     setIsLoading(true);
     try {
-      // Get all devices with their location information  
+      // Get all devices with their location information and room operating hours
       const { data: devices, error: devicesError } = await supabase
         .from('devices')
         .select(`
-          id, name, status, floor_id,
-          floors(floor_number)
+          id, name, status, floor_id, room_id,
+          floors(floor_number),
+          rooms(operating_hours_start, operating_hours_end, capacity)
         `);
 
       if (devicesError) throw devicesError;
@@ -170,15 +172,20 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
 
         if (deviceReadings.length === 0) continue;
 
+        // Get room-specific operating hours or use default
+        const roomOperatingHours = device.rooms?.operating_hours_start && device.rooms?.operating_hours_end
+          ? { start: device.rooms.operating_hours_start, end: device.rooms.operating_hours_end }
+          : params.operatingHours;
+
         // Filter readings by operating hours vs after hours
         const operatingHoursReadings = deviceReadings.filter(r => {
           const hour = new Date(r.timestamp).getHours();
-          return hour >= params.operatingHours.start && hour <= params.operatingHours.end;
+          return hour >= roomOperatingHours.start && hour <= roomOperatingHours.end;
         });
 
         const afterHoursReadings = deviceReadings.filter(r => {
           const hour = new Date(r.timestamp).getHours();
-          return hour < params.operatingHours.start || hour > params.operatingHours.end;
+          return hour < roomOperatingHours.start || hour > roomOperatingHours.end;
         });
 
         // Get sensor data by type
@@ -256,7 +263,7 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
           )?.value
         })) as OccupancyReading[];
 
-        const roomCapacity = 30; // Default classroom capacity
+        const roomCapacity = device.rooms?.capacity || 30; // Use room capacity if available, default to 30
         const roomOccupancyPercentage = calculateEnhancedOccupancy(occupancyReadings, roomCapacity);
         
         // Calculate room usage hours based on enhanced occupancy detection
@@ -278,7 +285,7 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
           return hourOccupancy > 20; // Consider occupied if >20% capacity
         }).length;
 
-        const totalOperatingHours = params.operatingHours.end - params.operatingHours.start;
+        const totalOperatingHours = roomOperatingHours.end - roomOperatingHours.start;
         const roomUsageHours = occupiedHours;
         const roomEfficiencyScore = roomOccupancyPercentage;
 
@@ -342,8 +349,10 @@ export function useMultiClassroomReportData(params: MultiClassroomReportParams) 
           alertCount: deviceAlerts.length,
           status,
           recommendations,
-          peakPollution
-        });
+          peakPollution,
+          // Store room-specific operating hours for display
+          operatingHours: roomOperatingHours
+        } as any);
       }
 
       setClassroomsData(classroomResults);

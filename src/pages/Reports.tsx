@@ -206,7 +206,7 @@ Generated on: ${format(new Date(), 'PPP')}
                 🏫 Campus Space Utilization During Operational Hours
               </CardTitle>
               <CardDescription className="text-base">
-                Classroom utilization analysis (8:00-18:00) excluding weekends and holidays
+                Classroom utilization analysis excluding weekends and holidays
               </CardDescription>
             </CardHeader>
             <CardContent className="p-6">
@@ -243,10 +243,15 @@ Generated on: ${format(new Date(), 'PPP')}
                 
                 <div className="text-center p-4 rounded-xl bg-gradient-to-br from-purple-50 to-indigo-50 dark:from-purple-950/20 dark:to-indigo-950/20 border border-purple-200 dark:border-purple-800">
                   <div className="text-3xl font-bold text-purple-700 dark:text-purple-400">
-                    10h
+                    {classroomsData[0]?.operatingHours 
+                      ? `${classroomsData[0].operatingHours.end - classroomsData[0].operatingHours.start}h` 
+                      : '10h'}
                   </div>
                   <div className="text-sm text-purple-600 dark:text-purple-500 mt-1">
                     Daily Operating Hours
+                    {classroomsData.some((r: any) => r.operatingHours?.start !== classroomsData[0]?.operatingHours?.start) && 
+                      <span className="block text-xs mt-1">(varies by room)</span>
+                    }
                   </div>
                 </div>
               </div>
@@ -260,7 +265,7 @@ Generated on: ${format(new Date(), 'PPP')}
           <>
             <ClassroomComparison 
               classrooms={classroomsData}
-              operatingHours={{ start: 8, end: 18 }}
+              operatingHours={classroomsData[0]?.operatingHours || { start: 8, end: 18 }}
             />
             {consolidatedSummary && (
               <Card className="glass-card hover-lift border-primary/20 shadow-2xl">

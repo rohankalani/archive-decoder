@@ -6,8 +6,9 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Loader2, Shield, Building2, Activity } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import { z } from 'zod'
+import { LogoBanner } from '@/components/LogoBanner'
 
 const loginSchema = z.object({
   email: z.string().email('Invalid email address'),
@@ -196,13 +197,7 @@ export default function Auth() {
         <div className="w-full max-w-md space-y-6">
           {/* Header */}
           <div className="text-center space-y-4">
-            <div className="flex items-center justify-center space-x-2">
-              <div className="relative">
-                <Shield className="h-8 w-8 text-primary" />
-                <Activity className="h-4 w-4 text-primary-glow absolute -top-1 -right-1" />
-              </div>
-              <Building2 className="h-8 w-8 text-primary" />
-            </div>
+            <LogoBanner variant="full" />
             <div>
               <h1 className="text-2xl font-bold text-foreground">Set New Password</h1>
               <p className="text-muted-foreground">Enter your new password below</p>
@@ -277,16 +272,10 @@ export default function Auth() {
       <div className="w-full max-w-md space-y-6">
         {/* Header */}
         <div className="text-center space-y-4">
-          <div className="flex items-center justify-center space-x-2">
-            <div className="relative">
-              <Shield className="h-8 w-8 text-primary" />
-              <Activity className="h-4 w-4 text-primary-glow absolute -top-1 -right-1" />
-            </div>
-            <Building2 className="h-8 w-8 text-primary" />
-          </div>
+          <LogoBanner variant="full" />
           <div>
-            <h1 className="text-2xl font-bold text-foreground">Abu Dhabi University</h1>
-            <p className="text-muted-foreground">Air Quality Management System</p>
+            <h1 className="text-2xl font-bold text-foreground">Air Quality Management System</h1>
+            <p className="text-muted-foreground">Powered by ROSAQI</p>
           </div>
         </div>
 

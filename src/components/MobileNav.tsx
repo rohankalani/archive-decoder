@@ -3,6 +3,7 @@ import { Link, useLocation } from 'react-router-dom';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
+import { LogoBanner } from '@/components/LogoBanner';
 import { 
   Menu,
   Building2, 
@@ -46,6 +47,9 @@ export function MobileNav() {
         </Button>
       </SheetTrigger>
       <SheetContent side="left" className="w-72 p-0">
+        <div className="py-4 px-6 border-b">
+          <LogoBanner variant="mobile" />
+        </div>
         <SheetHeader className="border-b p-6">
           <SheetTitle className="text-left">Navigation</SheetTitle>
           <div className="flex items-center gap-2 text-sm pt-2">

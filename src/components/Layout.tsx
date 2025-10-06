@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useAuth } from '@/contexts/AuthContext';
 import { MobileNav } from '@/components/MobileNav';
+import { LogoBanner } from '@/components/LogoBanner';
 import { 
   Settings, 
   Building2, 
@@ -42,9 +43,10 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
       {/* Top Navigation Bar */}
       <header className="fixed top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-14 md:h-16 items-center justify-between px-4">
-          {/* Left side - Mobile menu & Back button */}
-          <div className="flex items-center gap-2">
+          {/* Left side - Mobile menu, Logos & Back button */}
+          <div className="flex items-center gap-2 md:gap-4">
             <MobileNav />
+            <LogoBanner variant="compact" className="hidden sm:flex" />
             {showBackButton && (
               <Button
                 variant="ghost"

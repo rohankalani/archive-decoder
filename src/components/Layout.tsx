@@ -43,10 +43,9 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
       {/* Top Navigation Bar */}
       <header className="fixed top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-14 md:h-16 items-center justify-between px-4">
-          {/* Left side - Mobile menu, Logos & Back button */}
+          {/* Left side - Mobile menu & Back button */}
           <div className="flex items-center gap-2 md:gap-4">
             <MobileNav />
-            <LogoBanner variant="compact" className="hidden sm:flex" />
             {showBackButton && (
               <Button
                 variant="ghost"
@@ -145,8 +144,14 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
             </Button>
           </nav>
 
-          {/* Right side - User menu (Desktop only) */}
-          <div className="hidden md:flex items-center gap-2">
+          {/* Right side - ROSAIQ Logo & User menu (Desktop only) */}
+          <div className="hidden md:flex items-center gap-4">
+            <img
+              src="/logos/rosaiq.png"
+              alt="ROSAIQ"
+              className="h-8 object-contain"
+              loading="lazy"
+            />
             <div className="flex items-center gap-2 text-sm">
               <User className="h-4 w-4" />
               <span className="hidden lg:inline">

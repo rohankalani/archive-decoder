@@ -4,6 +4,7 @@ import { useSimplifiedReportData } from '@/hooks/useSimplifiedReportData';
 import { InlineLoader } from '@/components/LoadingSpinner';
 import { ErrorDisplay } from '@/components/ErrorDisplay';
 import { PeriodSelector } from '@/components/reports/PeriodSelector';
+import { ExportButton } from '@/components/reports/ExportButton';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { School } from 'lucide-react';
@@ -44,9 +45,12 @@ export default function ClassroomsReport() {
           <h1 className="text-3xl font-bold">Classrooms Report</h1>
           <p className="text-muted-foreground">Air quality heatmap across all classrooms</p>
         </div>
-        <Button variant="outline" onClick={() => navigate('/reports')}>
-          Back to Reports
-        </Button>
+        <div className="flex items-center gap-2">
+          <ExportButton reportTitle="Classrooms Report" />
+          <Button variant="outline" onClick={() => navigate('/reports')}>
+            Back to Reports
+          </Button>
+        </div>
       </div>
 
       <PeriodSelector

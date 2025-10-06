@@ -76,15 +76,16 @@ serve(async (req) => {
         deviceId = existingDevice.id;
         console.log('Found existing device:', deviceId);
       } else {
-        // Auto-register new device
+        // Auto-register new device as pending (unallocated)
         const { data: newDevice, error: deviceError } = await supabase
           .from('devices')
           .insert({
             name: `Device ${sensorData.mac_address.slice(-6)}`,
             mac_address: sensorData.mac_address,
             device_type: 'air_quality_sensor',
-            status: 'online',
-            floor_id: (await supabase.from('floors').select('id').limit(1).single()).data?.id
+            status: 'pending',
+            floor_id: null,
+            room_id: null
           })
           .select()
           .single();
@@ -95,7 +96,7 @@ serve(async (req) => {
         }
 
         deviceId = newDevice.id;
-        console.log('Auto-registered new device:', deviceId);
+        console.log('Auto-registered new device as pending:', deviceId);
       }
     }
 
@@ -173,17 +174,29 @@ serve(async (req) => {
         throw insertError;
       }
 
-      // Update device status to online
-      const { error: updateError } = await supabase
+      // Only update to 'online' if device is already allocated (has room_id)
+      const { data: deviceCheck } = await supabase
         .from('devices')
-        .update({ 
-          status: 'online',
-          updated_at: new Date().toISOString()
-        })
-        .eq('id', deviceId);
+        .select('room_id, status')
+        .eq('id', deviceId)
+        .single();
 
-      if (updateError) {
-        console.error('Error updating device status:', updateError);
+      if (deviceCheck?.room_id) {
+        // Device is allocated, update to online
+        const { error: updateError } = await supabase
+          .from('devices')
+          .update({ 
+            status: 'online',
+            updated_at: new Date().toISOString()
+          })
+          .eq('id', deviceId);
+
+        if (updateError) {
+          console.error('Error updating device status:', updateError);
+        }
+      } else {
+        // Device is pending allocation, keep status as pending but data is stored
+        console.log('Device is pending allocation - data stored but status remains pending');
       }
 
       // Check for alerts

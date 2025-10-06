@@ -8,6 +8,9 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { DeviceList } from './DeviceList'
 import { DeviceForm } from './DeviceForm'
+import { PendingDeviceList } from './PendingDeviceList'
+import { DeviceAllocationModal } from './DeviceAllocationModal'
+import { toast } from 'sonner'
 import { 
   Activity, 
   Plus, 
@@ -15,7 +18,8 @@ import {
   AlertTriangle,
   CheckCircle,
   WifiOff,
-  Settings
+  Settings,
+  Bell
 } from 'lucide-react'
 
 export function DeviceManagement() {
@@ -23,8 +27,11 @@ export function DeviceManagement() {
   const { floors } = useLocations()
   const [showForm, setShowForm] = useState(false)
   const [editDevice, setEditDevice] = useState<Device | null>(null)
+  const [allocationDevice, setAllocationDevice] = useState<Device | null>(null)
+  const [showAllocationModal, setShowAllocationModal] = useState(false)
 
   // Device status counts
+  const pendingDevices = devices.filter(d => d.status === 'pending').length
   const onlineDevices = devices.filter(d => d.status === 'online').length
   const offlineDevices = devices.filter(d => d.status === 'offline').length
   const errorDevices = devices.filter(d => d.status === 'error').length
@@ -62,6 +69,35 @@ export function DeviceManagement() {
     setEditDevice(null)
   }
 
+  const handleAssignDevice = (device: Device) => {
+    setAllocationDevice(device)
+    setShowAllocationModal(true)
+  }
+
+  const handleAllocateDevice = async (deviceId: string, floorId: string, roomId: string) => {
+    try {
+      await updateDevice(deviceId, { 
+        floor_id: floorId, 
+        room_id: roomId,
+        status: 'online' 
+      })
+      toast.success('Device assigned successfully')
+      setShowAllocationModal(false)
+      setAllocationDevice(null)
+    } catch (error) {
+      toast.error('Failed to assign device')
+    }
+  }
+
+  const handleRenameDevice = async (deviceId: string, newName: string) => {
+    try {
+      await updateDevice(deviceId, { name: newName })
+      toast.success('Device renamed successfully')
+    } catch (error) {
+      toast.error('Failed to rename device')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -72,6 +108,25 @@ export function DeviceManagement() {
 
   return (
     <div className="space-y-6">
+      {/* Pending Devices Alert */}
+      {pendingDevices > 0 && (
+        <Card className="border-warning bg-warning/10">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Bell className="h-6 w-6 text-warning" />
+                <div>
+                  <CardTitle className="text-warning">Unallocated Devices</CardTitle>
+                  <p className="text-sm text-muted-foreground mt-1">
+                    {pendingDevices} device(s) need to be assigned to a room
+                  </p>
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+        </Card>
+      )}
+
       {/* Stats Cards */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         <Card className="border-0 bg-gradient-to-br from-primary/5 to-primary/10">
@@ -170,13 +225,29 @@ export function DeviceManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue="all" className="space-y-4">
+          <Tabs defaultValue={pendingDevices > 0 ? "pending" : "all"} className="space-y-4">
             <TabsList>
+              {pendingDevices > 0 && (
+                <TabsTrigger value="pending" className="text-warning">
+                  <Bell className="h-4 w-4 mr-2" />
+                  Pending ({pendingDevices})
+                </TabsTrigger>
+              )}
               <TabsTrigger value="all">All Devices ({devices.length})</TabsTrigger>
               <TabsTrigger value="online">Online ({onlineDevices})</TabsTrigger>
               <TabsTrigger value="offline">Offline ({offlineDevices})</TabsTrigger>
               <TabsTrigger value="error">Error ({errorDevices})</TabsTrigger>
             </TabsList>
+
+            {pendingDevices > 0 && (
+              <TabsContent value="pending">
+                <PendingDeviceList
+                  devices={devices.filter(d => d.status === 'pending')}
+                  onAssign={handleAssignDevice}
+                  onRename={handleRenameDevice}
+                />
+              </TabsContent>
+            )}
 
             <TabsContent value="all">
               <DeviceList 
@@ -229,6 +300,17 @@ export function DeviceManagement() {
           onCancel={handleCloseForm}
         />
       )}
+
+      {/* Device Allocation Modal */}
+      <DeviceAllocationModal
+        device={allocationDevice}
+        open={showAllocationModal}
+        onClose={() => {
+          setShowAllocationModal(false)
+          setAllocationDevice(null)
+        }}
+        onAllocate={handleAllocateDevice}
+      />
     </div>
   )
 }

@@ -208,7 +208,7 @@ export type Database = {
           created_at: string | null
           device_type: string | null
           firmware_version: string | null
-          floor_id: string
+          floor_id: string | null
           id: string
           installation_date: string | null
           mac_address: string | null
@@ -225,7 +225,7 @@ export type Database = {
           created_at?: string | null
           device_type?: string | null
           firmware_version?: string | null
-          floor_id: string
+          floor_id?: string | null
           id?: string
           installation_date?: string | null
           mac_address?: string | null
@@ -242,7 +242,7 @@ export type Database = {
           created_at?: string | null
           device_type?: string | null
           firmware_version?: string | null
-          floor_id?: string
+          floor_id?: string | null
           id?: string
           installation_date?: string | null
           mac_address?: string | null
@@ -669,7 +669,7 @@ export type Database = {
     }
     Enums: {
       alert_severity: "low" | "medium" | "high" | "critical"
-      device_status: "online" | "offline" | "maintenance" | "error"
+      device_status: "online" | "offline" | "maintenance" | "error" | "pending"
       sensor_type:
         | "temperature"
         | "humidity"
@@ -820,7 +820,7 @@ export const Constants = {
   public: {
     Enums: {
       alert_severity: ["low", "medium", "high", "critical"],
-      device_status: ["online", "offline", "maintenance", "error"],
+      device_status: ["online", "offline", "maintenance", "error", "pending"],
       sensor_type: [
         "temperature",
         "humidity",

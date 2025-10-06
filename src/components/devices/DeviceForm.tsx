@@ -36,8 +36,8 @@ const deviceSchema = z.object({
   mac_address: z.string().optional(),
   serial_number: z.string().optional(),
   firmware_version: z.string().optional(),
-  status: z.enum(['online', 'offline', 'error']),
-  floor_id: z.string().min(1, 'Floor selection is required'),
+  status: z.enum(['online', 'offline', 'error', 'pending']),
+  floor_id: z.string().nullable(),
   installation_date: z.string().optional(),
   calibration_due_date: z.string().optional(),
 })
@@ -186,6 +186,7 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
                         <SelectItem value="online">Online</SelectItem>
                         <SelectItem value="offline">Offline</SelectItem>
                         <SelectItem value="error">Error</SelectItem>
+                        <SelectItem value="pending">Pending</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

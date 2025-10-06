@@ -9,11 +9,11 @@ export interface Device {
   mac_address?: string
   serial_number?: string
   firmware_version?: string
-  status: 'online' | 'offline' | 'error'
+  status: 'online' | 'offline' | 'error' | 'pending'
   battery_level?: number
   signal_strength?: number
-  floor_id: string
-  room_id?: string
+  floor_id: string | null
+  room_id?: string | null
   installation_date?: string
   calibration_due_date?: string
   created_at: string
@@ -41,7 +41,7 @@ export function useDevices() {
       const validDevices = (data || []).map(device => ({
         ...device,
         status: device.status === 'maintenance' ? 'offline' : device.status
-      })).filter(device => ['online', 'offline', 'error'].includes(device.status)) as Device[]
+      })).filter(device => ['online', 'offline', 'error', 'pending'].includes(device.status)) as Device[]
       
       setDevices(validDevices)
       console.log('Set devices state:', validDevices.map(d => ({ id: d.id, name: d.name })))

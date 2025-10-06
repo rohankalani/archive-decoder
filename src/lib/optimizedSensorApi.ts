@@ -4,7 +4,7 @@ import { logger } from './errors';
 export interface OptimizedSensorReading {
   device_id: string;
   device_name: string;
-  device_status: 'online' | 'offline' | 'maintenance' | 'error';
+  device_status: 'online' | 'offline' | 'maintenance' | 'error' | 'pending';
   sensor_type: string;
   value: number;
   unit: string;
@@ -33,7 +33,7 @@ export interface LiveSensorData {
   pc5?: number;
   pc10?: number;
   aqi?: number;
-  status: 'online' | 'offline' | 'maintenance' | 'error';
+  status: 'online' | 'offline' | 'maintenance' | 'error' | 'pending';
   last_updated: string;
 }
 

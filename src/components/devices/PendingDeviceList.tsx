@@ -11,11 +11,14 @@ interface PendingDeviceListProps {
   devices: Device[]
   onAssign: (device: Device) => void
   onRename: (deviceId: string, newName: string) => void
+  onUpdateSerialNumber: (deviceId: string, serialNumber: string) => void
 }
 
-export function PendingDeviceList({ devices, onAssign, onRename }: PendingDeviceListProps) {
+export function PendingDeviceList({ devices, onAssign, onRename, onUpdateSerialNumber }: PendingDeviceListProps) {
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState('')
+  const [editingSerialId, setEditingSerialId] = useState<string | null>(null)
+  const [editSerialNumber, setEditSerialNumber] = useState('')
 
   const handleStartEdit = (device: Device) => {
     setEditingId(device.id)
@@ -33,6 +36,24 @@ export function PendingDeviceList({ devices, onAssign, onRename }: PendingDevice
   const handleCancelEdit = () => {
     setEditingId(null)
     setEditName('')
+  }
+
+  const handleStartEditSerial = (device: Device) => {
+    setEditingSerialId(device.id)
+    setEditSerialNumber(device.serial_number || '')
+  }
+
+  const handleSaveSerialEdit = (deviceId: string) => {
+    if (editSerialNumber.trim()) {
+      onUpdateSerialNumber(deviceId, editSerialNumber.trim())
+      setEditingSerialId(null)
+      setEditSerialNumber('')
+    }
+  }
+
+  const handleCancelSerialEdit = () => {
+    setEditingSerialId(null)
+    setEditSerialNumber('')
   }
 
   if (devices.length === 0) {
@@ -99,6 +120,41 @@ export function PendingDeviceList({ devices, onAssign, onRename }: PendingDevice
               </p>
             </div>
 
+            {/* Serial Number */}
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">Serial Number</p>
+              {editingSerialId === device.id ? (
+                <div className="flex items-center gap-2">
+                  <Input
+                    value={editSerialNumber}
+                    onChange={(e) => setEditSerialNumber(e.target.value)}
+                    placeholder="Enter serial number"
+                    className="h-8 font-mono"
+                    autoFocus
+                  />
+                  <Button size="sm" variant="ghost" onClick={() => handleSaveSerialEdit(device.id)}>
+                    <Save className="h-4 w-4" />
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={handleCancelSerialEdit}>
+                    <X className="h-4 w-4" />
+                  </Button>
+                </div>
+              ) : (
+                <div className="flex items-center gap-2">
+                  <p className="text-sm font-mono bg-background px-2 py-1 rounded flex-1">
+                    {device.serial_number || 'Not set'}
+                  </p>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleStartEditSerial(device)}
+                  >
+                    <Edit2 className="h-3 w-3" />
+                  </Button>
+                </div>
+              )}
+            </div>
+
             {/* Device Type */}
             <div className="space-y-1">
               <p className="text-xs text-muted-foreground">Device Type</p>
@@ -109,10 +165,16 @@ export function PendingDeviceList({ devices, onAssign, onRename }: PendingDevice
             <Button
               className="w-full"
               onClick={() => onAssign(device)}
+              disabled={!device.serial_number}
             >
               <MapPin className="h-4 w-4 mr-2" />
-              Assign to Room
+              {device.serial_number ? 'Assign to Room' : 'Add Serial Number First'}
             </Button>
+            {!device.serial_number && (
+              <p className="text-xs text-warning text-center">
+                Serial number is required before assignment
+              </p>
+            )}
           </CardContent>
         </Card>
       ))}

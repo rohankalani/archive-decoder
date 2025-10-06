@@ -98,6 +98,15 @@ export function DeviceManagement() {
     }
   }
 
+  const handleUpdateSerialNumber = async (deviceId: string, serialNumber: string) => {
+    try {
+      await updateDevice(deviceId, { serial_number: serialNumber })
+      toast.success('Serial number updated successfully')
+    } catch (error) {
+      toast.error('Failed to update serial number')
+    }
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center p-8">
@@ -245,6 +254,7 @@ export function DeviceManagement() {
                   devices={devices.filter(d => d.status === 'pending')}
                   onAssign={handleAssignDevice}
                   onRename={handleRenameDevice}
+                  onUpdateSerialNumber={handleUpdateSerialNumber}
                 />
               </TabsContent>
             )}

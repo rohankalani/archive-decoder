@@ -62,21 +62,23 @@ serve(async (req) => {
     const sensorData: SensorPayload = await req.json();
     console.log('Processing sensor data:', sensorData);
 
-    // Identify or register device by MAC address
+    // Check if device already exists by MAC address (pre-registered or auto-registered)
     let deviceId = sensorData.device_id;
     
     if (!deviceId && sensorData.mac_address) {
       const { data: existingDevice } = await supabase
         .from('devices')
-        .select('id')
+        .select('id, status, room_id')
         .eq('mac_address', sensorData.mac_address)
         .maybeSingle();
 
       if (existingDevice) {
+        // Device exists (either manually pre-registered or auto-registered before)
         deviceId = existingDevice.id;
-        console.log('Found existing device:', deviceId);
+        console.log('Found existing device:', deviceId, 'Status:', existingDevice.status);
       } else {
         // Auto-register new device as pending (unallocated)
+        console.log('Auto-registering new device with MAC:', sensorData.mac_address);
         const { data: newDevice, error: deviceError } = await supabase
           .from('devices')
           .insert({
@@ -85,13 +87,14 @@ serve(async (req) => {
             device_type: 'air_quality_sensor',
             status: 'pending',
             floor_id: null,
-            room_id: null
+            room_id: null,
+            serial_number: null
           })
           .select()
           .single();
 
         if (deviceError) {
-          console.error('Error registering device:', deviceError);
+          console.error('Error auto-registering device:', deviceError);
           throw deviceError;
         }
 

@@ -38,7 +38,7 @@ interface DeviceListProps {
 }
 
 export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: DeviceListProps) {
-  const { floors, buildings, sites, getFloorLocation } = useLocations()
+  const { floors, buildings, sites, rooms, getFloorLocation } = useLocations()
 
   const getStatusIcon = (status: Device['status']) => {
     switch (status) {
@@ -75,12 +75,30 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
     return <Battery className={`h-4 w-4 ${color}`} />
   }
 
-  const getLocationPath = (floorId: string) => {
-    const floor = floors.find(f => f.id === floorId)
-    if (!floor) return 'Unknown Location'
+  const getLocationPath = (device: Device) => {
+    // If device has room_id, show full hierarchy including room
+    if (device.room_id) {
+      const room = useLocations().rooms.find(r => r.id === device.room_id)
+      if (room) {
+        const floor = floors.find(f => f.id === room.floor_id)
+        if (floor) {
+          const location = getFloorLocation(floor)
+          return `${location.site?.name} → ${location.building?.name} → ${floor.name || `Floor ${floor.floor_number}`} → ${room.name}`
+        }
+      }
+    }
+    
+    // Fallback to floor if no room
+    if (device.floor_id) {
+      const floor = floors.find(f => f.id === device.floor_id)
+      if (!floor) return '⚠️ Unassigned'
 
-    const location = getFloorLocation(floor)
-    return `${location.site?.name} > ${location.building?.name} > ${floor.name || `Floor ${floor.floor_number}`}`
+      const location = getFloorLocation(floor)
+      return `${location.site?.name} → ${location.building?.name} → ${floor.name || `Floor ${floor.floor_number}`}`
+    }
+    
+    // No location assigned
+    return '⚠️ Unassigned'
   }
 
   const formatDate = (dateString?: string) => {
@@ -132,8 +150,8 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
               <TableCell>
                 <div className="flex items-center gap-1 text-sm">
                   <MapPin className="h-3 w-3 text-muted-foreground" />
-                  <span className="max-w-[200px] truncate" title={getLocationPath(device.floor_id)}>
-                    {getLocationPath(device.floor_id)}
+                  <span className="max-w-[250px] truncate" title={getLocationPath(device)}>
+                    {getLocationPath(device)}
                   </span>
                 </div>
               </TableCell>

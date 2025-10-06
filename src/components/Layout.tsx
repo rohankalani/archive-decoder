@@ -37,6 +37,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
   };
 
   const isActive = (path: string) => location.pathname === path;
+  const isReportsActive = location.pathname.startsWith('/reports');
 
   return (
     <div className="min-h-screen bg-background">
@@ -110,7 +111,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
             )}
             
             <Button
-              variant={isActive('/reports') ? 'default' : 'ghost'}
+              variant={isReportsActive ? 'default' : 'ghost'}
               size="sm"
               asChild
             >

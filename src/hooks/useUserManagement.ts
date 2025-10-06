@@ -171,15 +171,27 @@ export function useUserManagement() {
         throw new Error('Unauthorized: Insufficient permissions');
       }
 
-      const { error } = await supabase
-        .from('profiles')
-        .delete()
-        .eq('id', userId);
+      // Call the edge function to delete user via Supabase Admin API
+      const { data, error } = await supabase.functions.invoke('delete-admin-user', {
+        body: { userId },
+      })
 
-      if (error) throw error;
+      if (error) {
+        console.error('Edge function error:', error)
+        throw error
+      }
+
+      if (data?.error) {
+        console.error('User deletion error:', data.error)
+        throw new Error(data.error)
+      }
+
+      console.log('User deleted successfully')
       
-      // user_roles will be deleted automatically via CASCADE
+      // Remove from local state
       setUsers(prev => prev.filter(user => user.id !== userId));
+      
+      toast.success('User deleted successfully')
     } catch (error) {
       console.error('Error deleting user:', error);
       throw error;

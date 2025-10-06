@@ -257,7 +257,7 @@ export default function UserManagement() {
                         <SelectContent>
                           <SelectItem value="viewer">Viewer</SelectItem>
                           <SelectItem value="supervisor">Supervisor</SelectItem>
-                          {isSuperAdmin && <SelectItem value="admin">Admin</SelectItem>}
+                          <SelectItem value="admin">Admin</SelectItem>
                           {isSuperAdmin && <SelectItem value="super_admin">Super Admin</SelectItem>}
                         </SelectContent>
                       </Select>

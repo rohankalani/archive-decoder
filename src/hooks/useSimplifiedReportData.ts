@@ -54,6 +54,13 @@ function generateMockReportData(mockDevices: any[], mockLocations: any): Simplif
   const floors = mockLocations?.floors || [];
   const rooms = mockLocations?.rooms || [];
 
+  console.log('🔧 Generating mock report data:', {
+    devicesCount: devices.length,
+    buildingsCount: buildings.length,
+    floorsCount: floors.length,
+    roomsCount: rooms.length
+  });
+
   // Generate summary
   const activeDevices = devices.filter(d => d.status === 'online').length;
   const avgAqi = devices.length > 0
@@ -109,12 +116,21 @@ function generateMockReportData(mockDevices: any[], mockLocations: any): Simplif
     maxValue: Math.round(600 + Math.random() * 800 + (hour >= 8 && hour <= 18 ? 400 : 0)),
   }));
 
-  return {
+  const result = {
     summary,
     buildings: buildingMetrics,
     classrooms,
     co2Trends,
   };
+
+  console.log('✅ Mock report data generated:', {
+    summary,
+    buildingsCount: buildingMetrics.length,
+    classroomsCount: classrooms.length,
+    co2TrendsCount: co2Trends.length
+  });
+
+  return result;
 }
 
 interface UseSimplifiedReportDataResult {

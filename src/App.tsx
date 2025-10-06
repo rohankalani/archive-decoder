@@ -12,7 +12,7 @@ import { DeviceDetail } from '@/pages/DeviceDetail'
 import Management from '@/pages/Management'
 import { Settings } from '@/pages/Settings'
 import Reports from '@/pages/Reports';
-import GeneralReports from '@/pages/GeneralReports';
+import { GeneralReportsSimple as GeneralReports } from '@/pages/GeneralReportsSimple';
 import Alerts from '@/pages/Alerts';
 import UserManagement from '@/pages/UserManagement';
 import DatabaseChat from '@/pages/DatabaseChat';

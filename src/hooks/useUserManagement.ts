@@ -71,42 +71,46 @@ export function useUserManagement() {
         throw new Error('Unauthorized: Insufficient permissions');
       }
 
-      // Note: In a real implementation, you'd use Supabase Auth Admin API
-      // For demo purposes, we'll create a profile entry directly
-      const userId = crypto.randomUUID();
-      
-      const { data, error } = await supabase
-        .from('profiles')
-        .insert({
-          id: userId,
+      // Generate a default password (user should change this on first login)
+      const defaultPassword = `${userData.first_name}${Math.floor(Math.random() * 10000)}!`
+
+      // Call the edge function to create user via Supabase Admin API
+      const { data: { session } } = await supabase.auth.getSession()
+      if (!session) {
+        throw new Error('No active session')
+      }
+
+      const { data, error } = await supabase.functions.invoke('create-admin-user', {
+        body: {
           email: userData.email,
+          password: defaultPassword,
           first_name: userData.first_name,
           last_name: userData.last_name,
+          role: userData.role,
           department: userData.department,
-        })
-        .select()
-        .single();
+        },
+      })
 
-      if (error) throw error;
-
-      // Insert role into user_roles table
-      const { error: roleError } = await supabase
-        .from('user_roles')
-        .insert({
-          user_id: userId,
-          role: userData.role
-        });
-
-      if (roleError) {
-        console.error('Error creating user role:', roleError);
-        throw roleError;
+      if (error) {
+        console.error('Edge function error:', error)
+        throw error
       }
+
+      if (data?.error) {
+        console.error('User creation error:', data.error)
+        throw new Error(data.error)
+      }
+
+      console.log('User created successfully:', data)
       
-      setUsers(prev => [data, ...prev]);
-      return data;
+      // Refresh the user list
+      await fetchUsers()
+      
+      toast.success(`User created! Default password: ${defaultPassword}`)
+      return data.user
     } catch (error) {
-      console.error('Error creating user:', error);
-      throw error;
+      console.error('Error creating user:', error)
+      throw error
     }
   };
 

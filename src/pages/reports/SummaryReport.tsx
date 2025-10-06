@@ -78,13 +78,13 @@ export default function SummaryReport() {
       />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-        <Card>
+        <Card className="border-2 border-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Average AQI</CardTitle>
-            <Activity className="h-4 w-4 text-muted-foreground" />
+            <CardTitle className="text-sm font-medium text-foreground">Average AQI</CardTitle>
+            <Activity className="h-4 w-4 text-primary" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{data.summary.avgAqi}</div>
+            <div className="text-2xl font-bold text-foreground">{data.summary.avgAqi}</div>
             <p className="text-xs text-muted-foreground">
               {data.summary.avgAqi <= 50 ? 'Good' : data.summary.avgAqi <= 100 ? 'Moderate' : 'Unhealthy'}
             </p>

@@ -20,8 +20,9 @@ export interface MockDevice {
   id: string;
   name: string;
   floor_id: string;
+  room_id?: string | null;
   device_type: string;
-  status: 'online' | 'offline' | 'maintenance';
+  status: 'online' | 'offline' | 'maintenance' | 'pending';
   mac_address: string;
   serial_number: string;
   firmware_version: string;
@@ -49,6 +50,31 @@ export const generateMockDevices = (): MockDevice[] => {
   const devices: MockDevice[] = [];
   let deviceCounter = 1;
 
+  // First, add 5 unallocated devices
+  for (let i = 1; i <= 5; i++) {
+    const deviceId = `device-unallocated-${String(i).padStart(3, '0')}`;
+    const serialNumber = `SN-UNALLOC-${String(i).padStart(3, '0')}`;
+    const macAddress = `00:1B:44:99:9A:${String(i).padStart(2, '0')}`;
+    
+    devices.push({
+      id: deviceId,
+      name: `ULTRADETEKT-UNALLOCATED-${String(i).padStart(2, '0')}`,
+      floor_id: '', // No floor assigned
+      room_id: null, // No room assigned
+      device_type: 'air_quality_sensor',
+      status: 'pending',
+      mac_address: macAddress,
+      serial_number: serialNumber,
+      firmware_version: i % 2 === 0 ? 'v2.1.0' : 'v2.0.5',
+      installation_date: new Date('2024-01-15').toISOString().split('T')[0],
+      battery_level: Math.floor(Math.random() * 30) + 70, // 70-100%
+      signal_strength: Math.floor(Math.random() * 20) - 75, // -75 to -55 dBm
+      calibration_due_date: new Date(Date.now() + Math.random() * 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      created_at: new Date('2024-01-15'),
+      updated_at: new Date()
+    });
+  }
+
   // Create devices only for classrooms (air quality monitors are only in classrooms)
   const keyRooms = mockRooms.filter(room => 
     room.room_type === 'Classroom'
@@ -63,6 +89,7 @@ export const generateMockDevices = (): MockDevice[] => {
       id: deviceId,
       name: room.name, // Use actual classroom name like "Classroom 102"
       floor_id: room.floor_id,
+      room_id: room.id,
       device_type: 'air_quality_sensor',
       status: 'online', // All devices online for mock data
       mac_address: macAddress,

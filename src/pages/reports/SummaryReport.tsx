@@ -28,6 +28,17 @@ export default function SummaryReport() {
 
   console.log('📊 SummaryReport state:', { isLoading, hasError: !!error, hasData: !!data });
 
+  if (data) {
+    console.log('📊 Summary data details:', {
+      avgAqi: data.summary.avgAqi,
+      totalAlerts: data.summary.totalAlerts,
+      devicesCount: data.summary.devicesCount,
+      activeDevices: data.summary.activeDevices,
+      buildingsLength: data.buildings?.length,
+      classroomsLength: data.classrooms?.length
+    });
+  }
+
   if (isLoading) {
     return <InlineLoader text="Loading summary..." />;
   }

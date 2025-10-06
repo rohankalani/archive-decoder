@@ -121,7 +121,7 @@ serve(async (req) => {
       temperature: '°C',
       humidity: '%',
       voc: 'ppb',
-      hcho: 'µg/m³',
+      hcho: 'ppb',
       pc03: 'particles/cm³',
       pc05: 'particles/cm³',
       pc1: 'particles/cm³',

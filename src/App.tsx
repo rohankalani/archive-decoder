@@ -2,7 +2,6 @@ import React, { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { SettingsProvider } from '@/contexts/SettingsContext'
-import { UnifiedMockDataProvider } from '@/contexts/UnifiedMockDataContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { InlineLoader } from '@/components/LoadingSpinner'
@@ -28,8 +27,7 @@ function App() {
   return (
     <AuthProvider>
       <SettingsProvider>
-        <UnifiedMockDataProvider>
-          <Router>
+        <Router>
         <div className="min-h-screen bg-background">
           <Routes>
             {/* Public routes */}
@@ -184,8 +182,7 @@ function App() {
             }}
           />
         </div>
-          </Router>
-        </UnifiedMockDataProvider>
+        </Router>
       </SettingsProvider>
     </AuthProvider>
   )

@@ -10,8 +10,7 @@ import { LocationTree } from '@/components/locations/LocationTree'
 import { LocationWizard } from '@/components/locations/LocationWizard'
 import { QuickActions } from '@/components/locations/QuickActions'
 import { DeviceManagement } from '@/components/devices/DeviceManagement'
-import { MockDataToggle } from '@/components/MockDataToggle'
-import { 
+import {
   Building2, 
   MapPin, 
   Settings, 
@@ -113,9 +112,6 @@ export default function Management() {
             </CardContent>
           </Card>
         </div>
-
-        {/* Development Controls */}
-        <MockDataToggle />
 
         {/* Quick Actions */}
         <QuickActions />

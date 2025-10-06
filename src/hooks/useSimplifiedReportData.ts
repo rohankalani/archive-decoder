@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { supabase } from '@/integrations/supabase/client';
-import { useUnifiedMockData } from '@/contexts/UnifiedMockDataContext';
 
 // Flat, focused interfaces - no complex nesting
 export interface ReportSummary {
@@ -47,104 +46,10 @@ interface UseSimplifiedReportDataResult {
   refetch: () => Promise<void>;
 }
 
-// Generate mock report data from mock devices and locations
-function generateMockReportData(mockDevices: any[], mockLocations: any): SimplifiedReportData {
-  const devices = mockDevices || [];
-  const buildings = mockLocations?.buildings || [];
-  const floors = mockLocations?.floors || [];
-  const rooms = mockLocations?.rooms || [];
-
-  console.log('🔧 Generating mock report data:', {
-    devicesCount: devices.length,
-    buildingsCount: buildings.length,
-    floorsCount: floors.length,
-    roomsCount: rooms.length
-  });
-
-  // Generate summary
-  const activeDevices = devices.filter(d => d.status === 'online').length;
-  const avgAqi = devices.length > 0
-    ? devices.reduce((sum, d) => sum + (Math.random() * 50 + 20), 0) / devices.length
-    : 45;
-
-  const summary: ReportSummary = {
-    avgAqi: Math.round(avgAqi),
-    totalAlerts: Math.floor(Math.random() * 10),
-    devicesCount: devices.length,
-    activeDevices,
-  };
-
-  // Generate building metrics
-  const buildingMetrics: BuildingMetric[] = buildings.map((building: any) => {
-    const aqi = Math.round(Math.random() * 80 + 20);
-    const buildingFloors = floors.filter((f: any) => f.building_id === building.id);
-    const buildingRooms = rooms.filter((r: any) => 
-      buildingFloors.some((f: any) => f.id === r.floor_id)
-    );
-    const deviceCount = devices.filter((d: any) => 
-      buildingRooms.some((r: any) => r.id === d.room_id)
-    ).length;
-
-    return {
-      id: building.id,
-      name: building.name,
-      aqi,
-      status: aqi <= 50 ? 'good' : aqi <= 100 ? 'moderate' : 'unhealthy',
-      deviceCount,
-    };
-  });
-
-  // Generate classroom data
-  const classrooms: ClassroomData[] = rooms.map((room: any) => {
-    const aqi = Math.round(Math.random() * 80 + 20);
-    const floor = floors.find((f: any) => f.id === room.floor_id);
-
-    return {
-      id: room.id,
-      name: room.name,
-      roomNumber: room.room_number || '',
-      aqi,
-      floorId: room.floor_id,
-      buildingId: floor?.building_id || '',
-    };
-  });
-
-  // Generate CO2 trends (24 hours)
-  const co2Trends: CO2Data[] = Array.from({ length: 24 }, (_, hour) => ({
-    hour,
-    avgValue: Math.round(400 + Math.random() * 600 + (hour >= 8 && hour <= 18 ? 300 : 0)),
-    maxValue: Math.round(600 + Math.random() * 800 + (hour >= 8 && hour <= 18 ? 400 : 0)),
-  }));
-
-  const result = {
-    summary,
-    buildings: buildingMetrics,
-    classrooms,
-    co2Trends,
-  };
-
-  console.log('✅ Mock report data generated:', {
-    summary,
-    buildingsCount: buildingMetrics.length,
-    classroomsCount: classrooms.length,
-    co2TrendsCount: co2Trends.length
-  });
-
-  return result;
-}
-
-interface UseSimplifiedReportDataResult {
-  data: SimplifiedReportData | null;
-  isLoading: boolean;
-  error: Error | null;
-  refetch: () => Promise<void>;
-}
-
 export function useSimplifiedReportData(
   startDate: Date,
   endDate: Date
 ): UseSimplifiedReportDataResult {
-  const { isUsingMockData, devices: mockDevices, locations: mockLocations } = useUnifiedMockData();
   const [data, setData] = useState<SimplifiedReportData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
@@ -153,20 +58,10 @@ export function useSimplifiedReportData(
     try {
       console.log('📊 Fetching report data...', { 
         startDate: startDate.toISOString(), 
-        endDate: endDate.toISOString(),
-        isUsingMockData 
+        endDate: endDate.toISOString()
       });
       setIsLoading(true);
       setError(null);
-
-      // Use mock data if enabled
-      if (isUsingMockData) {
-        console.log('📊 Using mock data for reports');
-        const mockReportData = generateMockReportData(mockDevices, mockLocations);
-        setData(mockReportData);
-        setIsLoading(false);
-        return;
-      }
 
       // Fetch sensor readings from Supabase
       const { data: readings, error: readingsError } = await supabase

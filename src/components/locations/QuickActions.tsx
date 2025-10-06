@@ -3,12 +3,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { LocationWizard } from './LocationWizard';
 import { useLocations } from '@/hooks/useLocations';
-import { Plus, MapPin, Building2, Layers, Zap } from 'lucide-react';
+import { Plus, MapPin, Building2, Layers, Zap, DoorOpen } from 'lucide-react';
 
-type LocationType = 'site' | 'building' | 'floor';
+type LocationType = 'site' | 'building' | 'floor' | 'room';
 
 export function QuickActions() {
-  const { sites, buildings } = useLocations();
+  const { sites, buildings, floors } = useLocations();
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardType, setWizardType] = useState<LocationType>('site');
   const [parentId, setParentId] = useState<string>();
@@ -51,6 +51,17 @@ export function QuickActions() {
       action: () => openWizard('floor'),
       enabled: buildings.length > 0,
       requirement: buildings.length === 0 ? 'Create a building first' : undefined,
+    },
+    {
+      id: 'room',
+      title: 'Add Room',
+      description: 'Add a room/classroom to a floor',
+      icon: DoorOpen,
+      color: 'text-warning',
+      bgColor: 'bg-warning/10',
+      action: () => openWizard('room'),
+      enabled: floors.length > 0,
+      requirement: floors.length === 0 ? 'Create a floor first' : undefined,
     },
   ];
 

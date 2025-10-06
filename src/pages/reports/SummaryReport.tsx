@@ -8,6 +8,7 @@ import { ExportButton } from '@/components/reports/ExportButton';
 import { Activity, AlertTriangle, Cpu, TrendingUp } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
+import jsPDF from 'jspdf';
 
 export default function SummaryReport() {
   console.log('🎯 SummaryReport component mounted');
@@ -55,6 +56,54 @@ export default function SummaryReport() {
     (data.summary.activeDevices / data.summary.devicesCount) * 100
   );
 
+  const handleExportPDF = () => {
+    const pdf = new jsPDF();
+    
+    // Title
+    pdf.setFontSize(20);
+    pdf.text('Summary Report', 20, 20);
+    
+    // Date
+    pdf.setFontSize(10);
+    pdf.text(`Generated on: ${new Date().toLocaleDateString()}`, 20, 30);
+    pdf.text(`Period: ${startDate.toLocaleDateString()} - ${endDate.toLocaleDateString()}`, 20, 35);
+    
+    // Summary Metrics
+    pdf.setFontSize(14);
+    pdf.text('Summary Metrics', 20, 50);
+    pdf.setFontSize(10);
+    pdf.text(`Average AQI: ${data.summary.avgAqi}`, 25, 60);
+    pdf.text(`Total Alerts: ${data.summary.totalAlerts}`, 25, 67);
+    pdf.text(`Performance: ${performanceScore}% (${data.summary.activeDevices}/${data.summary.devicesCount} devices active)`, 25, 74);
+    pdf.text(`Total Devices: ${data.summary.devicesCount}`, 25, 81);
+    
+    // Buildings Overview
+    pdf.setFontSize(14);
+    pdf.text('Buildings Overview', 20, 95);
+    pdf.setFontSize(10);
+    let yPos = 105;
+    data.buildings.slice(0, 10).forEach((building) => {
+      pdf.text(`${building.name}: AQI ${building.aqi} (${building.status})`, 25, yPos);
+      yPos += 7;
+    });
+    
+    // Classrooms Overview
+    pdf.setFontSize(14);
+    pdf.text('Classrooms Overview', 20, yPos + 10);
+    pdf.setFontSize(10);
+    yPos += 20;
+    data.classrooms.slice(0, 10).forEach((classroom) => {
+      if (yPos > 270) {
+        pdf.addPage();
+        yPos = 20;
+      }
+      pdf.text(`${classroom.name}: AQI ${classroom.aqi}`, 25, yPos);
+      yPos += 7;
+    });
+    
+    pdf.save('summary-report.pdf');
+  };
+
   return (
     <div className="container mx-auto p-6 space-y-6">
       <div className="flex items-center justify-between">
@@ -63,7 +112,7 @@ export default function SummaryReport() {
           <p className="text-muted-foreground">Overview of air quality metrics</p>
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton reportTitle="Summary Report" />
+          <ExportButton reportTitle="Summary Report" onExportPDF={handleExportPDF} />
           <Button variant="outline" onClick={() => navigate('/reports')}>
             Back to Reports
           </Button>

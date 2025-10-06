@@ -1,21 +1,28 @@
-import React from 'react'
+import React, { Suspense, lazy } from 'react'
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider } from '@/contexts/AuthContext'
 import { SettingsProvider } from '@/contexts/SettingsContext'
 import { UnifiedMockDataProvider } from '@/contexts/UnifiedMockDataContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
+import { InlineLoader } from '@/components/LoadingSpinner'
 import Auth from '@/pages/Auth'
 import { BuildingView } from '@/pages/BuildingView'
 import { DeviceView } from '@/pages/DeviceView'
 import { DeviceDetail } from '@/pages/DeviceDetail'
 import Management from '@/pages/Management'
 import { Settings } from '@/pages/Settings'
-import Reports from '@/pages/Reports';
-import { GeneralReportsSimple as GeneralReports } from '@/pages/GeneralReportsSimple';
-import Alerts from '@/pages/Alerts';
-import UserManagement from '@/pages/UserManagement';
-import DatabaseChat from '@/pages/DatabaseChat';
+import Reports from '@/pages/Reports'
+import Alerts from '@/pages/Alerts'
+import UserManagement from '@/pages/UserManagement'
+import DatabaseChat from '@/pages/DatabaseChat'
+import { GeneralReportsSimple } from '@/pages/GeneralReportsSimple'
+
+// Lazy load report pages
+const SummaryReport = lazy(() => import('@/pages/reports/SummaryReport'))
+const BuildingsReport = lazy(() => import('@/pages/reports/BuildingsReport'))
+const ClassroomsReport = lazy(() => import('@/pages/reports/ClassroomsReport'))
+const AnalysisReport = lazy(() => import('@/pages/reports/AnalysisReport'))
 
 function App() {
   return (
@@ -82,10 +89,50 @@ function App() {
               }
             />
             <Route
+              path="/reports/summary"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<InlineLoader text="Loading summary report..." />}>
+                    <SummaryReport />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports/buildings"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<InlineLoader text="Loading buildings report..." />}>
+                    <BuildingsReport />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports/classrooms"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<InlineLoader text="Loading classrooms report..." />}>
+                    <ClassroomsReport />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/reports/analysis"
+              element={
+                <ProtectedRoute>
+                  <Suspense fallback={<InlineLoader text="Loading analysis report..." />}>
+                    <AnalysisReport />
+                  </Suspense>
+                </ProtectedRoute>
+              }
+            />
+            <Route
               path="/reports/general"
               element={
                 <ProtectedRoute>
-                  <GeneralReports />
+                  <GeneralReportsSimple />
                 </ProtectedRoute>
               }
             />

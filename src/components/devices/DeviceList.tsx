@@ -38,7 +38,7 @@ interface DeviceListProps {
 }
 
 export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: DeviceListProps) {
-  const { floors, buildings, sites, rooms, getFloorLocation } = useLocations()
+  const { floors, buildings, sites, rooms } = useLocations()
 
   const getStatusIcon = (status: Device['status']) => {
     switch (status) {

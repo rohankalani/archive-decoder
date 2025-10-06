@@ -1,4 +1,4 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import { useDevices } from '@/hooks/useDevices'
 import type { Device } from '@/hooks/useDevices'
 import { useLocations } from '@/hooks/useLocations'
@@ -11,6 +11,7 @@ import { DeviceForm } from './DeviceForm'
 import { PendingDeviceList } from './PendingDeviceList'
 import { DeviceAllocationModal } from './DeviceAllocationModal'
 import { toast } from 'sonner'
+import { supabase } from '@/integrations/supabase/client'
 import { 
   Activity, 
   Plus, 
@@ -29,9 +30,51 @@ export function DeviceManagement() {
   const [editDevice, setEditDevice] = useState<Device | null>(null)
   const [allocationDevice, setAllocationDevice] = useState<Device | null>(null)
   const [showAllocationModal, setShowAllocationModal] = useState(false)
+  const [previousPendingCount, setPreviousPendingCount] = useState(0)
+
+  // Real-time device detection
+  useEffect(() => {
+    const channel = supabase
+      .channel('device-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'devices'
+        },
+        (payload) => {
+          const newDevice = payload.new as Device
+          if (!newDevice.room_id) {
+            toast.success(
+              `New device detected: ${newDevice.name || 'Unnamed Device'}`,
+              {
+                description: `MAC: ${newDevice.mac_address || 'N/A'}`,
+                duration: 5000
+              }
+            )
+          }
+        }
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [])
+
+  // Track pending count changes
+  const pendingDevices = devices.filter(d => !d.room_id).length
+  
+  useEffect(() => {
+    if (previousPendingCount > 0 && pendingDevices > previousPendingCount) {
+      toast.info(`${pendingDevices - previousPendingCount} new device(s) need allocation`)
+    }
+    setPreviousPendingCount(pendingDevices)
+  }, [pendingDevices])
 
   // Device status counts
-  const pendingDevices = devices.filter(d => d.status === 'pending').length
+  const unallocatedDevices = devices.filter(d => !d.room_id).length
   const onlineDevices = devices.filter(d => d.status === 'online').length
   const offlineDevices = devices.filter(d => d.status === 'offline').length
   const errorDevices = devices.filter(d => d.status === 'error').length
@@ -117,8 +160,8 @@ export function DeviceManagement() {
 
   return (
     <div className="space-y-6">
-      {/* Pending Devices Alert */}
-      {pendingDevices > 0 && (
+      {/* Unallocated Devices Alert */}
+      {unallocatedDevices > 0 && (
         <Card className="border-warning bg-warning/10">
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
@@ -127,7 +170,7 @@ export function DeviceManagement() {
                 <div>
                   <CardTitle className="text-warning">Unallocated Devices</CardTitle>
                   <p className="text-sm text-muted-foreground mt-1">
-                    {pendingDevices} device(s) need to be assigned to a room
+                    {unallocatedDevices} device(s) need to be assigned to a room
                   </p>
                 </div>
               </div>
@@ -234,11 +277,16 @@ export function DeviceManagement() {
           </div>
         </CardHeader>
         <CardContent>
-          <Tabs defaultValue={pendingDevices > 0 ? "pending" : "all"} className="space-y-4">
+          <Tabs defaultValue={unallocatedDevices > 0 ? "unallocated" : "all"} className="space-y-4">
             <TabsList>
-              <TabsTrigger value="unallocated" className="text-warning">
+              <TabsTrigger value="unallocated" className="relative">
                 <MapPin className="h-4 w-4 mr-2" />
-                Unallocated ({devices.filter(d => !d.room_id).length})
+                Unallocated
+                {unallocatedDevices > 0 && (
+                  <Badge variant="destructive" className="ml-2 px-1.5 py-0 h-5 text-xs">
+                    {unallocatedDevices}
+                  </Badge>
+                )}
               </TabsTrigger>
               <TabsTrigger value="all">All ({devices.length})</TabsTrigger>
               <TabsTrigger value="online">Online ({onlineDevices})</TabsTrigger>

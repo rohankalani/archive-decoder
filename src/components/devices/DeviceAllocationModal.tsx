@@ -38,6 +38,9 @@ export function DeviceAllocationModal({
     }
   }, [open, device])
 
+  // Validation check
+  const canAssign = device?.serial_number && selectedRoom && selectedFloor
+
   const handleSelectRoom = (roomId: string, floorId: string) => {
     setSelectedRoom(roomId)
     setSelectedFloor(floorId)
@@ -67,10 +70,20 @@ export function DeviceAllocationModal({
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>Assign Device to Room</DialogTitle>
-          <DialogDescription>
-            Device: <span className="font-semibold">{device.name}</span>
+          <DialogDescription className="space-y-2">
+            <div>
+              Device: <span className="font-semibold">{device.name}</span>
+            </div>
             {device.mac_address && (
-              <span className="block text-xs font-mono mt-1">MAC: {device.mac_address}</span>
+              <div className="text-xs font-mono">MAC: {device.mac_address}</div>
+            )}
+            {device.serial_number && (
+              <div className="text-xs font-mono">Serial: {device.serial_number}</div>
+            )}
+            {!device.serial_number && (
+              <div className="text-xs text-warning">
+                ⚠️ Serial number required before assignment
+              </div>
             )}
           </DialogDescription>
         </DialogHeader>
@@ -97,8 +110,8 @@ export function DeviceAllocationModal({
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
-          <Button onClick={handleAllocate} disabled={!selectedRoom}>
-            Assign Device
+          <Button onClick={handleAllocate} disabled={!canAssign}>
+            {!device.serial_number ? 'Add Serial Number First' : 'Assign Device'}
           </Button>
         </DialogFooter>
       </DialogContent>

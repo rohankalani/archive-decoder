@@ -4,8 +4,9 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Badge } from '@/components/ui/badge'
-import { Settings, MapPin, Edit2, Save, X } from 'lucide-react'
+import { Settings, MapPin, Edit2, Save, X, Copy, Check, Activity } from 'lucide-react'
 import { formatDistanceToNow } from 'date-fns'
+import { toast } from 'sonner'
 
 interface PendingDeviceListProps {
   devices: Device[]
@@ -19,6 +20,14 @@ export function PendingDeviceList({ devices, onAssign, onRename, onUpdateSerialN
   const [editName, setEditName] = useState('')
   const [editingSerialId, setEditingSerialId] = useState<string | null>(null)
   const [editSerialNumber, setEditSerialNumber] = useState('')
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  const handleCopyToClipboard = (text: string, label: string, id: string) => {
+    navigator.clipboard.writeText(text)
+    toast.success(`${label} copied to clipboard`)
+    setCopiedId(id)
+    setTimeout(() => setCopiedId(null), 2000)
+  }
 
   const handleStartEdit = (device: Device) => {
     setEditingId(device.id)
@@ -112,12 +121,50 @@ export function PendingDeviceList({ devices, onAssign, onRename, onUpdateSerialN
               )}
             </div>
 
+            {/* Device ID */}
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground font-medium">Internal Device ID</p>
+              <div className="flex items-center gap-2">
+                <p className="text-xs font-mono bg-muted px-2 py-1.5 rounded flex-1 truncate">
+                  {device.id}
+                </p>
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="h-7 w-7 p-0"
+                  onClick={() => handleCopyToClipboard(device.id, 'Device ID', `id-${device.id}`)}
+                >
+                  {copiedId === `id-${device.id}` ? (
+                    <Check className="h-3 w-3 text-success" />
+                  ) : (
+                    <Copy className="h-3 w-3" />
+                  )}
+                </Button>
+              </div>
+            </div>
+
             {/* MAC Address */}
             <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">MAC Address</p>
-              <p className="text-sm font-mono bg-background px-2 py-1 rounded">
-                {device.mac_address || 'N/A'}
-              </p>
+              <p className="text-xs text-muted-foreground font-medium">MAC Address</p>
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-mono bg-muted px-2 py-1.5 rounded flex-1">
+                  {device.mac_address || 'N/A'}
+                </p>
+                {device.mac_address && (
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="h-7 w-7 p-0"
+                    onClick={() => handleCopyToClipboard(device.mac_address!, 'MAC Address', `mac-${device.id}`)}
+                  >
+                    {copiedId === `mac-${device.id}` ? (
+                      <Check className="h-3 w-3 text-success" />
+                    ) : (
+                      <Copy className="h-3 w-3" />
+                    )}
+                  </Button>
+                )}
+              </div>
             </div>
 
             {/* Serial Number */}
@@ -155,10 +202,19 @@ export function PendingDeviceList({ devices, onAssign, onRename, onUpdateSerialN
               )}
             </div>
 
-            {/* Device Type */}
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">Device Type</p>
-              <p className="text-sm">{device.device_type}</p>
+            {/* Device Type & Status */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Device Type</p>
+                <p className="text-sm">{device.device_type}</p>
+              </div>
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Activity Status</p>
+                <div className="flex items-center gap-1">
+                  <Activity className="h-3 w-3 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">Awaiting Data</p>
+                </div>
+              </div>
             </div>
 
             {/* Assign Button */}

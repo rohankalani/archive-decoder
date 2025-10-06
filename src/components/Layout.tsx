@@ -48,14 +48,14 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
             <img
               src="/logos/abu-dhabi-university.png"
               alt="Abu Dhabi University"
-              className="h-10 md:h-12 object-contain hidden sm:block"
-              loading="lazy"
+              className="h-12 md:h-14 object-contain"
+              loading="eager"
             />
             <img
               src="/logos/arc-light-services.png"
               alt="Arc Light Services"
-              className="h-7 md:h-9 object-contain hidden sm:block"
-              loading="lazy"
+              className="h-9 md:h-11 object-contain"
+              loading="eager"
             />
             <MobileNav />
             {showBackButton && (

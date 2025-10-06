@@ -113,26 +113,49 @@ export function useLocations() {
   // Site operations
   const createSite = async (data: Omit<Site, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      console.log('🔵 useLocations: Creating site with data:', data)
+      
       const { data: newSite, error } = await supabase
         .from('sites')
         .insert([data])
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('🔴 Supabase error creating site:', {
+          message: error.message,
+          details: error.details,
+          hint: error.hint,
+          code: error.code,
+        })
+        throw error
+      }
 
+      console.log('✅ Site created successfully:', newSite)
       setSites(prev => [...prev, newSite])
       toast.success('Site created successfully')
       return newSite
-    } catch (error) {
-      console.error('Error creating site:', error)
-      toast.error('Failed to create site')
+    } catch (error: any) {
+      console.error('❌ Error creating site:', error)
+      
+      // Extract detailed error info for better debugging
+      const errorDetails = {
+        message: error?.message,
+        code: error?.code,
+        details: error?.details,
+        hint: error?.hint,
+      }
+      console.error('Error details:', errorDetails)
+      
+      // Don't show toast here - let the calling component handle it
       throw error
     }
   }
 
   const updateSite = async (id: string, data: Partial<Site>) => {
     try {
+      console.log('🔵 useLocations: Updating site:', id, data)
+      
       const { data: updatedSite, error } = await supabase
         .from('sites')
         .update(data)
@@ -140,14 +163,17 @@ export function useLocations() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('🔴 Supabase error updating site:', error)
+        throw error
+      }
 
+      console.log('✅ Site updated successfully:', updatedSite)
       setSites(prev => prev.map(site => site.id === id ? updatedSite : site))
       toast.success('Site updated successfully')
       return updatedSite
-    } catch (error) {
-      console.error('Error updating site:', error)
-      toast.error('Failed to update site')
+    } catch (error: any) {
+      console.error('❌ Error updating site:', error)
       throw error
     }
   }
@@ -178,6 +204,8 @@ export function useLocations() {
   // Building operations
   const createBuilding = async (data: Omit<Building, 'id' | 'created_at' | 'updated_at'>) => {
     try {
+      console.log('🔵 useLocations: Creating building:', data)
+      
       const { data: newBuilding, error } = await supabase
         .from('buildings')
         .insert([data])
@@ -187,14 +215,17 @@ export function useLocations() {
         `)
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('🔴 Supabase error creating building:', error)
+        throw error
+      }
 
+      console.log('✅ Building created successfully:', newBuilding)
       setBuildings(prev => [...prev, newBuilding])
       toast.success('Building created successfully')
       return newBuilding
-    } catch (error) {
-      console.error('Error creating building:', error)
-      toast.error('Failed to create building')
+    } catch (error: any) {
+      console.error('❌ Error creating building:', error)
       throw error
     }
   }

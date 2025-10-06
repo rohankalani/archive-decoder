@@ -47,9 +47,23 @@ export const FloorSchema = z.object({
   area_sqm: z.number().min(0).max(100000).optional(),
 });
 
+export const RoomSchema = z.object({
+  id: z.string().uuid(),
+  name: z.string().trim().min(1, 'Room name is required').max(100, 'Room name too long'),
+  description: z.string().max(500, 'Description too long').optional(),
+  room_number: z.string().trim().max(20, 'Room number too long').optional(),
+  room_type: z.string().trim().max(50, 'Room type too long').optional(),
+  capacity: z.number().min(0).max(10000).optional(),
+  area_sqm: z.number().min(0).max(100000).optional(),
+  floor_id: z.string().uuid(),
+  operating_hours_start: z.number().min(0).max(23).optional(),
+  operating_hours_end: z.number().min(0).max(23).optional(),
+});
+
 export const CreateSiteSchema = SiteSchema.omit({ id: true });
 export const CreateBuildingSchema = BuildingSchema.omit({ id: true });
 export const CreateFloorSchema = FloorSchema.omit({ id: true });
+export const CreateRoomSchema = RoomSchema.omit({ id: true });
 
 // ============= Sensor Data Schemas =============
 
@@ -118,10 +132,12 @@ export type UpdateDevice = z.infer<typeof UpdateDeviceSchema>;
 export type Site = z.infer<typeof SiteSchema>;
 export type Building = z.infer<typeof BuildingSchema>;
 export type Floor = z.infer<typeof FloorSchema>;
+export type Room = z.infer<typeof RoomSchema>;
 
 export type CreateSite = z.infer<typeof CreateSiteSchema>;
 export type CreateBuilding = z.infer<typeof CreateBuildingSchema>;
 export type CreateFloor = z.infer<typeof CreateFloorSchema>;
+export type CreateRoom = z.infer<typeof CreateRoomSchema>;
 
 export type SensorReading = z.infer<typeof SensorReadingSchema>;
 export type CreateSensorReading = z.infer<typeof CreateSensorReadingSchema>;

@@ -6,7 +6,10 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from '@/components/ui/dialog'
-import { Plus, Edit } from 'lucide-react'
+import { Plus, Edit, Loader2 } from 'lucide-react'
+import { toast } from 'sonner'
+import { CreateSiteSchema, CreateBuildingSchema, CreateFloorSchema, validateAndSanitize } from '@/lib/validation'
+import { z } from 'zod'
 
 type LocationType = 'site' | 'building' | 'floor' | 'room'
 
@@ -41,6 +44,8 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
   const [selectedSite, setSelectedSite] = useState<string>('')
   const [selectedBuilding, setSelectedBuilding] = useState<string>('')
   const [selectedFloor, setSelectedFloor] = useState<string>('')
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [validationErrors, setValidationErrors] = useState<Record<string, string>>({})
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -230,9 +235,125 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
     }
   }, [isOpen])
 
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {}
+    
+    // Validate based on location type
+    if (currentType === 'site' && !isEditing) {
+      const siteData = {
+        name: formData.name,
+        address: formData.address,
+        description: formData.description || undefined,
+        latitude: formData.latitude ? parseFloat(formData.latitude) : undefined,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : undefined,
+      }
+      
+      const result = validateAndSanitize(CreateSiteSchema, siteData)
+      if (!result.success && 'errors' in result) {
+        result.errors.forEach(err => {
+          const [field, ...messageParts] = err.split(': ')
+          errors[field] = messageParts.join(': ')
+        })
+      }
+    } else if (currentType === 'building' && !isEditing) {
+      const buildingData = {
+        name: formData.name,
+        description: formData.description || undefined,
+        site_id: selectedSite,
+        floor_count: formData.floorCount,
+      }
+      
+      const result = validateAndSanitize(CreateBuildingSchema, buildingData)
+      if (!result.success && 'errors' in result) {
+        result.errors.forEach(err => {
+          const [field, ...messageParts] = err.split(': ')
+          errors[field] = messageParts.join(': ')
+        })
+      }
+      
+      if (!selectedSite) {
+        errors['site_id'] = 'Please select a site'
+      }
+    } else if (currentType === 'floor' && !isEditing) {
+      if (!formData.name && formData.floorNumber === undefined) {
+        errors['name'] = 'Floor name or number is required'
+      }
+      if (!selectedBuilding) {
+        errors['building_id'] = 'Please select a building'
+      }
+    } else if (currentType === 'room' && !isEditing) {
+      if (!formData.name) {
+        errors['name'] = 'Room name is required'
+      }
+      if (!selectedFloor) {
+        errors['floor_id'] = 'Please select a floor'
+      }
+      if (formData.operatingHoursEnd <= formData.operatingHoursStart) {
+        errors['operating_hours'] = 'End time must be after start time'
+      }
+    }
+    
+    setValidationErrors(errors)
+    return Object.keys(errors).length === 0
+  }
+
+  const extractSupabaseError = (error: any): string => {
+    console.error('Supabase error details:', {
+      message: error?.message,
+      details: error?.details,
+      hint: error?.hint,
+      code: error?.code,
+    })
+
+    // Check for specific error codes
+    if (error?.code === 'PGRST301' || error?.code === '42501') {
+      return 'Permission denied. You need admin privileges to perform this action.'
+    }
+    
+    if (error?.code === '23505') {
+      return 'A location with this name already exists. Please use a different name.'
+    }
+    
+    if (error?.code === '23503') {
+      return 'Invalid parent location selected. Please refresh and try again.'
+    }
+    
+    if (error?.message?.includes('violates row-level security')) {
+      return 'Access denied. Please ensure you are logged in as an admin.'
+    }
+    
+    if (error?.message?.includes('duplicate key')) {
+      return 'A location with this name already exists.'
+    }
+    
+    if (error?.message?.includes('Failed to fetch') || error?.message?.includes('network')) {
+      return 'Network error. Please check your connection and try again.'
+    }
+
+    return error?.message || 'An unexpected error occurred. Please try again.'
+  }
+
   const handleSubmit = async () => {
+    // Validate form
+    if (!validateForm()) {
+      toast.error('Please fix the validation errors before submitting')
+      return
+    }
+
+    setIsSubmitting(true)
+    
     try {
+      console.log('🚀 Starting form submission:', {
+        currentType,
+        isEditing,
+        formData,
+        selectedSite,
+        selectedBuilding,
+        selectedFloor,
+      })
+
       if (isEditing && editItem) {
+        console.log('📝 Updating existing item:', editItem.id)
         // Update existing item
         switch (currentType) {
           case 'site':
@@ -274,10 +395,19 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
             })
             break
         }
+        console.log('✅ Update successful')
       } else {
+        console.log('➕ Creating new item')
         // Create new item
         switch (currentType) {
           case 'site':
+            console.log('Creating site with data:', {
+              name: formData.name,
+              description: formData.description,
+              address: formData.address,
+              latitude: formData.latitude,
+              longitude: formData.longitude,
+            })
             await createSite({
               name: formData.name,
               description: formData.description,
@@ -316,10 +446,19 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
             })
             break
         }
+        console.log('✅ Creation successful')
       }
+      
+      setValidationErrors({})
       onClose()
-    } catch (error) {
-      console.error('Failed to save location:', error)
+    } catch (error: any) {
+      console.error('❌ Failed to save location:', error)
+      const errorMessage = extractSupabaseError(error)
+      toast.error(errorMessage, {
+        duration: 5000,
+      })
+    } finally {
+      setIsSubmitting(false)
     }
   }
 
@@ -344,7 +483,7 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
   const availableFloors = getFloorsByBuilding(selectedBuilding)
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
+    <Dialog open={isOpen} onOpenChange={(open) => !isSubmitting && onClose()}>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
@@ -421,9 +560,16 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
             <Input
               id="name"
               value={formData.name}
-              onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+              onChange={(e) => {
+                setFormData(prev => ({ ...prev, name: e.target.value }))
+                setValidationErrors(prev => ({ ...prev, name: '' }))
+              }}
               placeholder={`Enter ${currentType} name`}
+              disabled={isSubmitting}
             />
+            {validationErrors.name && (
+              <p className="text-sm text-destructive">{validationErrors.name}</p>
+            )}
           </div>
 
           {/* Site-specific fields */}
@@ -434,9 +580,16 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
                 <Input
                   id="address"
                   value={formData.address}
-                  onChange={(e) => setFormData(prev => ({ ...prev, address: e.target.value }))}
+                  onChange={(e) => {
+                    setFormData(prev => ({ ...prev, address: e.target.value }))
+                    setValidationErrors(prev => ({ ...prev, address: '' }))
+                  }}
                   placeholder="Enter address"
+                  disabled={isSubmitting}
                 />
+                {validationErrors.address && (
+                  <p className="text-sm text-destructive">{validationErrors.address}</p>
+                )}
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -589,11 +742,12 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
         </div>
 
         <div className="flex justify-end gap-2 mt-4">
-          <Button variant="outline" onClick={onClose}>
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting}>
             Cancel
           </Button>
-          <Button onClick={handleSubmit} disabled={!canSubmit()}>
-            {isEditing ? 'Update' : 'Create'}
+          <Button onClick={handleSubmit} disabled={!canSubmit() || isSubmitting}>
+            {isSubmitting && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            {isSubmitting ? 'Saving...' : (isEditing ? 'Update' : 'Create')}
           </Button>
         </div>
       </DialogContent>

@@ -187,7 +187,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const signIn = async (email: string, password: string) => {
     try {
-      setLoading(true)
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -208,6 +207,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return { error }
       }
       
+      toast.success('Signed in successfully')
       return { error: null }
     } catch (error) {
       const authError = error as Error
@@ -224,14 +224,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       
       toast.error('Login failed: ' + authError.message)
       return { error: authError }
-    } finally {
-      setLoading(false)
     }
   }
 
   const signUp = async (email: string, password: string, firstName?: string, lastName?: string) => {
     try {
-      setLoading(true)
       const redirectUrl = `${window.location.origin}/`
       
       const { error } = await supabase.auth.signUp({
@@ -257,14 +254,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError = error as Error
       toast.error('Sign up failed: ' + authError.message)
       return { error: authError }
-    } finally {
-      setLoading(false)
     }
   }
 
   const signOut = async () => {
     try {
-      setLoading(true)
       const { error } = await supabase.auth.signOut()
       if (error) {
         toast.error('Sign out failed: ' + error.message)
@@ -273,14 +267,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
     } catch (error) {
       toast.error('Sign out failed')
-    } finally {
-      setLoading(false)
     }
   }
 
   const resetPassword = async (email: string) => {
     try {
-      setLoading(true)
       const redirectUrl = `${window.location.origin}/auth`
       
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -298,14 +289,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError = error as Error
       toast.error('Password reset failed: ' + authError.message)
       return { error: authError }
-    } finally {
-      setLoading(false)
     }
   }
 
   const updatePassword = async (password: string) => {
     try {
-      setLoading(true)
       const { error } = await supabase.auth.updateUser({
         password: password
       })
@@ -322,8 +310,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const authError = error as Error
       toast.error('Password update failed: ' + authError.message)
       return { error: authError }
-    } finally {
-      setLoading(false)
     }
   }
 

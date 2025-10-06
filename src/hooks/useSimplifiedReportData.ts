@@ -56,6 +56,7 @@ export function useSimplifiedReportData(
 
   const fetchData = async () => {
     try {
+      console.log('📊 Fetching report data...', { startDate: startDate.toISOString(), endDate: endDate.toISOString() });
       setIsLoading(true);
       setError(null);
 
@@ -65,6 +66,8 @@ export function useSimplifiedReportData(
         .select('*')
         .gte('timestamp', startDate.toISOString())
         .lte('timestamp', endDate.toISOString());
+
+      console.log('📊 Sensor readings fetched:', { count: readings?.length, error: readingsError });
 
       if (readingsError) throw readingsError;
 
@@ -192,16 +195,18 @@ export function useSimplifiedReportData(
         co2Trends,
       });
     } catch (err) {
+      console.error('❌ Error fetching report data:', err);
       setError(err as Error);
-      console.error('Error fetching report data:', err);
     } finally {
+      console.log('✅ Report data fetch complete');
       setIsLoading(false);
     }
   };
 
   useEffect(() => {
     fetchData();
-  }, [startDate, endDate]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [startDate.getTime(), endDate.getTime()]);
 
   return { data, isLoading, error, refetch: fetchData };
 }

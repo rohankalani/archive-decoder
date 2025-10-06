@@ -9,15 +9,23 @@ import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 
 export default function SummaryReport() {
+  console.log('🎯 SummaryReport component mounted');
   const navigate = useNavigate();
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 7);
+    console.log('📅 Initial start date:', date.toISOString());
     return date;
   });
-  const [endDate, setEndDate] = useState(new Date());
+  const [endDate, setEndDate] = useState(() => {
+    const date = new Date();
+    console.log('📅 Initial end date:', date.toISOString());
+    return date;
+  });
 
   const { data, isLoading, error } = useSimplifiedReportData(startDate, endDate);
+
+  console.log('📊 SummaryReport state:', { isLoading, hasError: !!error, hasData: !!data });
 
   if (isLoading) {
     return <InlineLoader text="Loading summary..." />;

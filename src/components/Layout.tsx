@@ -43,8 +43,20 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
       {/* Top Navigation Bar */}
       <header className="fixed top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-14 md:h-16 items-center justify-between px-4">
-          {/* Left side - Mobile menu & Back button */}
+          {/* Left side - Logos, Mobile menu & Back button */}
           <div className="flex items-center gap-2 md:gap-4">
+            <img
+              src="/logos/abu-dhabi-university.png"
+              alt="Abu Dhabi University"
+              className="h-10 md:h-12 object-contain hidden sm:block"
+              loading="lazy"
+            />
+            <img
+              src="/logos/arc-light-services.png"
+              alt="Arc Light Services"
+              className="h-7 md:h-9 object-contain hidden sm:block"
+              loading="lazy"
+            />
             <MobileNav />
             {showBackButton && (
               <Button

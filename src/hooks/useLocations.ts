@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
 import { toast } from 'sonner'
 
@@ -59,7 +59,7 @@ export function useLocations() {
   const [loading, setLoading] = useState(true)
 
   // Fetch all locations
-  const fetchLocations = async () => {
+  const fetchLocations = useCallback(async () => {
     try {
       setLoading(true)
       
@@ -108,7 +108,7 @@ export function useLocations() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   // Site operations
   const createSite = async (data: Omit<Site, 'id' | 'created_at' | 'updated_at'>) => {
@@ -378,7 +378,7 @@ export function useLocations() {
   // Load data on mount
   useEffect(() => {
     fetchLocations()
-  }, [])
+  }, [fetchLocations])
 
   return {
     // Data

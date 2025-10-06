@@ -1,10 +1,13 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts"
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2'
+import { Resend } from 'npm:resend@2.0.0'
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 }
+
+const resend = new Resend(Deno.env.get('RESEND_API_KEY'))
 
 interface CreateUserRequest {
   email: string
@@ -66,12 +69,15 @@ serve(async (req) => {
 
     // Parse request body
     const requestData: CreateUserRequest = await req.json()
-    const { email, password, first_name, last_name, role, department } = requestData
+    const { email, first_name, last_name, role, department } = requestData
+    
+    // Generate a secure random password
+    const password = `${first_name}${Math.floor(Math.random() * 10000)}!`
 
     // Validate required fields
-    if (!email || !password || !first_name || !last_name || !role) {
+    if (!email || !first_name || !last_name || !role) {
       return new Response(
-        JSON.stringify({ error: 'Missing required fields: email, password, first_name, last_name, role' }),
+        JSON.stringify({ error: 'Missing required fields: email, first_name, last_name, role' }),
         { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
       )
     }
@@ -137,6 +143,31 @@ serve(async (req) => {
 
     if (fetchError) {
       console.error('Error fetching profile:', fetchError)
+    }
+
+    // Send welcome email with password
+    try {
+      await resend.emails.send({
+        from: 'ROSAIQ <onboarding@resend.dev>',
+        to: [email],
+        subject: 'Welcome to ROSAIQ - Your Account Details',
+        html: `
+          <h1>Welcome to ROSAIQ, ${first_name}!</h1>
+          <p>Your account has been created with the following details:</p>
+          <ul>
+            <li><strong>Email:</strong> ${email}</li>
+            <li><strong>Role:</strong> ${role}</li>
+            <li><strong>Temporary Password:</strong> <code style="background: #f4f4f4; padding: 4px 8px; border-radius: 4px;">${password}</code></li>
+          </ul>
+          <p><strong>Important:</strong> Please change your password after your first login.</p>
+          <p>Login at: <a href="${supabaseUrl}">${supabaseUrl}</a></p>
+          <p>Best regards,<br>The ROSAIQ Team</p>
+        `,
+      })
+      console.log('Welcome email sent to:', email)
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError)
+      // Don't fail the user creation if email fails
     }
 
     return new Response(

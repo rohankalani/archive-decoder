@@ -71,9 +71,6 @@ export function useUserManagement() {
         throw new Error('Unauthorized: Insufficient permissions');
       }
 
-      // Generate a default password (user should change this on first login)
-      const defaultPassword = `${userData.first_name}${Math.floor(Math.random() * 10000)}!`
-
       // Call the edge function to create user via Supabase Admin API
       const { data: { session } } = await supabase.auth.getSession()
       if (!session) {
@@ -83,7 +80,6 @@ export function useUserManagement() {
       const { data, error } = await supabase.functions.invoke('create-admin-user', {
         body: {
           email: userData.email,
-          password: defaultPassword,
           first_name: userData.first_name,
           last_name: userData.last_name,
           role: userData.role,
@@ -106,7 +102,7 @@ export function useUserManagement() {
       // Refresh the user list
       await fetchUsers()
       
-      toast.success(`User created! Default password: ${defaultPassword}`)
+      toast.success(`User created successfully! Login credentials sent to ${userData.email}`)
       return data.user
     } catch (error) {
       console.error('Error creating user:', error)

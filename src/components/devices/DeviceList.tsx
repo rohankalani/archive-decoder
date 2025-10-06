@@ -76,29 +76,16 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
   }
 
   const getLocationPath = (device: Device) => {
-    // If device has room_id, show full hierarchy including room
-    if (device.room_id) {
-      const room = useLocations().rooms.find(r => r.id === device.room_id)
-      if (room) {
-        const floor = floors.find(f => f.id === room.floor_id)
-        if (floor) {
-          const location = getFloorLocation(floor)
-          return `${location.site?.name} → ${location.building?.name} → ${floor.name || `Floor ${floor.floor_number}`} → ${room.name}`
-        }
-      }
-    }
-    
-    // Fallback to floor if no room
-    if (device.floor_id) {
-      const floor = floors.find(f => f.id === device.floor_id)
-      if (!floor) return '⚠️ Unassigned'
+    const room = device.room_id ? rooms.find(r => r.id === device.room_id) : null
+    const floor = floors.find(f => f.id === (room?.floor_id || device.floor_id))
+    const building = buildings.find(b => b.id === floor?.building_id)
+    const site = sites.find(s => s.id === building?.site_id)
 
-      const location = getFloorLocation(floor)
-      return `${location.site?.name} → ${location.building?.name} → ${floor.name || `Floor ${floor.floor_number}`}`
+    if (room && floor && building && site) {
+      return `${site.name} → ${building.name} → ${floor.name || `Floor ${floor.floor_number}`} → ${room.name}`
     }
-    
-    // No location assigned
-    return '⚠️ Unassigned'
+
+    return null
   }
 
   const formatDate = (dateString?: string) => {
@@ -148,12 +135,18 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
                 {getStatusBadge(device.status)}
               </TableCell>
               <TableCell>
-                <div className="flex items-center gap-1 text-sm">
-                  <MapPin className="h-3 w-3 text-muted-foreground" />
-                  <span className="max-w-[250px] truncate" title={getLocationPath(device)}>
-                    {getLocationPath(device)}
-                  </span>
-                </div>
+                {getLocationPath(device) ? (
+                  <div className="flex items-center gap-1 text-sm">
+                    <MapPin className="h-3 w-3 text-muted-foreground" />
+                    <span className="max-w-[250px] truncate" title={getLocationPath(device) || undefined}>
+                      {getLocationPath(device)}
+                    </span>
+                  </div>
+                ) : (
+                  <Badge variant="secondary" className="text-xs">
+                    Not Assigned
+                  </Badge>
+                )}
               </TableCell>
               <TableCell>
                 <div className="flex items-center gap-1 text-sm text-muted-foreground">

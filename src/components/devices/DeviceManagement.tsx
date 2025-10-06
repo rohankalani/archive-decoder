@@ -236,28 +236,24 @@ export function DeviceManagement() {
         <CardContent>
           <Tabs defaultValue={pendingDevices > 0 ? "pending" : "all"} className="space-y-4">
             <TabsList>
-              {pendingDevices > 0 && (
-                <TabsTrigger value="pending" className="text-warning">
-                  <Bell className="h-4 w-4 mr-2" />
-                  Pending ({pendingDevices})
-                </TabsTrigger>
-              )}
-              <TabsTrigger value="all">All Devices ({devices.length})</TabsTrigger>
+              <TabsTrigger value="unallocated" className="text-warning">
+                <MapPin className="h-4 w-4 mr-2" />
+                Unallocated ({devices.filter(d => !d.room_id).length})
+              </TabsTrigger>
+              <TabsTrigger value="all">All ({devices.length})</TabsTrigger>
               <TabsTrigger value="online">Online ({onlineDevices})</TabsTrigger>
               <TabsTrigger value="offline">Offline ({offlineDevices})</TabsTrigger>
               <TabsTrigger value="error">Error ({errorDevices})</TabsTrigger>
             </TabsList>
 
-            {pendingDevices > 0 && (
-              <TabsContent value="pending">
-                <PendingDeviceList
-                  devices={devices.filter(d => d.status === 'pending')}
-                  onAssign={handleAssignDevice}
-                  onRename={handleRenameDevice}
-                  onUpdateSerialNumber={handleUpdateSerialNumber}
-                />
-              </TabsContent>
-            )}
+            <TabsContent value="unallocated">
+              <PendingDeviceList
+                devices={devices.filter(d => !d.room_id)}
+                onAssign={handleAssignDevice}
+                onRename={handleRenameDevice}
+                onUpdateSerialNumber={handleUpdateSerialNumber}
+              />
+            </TabsContent>
 
             <TabsContent value="all">
               <DeviceList 

@@ -7,10 +7,23 @@ interface LogoBannerProps {
 }
 
 export function LogoBanner({ variant = 'full', className }: LogoBannerProps) {
-  const sizeClasses = {
-    full: 'h-16 md:h-20',
-    compact: 'h-8 md:h-10',
-    mobile: 'h-12'
+  // Abu Dhabi University is most important, Arc Light second, ROSAIQ third
+  const aduSizeClasses = {
+    full: 'h-20 md:h-24',
+    compact: 'h-10 md:h-12',
+    mobile: 'h-14'
+  };
+
+  const arcLightSizeClasses = {
+    full: 'h-14 md:h-16',
+    compact: 'h-7 md:h-9',
+    mobile: 'h-10'
+  };
+
+  const rosaiqSizeClasses = {
+    full: 'h-12 md:h-14',
+    compact: 'h-6 md:h-8',
+    mobile: 'h-9'
   };
 
   const gapClasses = {
@@ -26,50 +39,31 @@ export function LogoBanner({ variant = 'full', className }: LogoBannerProps) {
       className
     )}>
       <img
-        src="/logos/abu-dhabi-university.svg"
+        src="/logos/abu-dhabi-university.png"
         alt="Abu Dhabi University"
         className={cn(
           'object-contain transition-transform hover:scale-105',
-          sizeClasses[variant]
+          aduSizeClasses[variant]
         )}
         loading="lazy"
-        onError={(e) => {
-          // Fallback to PNG if SVG fails
-          const target = e.target as HTMLImageElement;
-          if (target.src.endsWith('.svg')) {
-            target.src = target.src.replace('.svg', '.png');
-          }
-        }}
       />
       <img
-        src="/logos/arc-light-services.svg"
+        src="/logos/arc-light-services.png"
         alt="Arc Light Services"
         className={cn(
           'object-contain transition-transform hover:scale-105',
-          sizeClasses[variant]
+          arcLightSizeClasses[variant]
         )}
         loading="lazy"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          if (target.src.endsWith('.svg')) {
-            target.src = target.src.replace('.svg', '.png');
-          }
-        }}
       />
       <img
-        src="/logos/rosaqi.svg"
-        alt="ROSAQI"
+        src="/logos/rosaiq.png"
+        alt="ROSAIQ"
         className={cn(
           'object-contain transition-transform hover:scale-105',
-          sizeClasses[variant]
+          rosaiqSizeClasses[variant]
         )}
         loading="lazy"
-        onError={(e) => {
-          const target = e.target as HTMLImageElement;
-          if (target.src.endsWith('.svg')) {
-            target.src = target.src.replace('.svg', '.png');
-          }
-        }}
       />
     </div>
   );

@@ -14,9 +14,9 @@ Place these three logo files in `public/logos/`:
    - Filename: `arc-light-services.svg` (or `.png`)
    - Path: `public/logos/arc-light-services.svg`
 
-3. **ROSAQI Logo**
-   - Filename: `rosaqi.svg` (or `.png`)
-   - Path: `public/logos/rosaqi.svg`
+3. **ROSAIQ Logo**
+   - Filename: `rosaiq.svg` (or `.png`)
+   - Path: `public/logos/rosaiq.png`
 
 ## Logo Specifications
 
@@ -43,17 +43,19 @@ The logos will appear in:
 ```
 public/
 └── logos/
-    ├── abu-dhabi-university.svg
-    ├── arc-light-services.svg
-    └── rosaqi.svg
+    ├── abu-dhabi-university.png
+    ├── arc-light-services.png
+    └── rosaiq.png
 ```
 
 ## Fallback Behavior
 
-The component automatically tries PNG format if SVG fails to load, so you can provide both formats if needed:
-- `abu-dhabi-university.svg` + `abu-dhabi-university.png`
-- `arc-light-services.svg` + `arc-light-services.png`
-- `rosaqi.svg` + `rosaqi.png`
+## Logo Hierarchy
+
+Logos are sized by importance:
+1. **Abu Dhabi University** - Largest (most prominent)
+2. **Arc Light Services** - Medium size
+3. **ROSAIQ** - Smaller size
 
 ## Testing
 

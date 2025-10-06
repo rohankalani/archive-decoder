@@ -599,9 +599,16 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
                     type="number"
                     step="0.0001"
                     value={formData.latitude}
-                    onChange={(e) => setFormData(prev => ({ ...prev, latitude: e.target.value }))}
-                    placeholder="24.4539"
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, latitude: e.target.value }))
+                      setValidationErrors(prev => ({ ...prev, latitude: '' }))
+                    }}
+                    placeholder="24.4539 (-90 to 90)"
+                    disabled={isSubmitting}
                   />
+                  {validationErrors.latitude && (
+                    <p className="text-sm text-destructive">{validationErrors.latitude}</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="longitude">Longitude</Label>
@@ -610,9 +617,16 @@ export function LocationWizard({ isOpen, onClose, initialType, parentId, editIte
                     type="number"
                     step="0.0001"
                     value={formData.longitude}
-                    onChange={(e) => setFormData(prev => ({ ...prev, longitude: e.target.value }))}
-                    placeholder="54.3773"
+                    onChange={(e) => {
+                      setFormData(prev => ({ ...prev, longitude: e.target.value }))
+                      setValidationErrors(prev => ({ ...prev, longitude: '' }))
+                    }}
+                    placeholder="54.3773 (-180 to 180)"
+                    disabled={isSubmitting}
                   />
+                  {validationErrors.longitude && (
+                    <p className="text-sm text-destructive">{validationErrors.longitude}</p>
+                  )}
                 </div>
               </div>
             </>

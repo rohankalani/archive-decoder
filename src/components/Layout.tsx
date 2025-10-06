@@ -43,19 +43,19 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
     <div className="min-h-screen bg-background">
       {/* Top Navigation Bar */}
       <header className="fixed top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
-        <div className="container flex h-14 md:h-16 items-center justify-between px-4">
+        <div className="container flex h-20 md:h-24 items-center justify-between px-4">
           {/* Left side - Logos, Mobile menu & Back button */}
-          <div className="flex items-center gap-2 md:gap-4">
+          <div className="flex items-center gap-4 md:gap-6">
             <img
               src="/logos/abu-dhabi-university.png"
               alt="Abu Dhabi University"
-              className="h-12 md:h-14 object-contain"
+              className="h-16 md:h-20 object-contain"
               loading="eager"
             />
             <img
               src="/logos/arc-light-services.png"
               alt="Arc Light Services"
-              className="h-9 md:h-11 object-contain"
+              className="h-12 md:h-16 object-contain"
               loading="eager"
             />
             <MobileNav />
@@ -162,7 +162,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
             <img
               src="/logos/rosaiq.png"
               alt="ROSAIQ"
-              className="h-8 object-contain"
+              className="h-12 md:h-14 object-contain"
               loading="lazy"
             />
             <div className="flex items-center gap-2 text-sm">
@@ -190,7 +190,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
       </header>
 
       {/* Main Content */}
-      <main className="container py-4 md:py-6 pt-16 md:pt-20 px-4">
+      <main className="container py-4 md:py-6 pt-24 md:pt-28 px-4">
         {children}
       </main>
     </div>

@@ -44,24 +44,8 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
       {/* Top Navigation Bar */}
       <header className="fixed top-0 z-50 w-full border-b bg-card/95 backdrop-blur supports-[backdrop-filter]:bg-card/60">
         <div className="container flex h-20 md:h-24 items-center justify-between px-4">
-          {/* Left side - Logos, Mobile menu & Back button */}
+          {/* Left side - Mobile menu & Back button */}
           <div className="flex items-center gap-4 md:gap-6">
-            <div className="bg-white rounded-lg p-2 flex items-center justify-center">
-              <img
-                src="/logos/abu-dhabi-university.png"
-                alt="Abu Dhabi University"
-                className="h-12 md:h-16 object-contain"
-                loading="eager"
-              />
-            </div>
-            <div className="bg-white rounded-lg p-2 flex items-center justify-center">
-              <img
-                src="/logos/arc-light-services.png"
-                alt="Arc Light Services"
-                className="h-10 md:h-14 object-contain"
-                loading="eager"
-              />
-            </div>
             <MobileNav />
             {showBackButton && (
               <Button

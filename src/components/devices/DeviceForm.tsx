@@ -65,6 +65,7 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
   const [selectedBuilding, setSelectedBuilding] = React.useState<string>('')
   const [selectedFloor, setSelectedFloor] = React.useState<string>('')
   const [selectedRoom, setSelectedRoom] = React.useState<string>('')
+  const [locationChanged, setLocationChanged] = React.useState(false)
 
   const form = useForm<DeviceFormData>({
     resolver: zodResolver(deviceSchema),
@@ -148,25 +149,34 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
 
   const handleSubmit = (data: DeviceFormData) => {
     console.log('Form submitted with data:', data)
+    console.log('Location changed:', locationChanged, 'Is new device:', !device)
     
-    // Auto-fill floor_id from selected room if room is selected
-    if (selectedRoom) {
-      const room = rooms.find(r => r.id === selectedRoom)
-      if (room) {
-        data.floor_id = room.floor_id
-        data.room_id = selectedRoom
-        // If room is assigned and this is a new device, set status to offline
-        if (!device) {
-          data.status = 'offline'
+    // Only update location fields if location selectors were used OR if it's a new device
+    if (locationChanged || !device) {
+      // Auto-fill floor_id from selected room if room is selected
+      if (selectedRoom) {
+        const room = rooms.find(r => r.id === selectedRoom)
+        if (room) {
+          data.floor_id = room.floor_id
+          data.room_id = selectedRoom
+          // If room is assigned and this is a new device, set status to offline
+          if (!device) {
+            data.status = 'offline'
+          }
         }
+      } else {
+        // If no room selected and this is a new device, set status to pending
+        if (!device) {
+          data.status = 'pending'
+        }
+        data.floor_id = null
+        data.room_id = null
       }
-    } else {
-      // If no room selected and this is a new device, set status to pending
-      if (!device) {
-        data.status = 'pending'
-      }
-      data.floor_id = null
-      data.room_id = null
+    }
+    // For updates where location wasn't changed, preserve existing location values
+    else if (device) {
+      data.floor_id = device.floor_id || null
+      data.room_id = device.room_id || null
     }
 
     // If calibration_due_date is not provided and installation_date is available,
@@ -301,7 +311,13 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
                 {/* Site Selection */}
                 <div>
                   <label className="text-sm font-medium">Site</label>
-                  <Select value={selectedSite} onValueChange={setSelectedSite}>
+                  <Select 
+                    value={selectedSite} 
+                    onValueChange={(value) => {
+                      setSelectedSite(value)
+                      setLocationChanged(true)
+                    }}
+                  >
                     <SelectTrigger className="mt-1">
                       <SelectValue placeholder="Select a site" />
                     </SelectTrigger>
@@ -320,7 +336,10 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
                   <label className="text-sm font-medium">Building</label>
                   <Select 
                     value={selectedBuilding} 
-                    onValueChange={setSelectedBuilding}
+                    onValueChange={(value) => {
+                      setSelectedBuilding(value)
+                      setLocationChanged(true)
+                    }}
                     disabled={!selectedSite}
                   >
                     <SelectTrigger className="mt-1">
@@ -341,7 +360,10 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
                   <label className="text-sm font-medium">Floor</label>
                   <Select 
                     value={selectedFloor} 
-                    onValueChange={setSelectedFloor}
+                    onValueChange={(value) => {
+                      setSelectedFloor(value)
+                      setLocationChanged(true)
+                    }}
                     disabled={!selectedBuilding}
                   >
                     <SelectTrigger className="mt-1">
@@ -362,7 +384,10 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
                   <label className="text-sm font-medium">Room</label>
                   <Select 
                     value={selectedRoom} 
-                    onValueChange={setSelectedRoom}
+                    onValueChange={(value) => {
+                      setSelectedRoom(value)
+                      setLocationChanged(true)
+                    }}
                     disabled={!selectedFloor}
                   >
                     <SelectTrigger className="mt-1">

@@ -264,22 +264,22 @@ export function DeviceDetail() {
             <CardContent>
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
-                  <div className="text-xl font-bold text-orange-500">
+                  <div className="text-3xl font-bold text-orange-500">
                     {deviceSensorData.temperature?.toFixed(1) || '--'}°C
                   </div>
-                  <div className="text-xs text-muted-foreground">Temp</div>
+                  <div className="text-sm text-muted-foreground">Temp</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-bold text-cyan-500">
+                  <div className="text-3xl font-bold text-cyan-500">
                     {deviceSensorData.humidity ? Math.round(deviceSensorData.humidity) : '--'}%
                   </div>
-                  <div className="text-xs text-muted-foreground">Humidity</div>
+                  <div className="text-sm text-muted-foreground">Humidity</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-xl font-bold text-blue-500">
+                  <div className="text-3xl font-bold text-blue-500">
                     {deviceSensorData.co2 ? Math.round(deviceSensorData.co2) : '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">CO₂ ppm</div>
+                  <div className="text-sm text-muted-foreground">CO₂ ppm</div>
                 </div>
               </div>
             </CardContent>
@@ -289,27 +289,27 @@ export function DeviceDetail() {
         {/* Pollutants */}
         <Card>
           <CardHeader className="pb-2">
-            <CardTitle className="text-base">Pollutants</CardTitle>
+            <CardTitle className="text-lg">Pollutants</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4">
               <div className="text-center">
-                <div className="text-lg font-bold text-purple-500">
+                <div className="text-2xl font-bold text-purple-500">
                   {deviceSensorData.voc ? Math.round(deviceSensorData.voc) : '--'}
                 </div>
-                <div className="text-xs text-muted-foreground">VOC (index)</div>
+                <div className="text-sm text-muted-foreground">VOC (index)</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-green-500">
+                <div className="text-2xl font-bold text-green-500">
                   {deviceSensorData.hcho ? Math.round(deviceSensorData.hcho) : '--'}
                 </div>
-                <div className="text-xs text-muted-foreground">HCHO (ppb)</div>
+                <div className="text-sm text-muted-foreground">HCHO (ppb)</div>
               </div>
               <div className="text-center">
-                <div className="text-lg font-bold text-yellow-500">
+                <div className="text-2xl font-bold text-yellow-500">
                   {deviceSensorData.nox ? Math.round(deviceSensorData.nox) : '--'}
                 </div>
-                <div className="text-xs text-muted-foreground">NOx (index)</div>
+                <div className="text-sm text-muted-foreground">NOx (index)</div>
               </div>
             </div>
           </CardContent>
@@ -319,39 +319,39 @@ export function DeviceDetail() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Particulate Matter (μg/m³)</CardTitle>
+              <CardTitle className="text-lg">Particulate Matter (μg/m³)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pm03?.toFixed(1) || '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PM0.3</div>
+                  <div className="text-sm text-muted-foreground">PM0.3</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pm1?.toFixed(1) || '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PM1</div>
+                  <div className="text-sm text-muted-foreground">PM1</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold text-red-500">
+                  <div className="text-lg font-bold text-red-500">
                     {deviceSensorData.pm25?.toFixed(1) || '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PM2.5</div>
+                  <div className="text-sm text-muted-foreground">PM2.5</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pm5?.toFixed(1) || '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PM5</div>
+                  <div className="text-sm text-muted-foreground">PM5</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pm10?.toFixed(1) || '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PM10</div>
+                  <div className="text-sm text-muted-foreground">PM10</div>
                 </div>
               </div>
             </CardContent>
@@ -359,45 +359,45 @@ export function DeviceDetail() {
 
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-base">Particle Count (#/m³)</CardTitle>
+              <CardTitle className="text-lg">Particle Count (#/m³)</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pc03 ? Math.round(deviceSensorData.pc03).toLocaleString() : '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PC0.3</div>
+                  <div className="text-sm text-muted-foreground">PC0.3</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pc05 ? Math.round(deviceSensorData.pc05).toLocaleString() : '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PC0.5</div>
+                  <div className="text-sm text-muted-foreground">PC0.5</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pc1 ? Math.round(deviceSensorData.pc1).toLocaleString() : '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PC1</div>
+                  <div className="text-sm text-muted-foreground">PC1</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pc25 ? Math.round(deviceSensorData.pc25).toLocaleString() : '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PC2.5</div>
+                  <div className="text-sm text-muted-foreground">PC2.5</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pc5 ? Math.round(deviceSensorData.pc5).toLocaleString() : '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PC5</div>
+                  <div className="text-sm text-muted-foreground">PC5</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-sm font-bold">
+                  <div className="text-lg font-bold">
                     {deviceSensorData.pc10 ? Math.round(deviceSensorData.pc10).toLocaleString() : '--'}
                   </div>
-                  <div className="text-xs text-muted-foreground">PC10</div>
+                  <div className="text-sm text-muted-foreground">PC10</div>
                 </div>
               </div>
             </CardContent>

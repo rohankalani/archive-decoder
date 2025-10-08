@@ -148,7 +148,7 @@ serve(async (req) => {
     // Send welcome email with password
     try {
       await resend.emails.send({
-        from: 'ROSAIQ <onboarding@resend.dev>',
+        from: 'ROSAIQ <noreply@rosaiq.com>',
         to: [email],
         subject: 'Welcome to ROSAIQ - Your Account Details',
         html: `

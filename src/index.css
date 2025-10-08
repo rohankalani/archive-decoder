@@ -8,37 +8,37 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Material 3 Light Theme - Rosaiq Green & Grey */
-    --background: 0 0% 98%;          /* Very light grey background */
-    --foreground: 0 0% 15%;          /* Dark grey text */
+    /* Material 3 Theme - Rosaiq Dark Grey & Green */
+    --background: 0 0% 25%;          /* Dark grey from logo */
+    --foreground: 0 0% 98%;          /* Light text */
 
-    --card: 0 0% 100%;               /* Pure white cards */
-    --card-foreground: 0 0% 15%;
+    --card: 0 0% 35%;                /* Lighter grey for headers/cards */
+    --card-foreground: 0 0% 98%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 15%;
+    --popover: 0 0% 30%;
+    --popover-foreground: 0 0% 98%;
 
     /* Rosaiq Green Primary Color */
     --primary: 142 76% 36%;          /* Rosaiq Green */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 96%;           /* Light grey for secondary surfaces */
-    --secondary-foreground: 0 0% 15%;
+    --secondary: 0 0% 40%;           /* Medium grey for secondary surfaces */
+    --secondary-foreground: 0 0% 98%;
 
     --tertiary: 142 60% 45%;         /* Lighter green accent */
     --tertiary-foreground: 0 0% 100%;
 
-    --accent: 142 76% 95%;           /* Very light green for hover states */
-    --accent-foreground: 142 76% 36%;
+    --accent: 0 0% 32%;              /* Slightly lighter grey for hover */
+    --accent-foreground: 142 76% 50%;
 
-    --muted: 0 0% 96%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 0 0% 30%;
+    --muted-foreground: 0 0% 70%;
 
     --destructive: 0 84% 60%;        /* Red for errors */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 90%;              /* Subtle border */
-    --input: 0 0% 100%;              /* White input backgrounds */
+    --border: 0 0% 45%;              /* Lighter border for contrast */
+    --input: 0 0% 30%;               /* Dark input backgrounds */
     --ring: 142 76% 36%;
 
     --radius: 16px;
@@ -60,19 +60,19 @@ All colors MUST be HSL.
     --chart-4: 0 84% 60%;
     --chart-5: 210 40% 50%;
 
-    /* Material 3 Elevation - Softer shadows */
-    --elevation-1: 0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08);
-    --elevation-2: 0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.12);
-    --elevation-3: 0 4px 8px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.16);
+    /* Material 3 Elevation - Enhanced for dark theme */
+    --elevation-1: 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.4);
+    --elevation-2: 0 4px 8px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.5);
+    --elevation-3: 0 8px 16px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.6);
     
-    /* Sidebar - Clean grey with green accents */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 15%;
+    /* Sidebar - Darker grey with green accents */
+    --sidebar-background: 0 0% 25%;
+    --sidebar-foreground: 0 0% 98%;
     --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 142 76% 95%;
-    --sidebar-accent-foreground: 142 76% 36%;
-    --sidebar-border: 0 0% 90%;
+    --sidebar-accent: 0 0% 32%;
+    --sidebar-accent-foreground: 142 76% 50%;
+    --sidebar-border: 0 0% 40%;
     --sidebar-ring: 142 76% 36%;
   }
 

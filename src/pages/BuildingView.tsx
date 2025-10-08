@@ -213,24 +213,24 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
               <div className="text-sm font-medium text-muted-foreground mb-4">
                 Classroom Air Quality ({stats.classrooms.length} rooms)
               </div>
-              <div className="grid grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
                 {stats.classrooms.map((classroom: any, idx: number) => (
                   <div 
                     key={idx}
-                    className="flex flex-col gap-1"
+                    className="flex flex-col gap-2"
                   >
-                    <div className={`h-16 rounded-lg ${getAqiColor(classroom.aqi)} transition-all duration-200 hover:scale-105 hover:shadow-md flex flex-col items-center justify-center p-1`}>
-                      <span className="text-lg font-bold text-foreground">
+                    <div className={`h-32 rounded-2xl ${getAqiColor(classroom.aqi)} transition-all duration-200 hover:scale-105 hover:shadow-md flex flex-col items-center justify-center p-3`}>
+                      <span className="text-4xl font-bold text-foreground">
                         {classroom.aqi}
                       </span>
-                      <span className="text-[9px] font-semibold text-foreground/80 leading-tight">
+                      <span className="text-lg font-semibold text-foreground/80 leading-tight">
                         {classroom.dominantPollutant}
                       </span>
-                      <span className="text-[8px] font-medium text-foreground/70 leading-tight">
+                      <span className="text-base font-medium text-foreground/70 leading-tight">
                         {classroom.dominantValue} {classroom.dominantUnit}
                       </span>
                     </div>
-                    <div className="text-[10px] font-medium text-muted-foreground text-center truncate">
+                    <div className="text-base font-medium text-muted-foreground text-center truncate">
                       {classroom.name}
                     </div>
                   </div>

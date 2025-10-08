@@ -127,18 +127,18 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
                               )} />
                             )}
                           </div>
-                          <span className="text-xs font-medium text-muted-foreground uppercase">
+                          <span className="text-xs font-bold text-foreground uppercase tracking-wide">
                             {isOnline ? 'Live' : 'Offline'}
                           </span>
                         </div>
 
                         {/* Device Name */}
-                        <h3 className="font-medium text-base leading-tight">
+                        <h3 className="font-medium text-base leading-tight text-foreground">
                           {device.room?.name || device.name}
                         </h3>
 
                         {/* Location */}
-                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground font-medium">
                           <MapPin className="h-4 w-4 flex-shrink-0" />
                           <span className="truncate">
                             {device.floor?.name || `Floor ${device.floor?.floor_number || 'N/A'}`}
@@ -174,11 +174,11 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
 
                           {/* AQI Details */}
                           <div className="space-y-1">
-                            <p className="text-xs text-muted-foreground font-medium">Air Quality</p>
+                            <p className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Air Quality</p>
                             <p className="text-sm font-bold" style={{ color: getAqiColor(aqi) }}>
                               {getAqiLabel(aqi)}
                             </p>
-                            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <div className="flex items-center gap-1.5 text-xs text-foreground font-medium">
                               <Activity className="h-3 w-3" />
                               <span>{device.sensor?.pm25?.toFixed(1) || '--'} μg/m³</span>
                             </div>
@@ -196,9 +196,9 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
                           <WifiOff className="h-7 w-7 text-muted-foreground" />
                         </div>
                         <div className="space-y-1">
-                          <p className="text-xs text-muted-foreground font-medium">Status</p>
-                          <p className="text-sm font-bold text-muted-foreground">Offline</p>
-                          <p className="text-xs text-muted-foreground/70">No data available</p>
+                          <p className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Status</p>
+                          <p className="text-sm font-bold text-foreground">Offline</p>
+                          <p className="text-xs text-muted-foreground font-medium">No data available</p>
                         </div>
                       </div>
                     )}

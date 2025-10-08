@@ -8,37 +8,37 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Material 3 Light Theme - Neutral & Clean */
-    --background: 0 0% 96%;          /* Light grey background */
-    --foreground: 0 0% 13%;          /* Near black text */
+    /* Material 3 Light Theme - Proper Surface Toning */
+    --background: 0 0% 98%;          /* Very light grey background */
+    --foreground: 0 0% 10%;          /* Dark text for better contrast */
 
-    --card: 0 0% 100%;               /* White cards */
-    --card-foreground: 0 0% 13%;
+    --card: 0 0% 96%;                /* Light grey cards (shaded) */
+    --card-foreground: 0 0% 10%;
 
-    --popover: 0 0% 100%;
-    --popover-foreground: 0 0% 13%;
+    --popover: 0 0% 96%;
+    --popover-foreground: 0 0% 10%;
 
-    /* Material 3 Color Palette - Subdued */
+    /* Material 3 Color Palette */
     --primary: 199 89% 48%;          /* Material Blue */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 60%;           /* Neutral grey */
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 85%;           /* Light grey for secondary surfaces */
+    --secondary-foreground: 0 0% 10%;
 
     --tertiary: 199 89% 48%;
     --tertiary-foreground: 0 0% 100%;
 
-    --accent: 0 0% 93%;              /* Very light grey for accents */
-    --accent-foreground: 0 0% 13%;
+    --accent: 0 0% 90%;              /* Slightly darker grey for hover states */
+    --accent-foreground: 0 0% 10%;
 
-    --muted: 0 0% 93%;
-    --muted-foreground: 0 0% 45%;
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;    /* Darker for better readability */
 
     --destructive: 0 72% 51%;        /* Coral red */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 88%;              /* Light border */
-    --input: 0 0% 100%;
+    --border: 0 0% 85%;              /* Visible border */
+    --input: 0 0% 100%;              /* White input backgrounds */
     --ring: 199 89% 48%;
 
     --radius: 12px;
@@ -66,13 +66,13 @@ All colors MUST be HSL.
     --elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
     
     /* Sidebar */
-    --sidebar-background: 0 0% 100%;
-    --sidebar-foreground: 0 0% 13%;
+    --sidebar-background: 0 0% 96%;
+    --sidebar-foreground: 0 0% 10%;
     --sidebar-primary: 199 89% 48%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 96%;
-    --sidebar-accent-foreground: 0 0% 13%;
-    --sidebar-border: 0 0% 88%;
+    --sidebar-accent: 0 0% 90%;
+    --sidebar-accent-foreground: 0 0% 10%;
+    --sidebar-border: 0 0% 85%;
     --sidebar-ring: 199 89% 48%;
   }
 

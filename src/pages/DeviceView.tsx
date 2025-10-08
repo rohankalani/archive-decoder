@@ -13,7 +13,6 @@ import { DeviceGridSkeleton } from '@/components/ui/skeleton';
 import { ErrorBoundary } from '@/components/ErrorBoundary';
 import { useNavigate } from 'react-router-dom';
 import { GlanceViewCard } from '@/components/devices/GlanceViewCard';
-import { DeviceDetailSidebar } from '@/components/dashboard/DeviceDetailSidebar';
 import { TimelineChart } from '@/components/dashboard/TimelineChart';
 import { DeviceTableView } from '@/components/devices/DeviceTableView';
 import { 
@@ -47,7 +46,6 @@ const DeviceViewContent = memo(() => {
   const [selectedSite, setSelectedSite] = useState<string>('all');
   const [selectedBuilding, setSelectedBuilding] = useState<string>('all');
   const [selectedFloor, setSelectedFloor] = useState<string>('all');
-  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // Debounce search query for better performance
@@ -265,11 +263,6 @@ const DeviceViewContent = memo(() => {
     return Array.from(grouped.values());
   }, [devicesWithFullData]);
 
-  const selectedDevice = useMemo(() => {
-    if (!selectedDeviceId) return null;
-    return devicesWithFullData.find(d => d.id === selectedDeviceId);
-  }, [selectedDeviceId, devicesWithFullData]);
-
   if (sensorLoading || devicesLoading || locationsLoading) {
     return (
       <Layout>
@@ -412,16 +405,16 @@ const DeviceViewContent = memo(() => {
                         </Badge>
                       </div>
 
-                      {/* Device Cards - Fixed min-width to prevent distortion */}
+                      {/* Device Cards - Increased width for better readability */}
                       <div className="grid gap-4" style={{
-                        gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))'
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
                       }}>
                         {buildingGroup.devices.map((device) => (
                           <GlanceViewCard
                             key={device.id}
                             device={device}
-                            isSelected={selectedDeviceId === device.id}
-                            onClick={() => setSelectedDeviceId(device.id)}
+                            isSelected={false}
+                            onClick={() => {}}
                           />
                         ))}
                       </div>
@@ -439,13 +432,7 @@ const DeviceViewContent = memo(() => {
               )}
             </div>
 
-            {/* Right Sidebar - Overlay */}
-            {selectedDevice && (
-              <DeviceDetailSidebar
-                device={selectedDevice}
-                onClose={() => setSelectedDeviceId(null)}
-              />
-            )}
+            {/* Device detail sidebar removed - comprehensive info already shown in cards */}
           </div>
         ) : (
           <div>
@@ -463,16 +450,6 @@ const DeviceViewContent = memo(() => {
                 </CardContent>
               </Card>
             )}
-          </div>
-        )}
-
-        {/* Timeline Chart - Only in Glance Mode with selected device */}
-        {viewMode === 'glance' && selectedDevice && (
-          <div className="mt-6">
-            <TimelineChart
-              devices={[selectedDevice]}
-              selectedDeviceId={selectedDeviceId}
-            />
           </div>
         )}
       </div>

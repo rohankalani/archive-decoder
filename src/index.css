@@ -8,128 +8,128 @@ All colors MUST be HSL.
 
 @layer base {
   :root {
-    /* Material 3 Light Theme - Proper Surface Toning */
+    /* Material 3 Light Theme - Rosaiq Green & Grey */
     --background: 0 0% 98%;          /* Very light grey background */
-    --foreground: 0 0% 10%;          /* Dark text for better contrast */
+    --foreground: 0 0% 15%;          /* Dark grey text */
 
-    --card: 0 0% 96%;                /* Light grey cards (shaded) */
-    --card-foreground: 0 0% 10%;
+    --card: 0 0% 100%;               /* Pure white cards */
+    --card-foreground: 0 0% 15%;
 
-    --popover: 0 0% 96%;
-    --popover-foreground: 0 0% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 0 0% 15%;
 
-    /* Material 3 Color Palette */
-    --primary: 199 89% 48%;          /* Material Blue */
+    /* Rosaiq Green Primary Color */
+    --primary: 142 76% 36%;          /* Rosaiq Green */
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 0 0% 85%;           /* Light grey for secondary surfaces */
-    --secondary-foreground: 0 0% 10%;
+    --secondary: 0 0% 96%;           /* Light grey for secondary surfaces */
+    --secondary-foreground: 0 0% 15%;
 
-    --tertiary: 199 89% 48%;
+    --tertiary: 142 60% 45%;         /* Lighter green accent */
     --tertiary-foreground: 0 0% 100%;
 
-    --accent: 0 0% 90%;              /* Slightly darker grey for hover states */
-    --accent-foreground: 0 0% 10%;
+    --accent: 142 76% 95%;           /* Very light green for hover states */
+    --accent-foreground: 142 76% 36%;
 
-    --muted: 0 0% 90%;
-    --muted-foreground: 0 0% 40%;    /* Darker for better readability */
+    --muted: 0 0% 96%;
+    --muted-foreground: 0 0% 45%;
 
-    --destructive: 0 72% 51%;        /* Coral red */
+    --destructive: 0 84% 60%;        /* Red for errors */
     --destructive-foreground: 0 0% 100%;
 
-    --border: 0 0% 85%;              /* Visible border */
+    --border: 0 0% 90%;              /* Subtle border */
     --input: 0 0% 100%;              /* White input backgrounds */
-    --ring: 199 89% 48%;
+    --ring: 142 76% 36%;
 
-    --radius: 12px;
+    --radius: 16px;
 
     /* Status Colors - Material 3 */
-    --success: 122 39% 49%;          /* Soft green */
+    --success: 142 76% 36%;          /* Rosaiq Green */
     --success-foreground: 0 0% 100%;
 
-    --warning: 35 91% 62%;           /* Amber */
-    --warning-foreground: 0 0% 13%;
+    --warning: 38 92% 50%;           /* Amber */
+    --warning-foreground: 0 0% 0%;
 
-    --danger: 0 72% 51%;             /* Coral red */
+    --danger: 0 84% 60%;             /* Red */
     --danger-foreground: 0 0% 100%;
 
-    /* Chart Colors */
-    --chart-1: 199 89% 48%;
-    --chart-2: 122 39% 49%;
-    --chart-3: 35 91% 62%;
-    --chart-4: 291 47% 51%;
-    --chart-5: 0 72% 51%;
+    /* Chart Colors - Green palette */
+    --chart-1: 142 76% 36%;
+    --chart-2: 142 60% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 210 40% 50%;
 
-    /* Material 3 Elevation */
-    --elevation-1: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
-    --elevation-2: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
-    --elevation-3: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+    /* Material 3 Elevation - Softer shadows */
+    --elevation-1: 0 1px 2px rgba(0,0,0,0.05), 0 1px 3px rgba(0,0,0,0.08);
+    --elevation-2: 0 2px 4px rgba(0,0,0,0.08), 0 4px 8px rgba(0,0,0,0.12);
+    --elevation-3: 0 4px 8px rgba(0,0,0,0.12), 0 8px 16px rgba(0,0,0,0.16);
     
-    /* Sidebar */
-    --sidebar-background: 0 0% 96%;
-    --sidebar-foreground: 0 0% 10%;
-    --sidebar-primary: 199 89% 48%;
+    /* Sidebar - Clean grey with green accents */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 0 0% 15%;
+    --sidebar-primary: 142 76% 36%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 90%;
-    --sidebar-accent-foreground: 0 0% 10%;
-    --sidebar-border: 0 0% 85%;
-    --sidebar-ring: 199 89% 48%;
+    --sidebar-accent: 142 76% 95%;
+    --sidebar-accent-foreground: 142 76% 36%;
+    --sidebar-border: 0 0% 90%;
+    --sidebar-ring: 142 76% 36%;
   }
 
   .dark {
-    /* Material 3 Dark Theme (optional, staying light-first) */
+    /* Material 3 Dark Theme - Rosaiq Green & Grey */
     --background: 0 0% 10%;
-    --foreground: 0 0% 90%;
+    --foreground: 0 0% 95%;
 
     --card: 0 0% 14%;
-    --card-foreground: 0 0% 90%;
+    --card-foreground: 0 0% 95%;
 
     --popover: 0 0% 14%;
-    --popover-foreground: 0 0% 90%;
+    --popover-foreground: 0 0% 95%;
 
-    --primary: 199 89% 58%;
+    --primary: 142 70% 45%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 0 0% 30%;
-    --secondary-foreground: 0 0% 100%;
+    --secondary: 0 0% 18%;
+    --secondary-foreground: 0 0% 95%;
 
-    --tertiary: 199 89% 58%;
+    --tertiary: 142 60% 55%;
     --tertiary-foreground: 0 0% 100%;
 
-    --accent: 0 0% 20%;
-    --accent-foreground: 0 0% 90%;
+    --accent: 0 0% 18%;
+    --accent-foreground: 142 70% 45%;
 
-    --muted: 0 0% 20%;
-    --muted-foreground: 0 0% 60%;
+    --muted: 0 0% 18%;
+    --muted-foreground: 0 0% 65%;
 
-    --destructive: 0 72% 51%;
+    --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
     --border: 0 0% 24%;
     --input: 0 0% 14%;
-    --ring: 199 89% 58%;
+    --ring: 142 70% 45%;
 
-    --success: 122 39% 49%;
+    --success: 142 70% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 35 91% 62%;
-    --warning-foreground: 0 0% 13%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 0 0% 0%;
 
-    --danger: 0 72% 51%;
+    --danger: 0 84% 60%;
     --danger-foreground: 0 0% 100%;
 
-    --elevation-1: 0 1px 3px rgba(0,0,0,0.24), 0 1px 2px rgba(0,0,0,0.36);
-    --elevation-2: 0 3px 6px rgba(0,0,0,0.32), 0 3px 6px rgba(0,0,0,0.40);
-    --elevation-3: 0 10px 20px rgba(0,0,0,0.40), 0 6px 6px rgba(0,0,0,0.46);
+    --elevation-1: 0 2px 4px rgba(0,0,0,0.3), 0 1px 2px rgba(0,0,0,0.4);
+    --elevation-2: 0 4px 8px rgba(0,0,0,0.4), 0 2px 4px rgba(0,0,0,0.5);
+    --elevation-3: 0 8px 16px rgba(0,0,0,0.5), 0 4px 8px rgba(0,0,0,0.6);
 
     --sidebar-background: 0 0% 14%;
-    --sidebar-foreground: 0 0% 90%;
-    --sidebar-primary: 199 89% 58%;
+    --sidebar-foreground: 0 0% 95%;
+    --sidebar-primary: 142 70% 45%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 0 0% 20%;
-    --sidebar-accent-foreground: 0 0% 90%;
+    --sidebar-accent: 0 0% 18%;
+    --sidebar-accent-foreground: 142 70% 45%;
     --sidebar-border: 0 0% 24%;
-    --sidebar-ring: 199 89% 58%;
+    --sidebar-ring: 142 70% 45%;
   }
 }
 

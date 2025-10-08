@@ -33,6 +33,7 @@ export interface LiveSensorData {
   pc25?: number
   pc5?: number
   pc10?: number
+  aqi_overall?: number
   aqi?: number
   status: 'online' | 'offline' | 'error'
   last_updated: string
@@ -73,7 +74,7 @@ export function useLiveSensorData() {
           .select('sensor_type, value, unit, timestamp')
           .eq('device_id', device.id)
           .order('timestamp', { ascending: false })
-          .limit(30) // Increased to capture all 19+ sensor types per reading batch
+          .limit(35) // Increased to capture all sensor types including aqi_overall
 
         if (readingsError) {
           console.error(`Error fetching readings for device ${device.id}:`, readingsError)
@@ -92,8 +93,10 @@ export function useLiveSensorData() {
           }
         })
 
+        // Use AQI from ESP32 if available, otherwise fallback to PM2.5 calculation
+        const aqiOverall = latestReadings.aqi_overall?.value
         const pm25Value = latestReadings.pm25?.value || 0
-        const aqi = pm25Value > 0 ? calculateAQI(pm25Value) : undefined
+        const aqi = aqiOverall || (pm25Value > 0 ? calculateAQI(pm25Value) : undefined)
 
         return {
           device_id: device.id,
@@ -116,6 +119,7 @@ export function useLiveSensorData() {
           pc25: latestReadings.pc25?.value,
           pc5: latestReadings.pc5?.value,
           pc10: latestReadings.pc10?.value,
+          aqi_overall: aqiOverall,
           aqi,
           status: device.status as 'online' | 'offline' | 'error',
           last_updated: Object.values(latestReadings).reduce((latest, reading) => {

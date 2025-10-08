@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, RefObject } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,29 +8,59 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, FileText, Table } from 'lucide-react';
 import { toast } from 'sonner';
+import html2canvas from 'html2canvas';
 import jsPDF from 'jspdf';
 
 interface ExportButtonProps {
   reportTitle: string;
+  reportContainerRef?: RefObject<HTMLDivElement>;
   onExportPDF?: () => void;
   onExportCSV?: () => void;
 }
 
-export function ExportButton({ reportTitle, onExportPDF, onExportCSV }: ExportButtonProps) {
+export function ExportButton({ reportTitle, reportContainerRef, onExportPDF, onExportCSV }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handlePDFExport = async () => {
+    if (!reportContainerRef?.current) {
+      toast.error('Report content not ready');
+      return;
+    }
+
     setIsExporting(true);
     try {
       if (onExportPDF) {
         onExportPDF();
       } else {
-        const pdf = new jsPDF();
-        pdf.setFontSize(20);
-        pdf.text(reportTitle, 20, 20);
-        pdf.setFontSize(12);
-        pdf.text('Report generated on: ' + new Date().toLocaleDateString(), 20, 30);
-        pdf.save(`${reportTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`);
+        const element = reportContainerRef.current;
+        
+        // Capture the element as canvas
+        const canvas = await html2canvas(element, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          backgroundColor: '#ffffff'
+        });
+
+        const imgData = canvas.toDataURL('image/png');
+        const pdf = new jsPDF({
+          orientation: 'portrait',
+          unit: 'mm',
+          format: 'a4'
+        });
+
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+        const imgWidth = canvas.width;
+        const imgHeight = canvas.height;
+        const ratio = Math.min(pdfWidth / imgWidth, pdfHeight / imgHeight);
+        const imgX = (pdfWidth - imgWidth * ratio) / 2;
+        const imgY = 10;
+
+        pdf.addImage(imgData, 'PNG', imgX, imgY, imgWidth * ratio, imgHeight * ratio);
+        
+        const filename = `${reportTitle.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
+        pdf.save(filename);
       }
       toast.success('PDF exported successfully');
     } catch (error) {

@@ -113,10 +113,10 @@ export default {
       fontSize: {
         'display-large': ['57px', { lineHeight: '64px', fontWeight: '400' }],
         'headline-large': ['32px', { lineHeight: '40px', fontWeight: '500' }],
-        'title-large': ['22px', { lineHeight: '28px', fontWeight: '500' }],
-        'title-medium': ['16px', { lineHeight: '24px', fontWeight: '500' }],
-        'body-large': ['16px', { lineHeight: '24px', fontWeight: '400' }],
-        'label-medium': ['12px', { lineHeight: '16px', fontWeight: '500' }],
+        'title-large': ['24px', { lineHeight: '32px', fontWeight: '500' }],
+        'title-medium': ['18px', { lineHeight: '26px', fontWeight: '500' }],
+        'body-large': ['18px', { lineHeight: '28px', fontWeight: '400' }],
+        'label-medium': ['14px', { lineHeight: '20px', fontWeight: '500' }],
       },
       keyframes: {
         "accordion-down": {

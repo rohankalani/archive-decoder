@@ -110,14 +110,14 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
       {/* Header Row */}
       <div className="flex items-center justify-between mb-3">
         <div>
-          <div className="text-base font-bold text-foreground">{displayName}</div>
-          <div className="text-xs text-muted-foreground font-medium">{floorName}</div>
+          <div className="text-lg font-bold text-foreground">{displayName}</div>
+          <div className="text-sm text-muted-foreground font-medium">{floorName}</div>
         </div>
         {!isOffline && (
           <div className="text-right">
-            <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide mb-1">AQI</div>
+            <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide mb-1">AQI</div>
             <div
-              className="font-bold text-3xl leading-none"
+              className="font-bold text-4xl leading-none"
               style={{ color: getAqiColor(aqi) }}
             >
               {aqi}
@@ -131,21 +131,21 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
           {/* Primary Sensors - 3 columns */}
           <div className="grid grid-cols-3 gap-3 pb-3 border-b">
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">PM2.5</div>
-              <div className="text-base font-semibold" style={{ color: getColorFromValue(calculatePM25Aqi, pm25) }}>
-                {pm25.toFixed(1)} <span className="text-xs text-foreground font-medium">µg/m³</span>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">PM2.5</div>
+              <div className="text-lg font-semibold" style={{ color: getColorFromValue(calculatePM25Aqi, pm25) }}>
+                {pm25.toFixed(1)} <span className="text-sm text-foreground font-medium">µg/m³</span>
               </div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">CO₂</div>
-              <div className="text-base font-semibold" style={{ color: getCO2Color(co2) }}>
-                {Math.round(co2)} <span className="text-xs text-foreground font-medium">ppm</span>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">CO₂</div>
+              <div className="text-lg font-semibold" style={{ color: getCO2Color(co2) }}>
+                {Math.round(co2)} <span className="text-sm text-foreground font-medium">ppm</span>
               </div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Temp</div>
-              <div className="text-base font-semibold" style={{ color: getTempColor(temperature) }}>
-                {temperature.toFixed(1)}<span className="text-xs text-foreground font-medium">°C</span>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">Temp</div>
+              <div className="text-lg font-semibold" style={{ color: getTempColor(temperature) }}>
+                {temperature.toFixed(1)}<span className="text-sm text-foreground font-medium">°C</span>
               </div>
             </div>
           </div>
@@ -153,20 +153,20 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
           {/* Secondary Sensors - 3 columns */}
           <div className="grid grid-cols-3 gap-3 pb-3 border-b">
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">PM10</div>
-              <div className="text-sm font-bold text-foreground" style={{ color: getColorFromValue(calculatePM10Aqi, pm10) }}>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">PM10</div>
+              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculatePM10Aqi, pm10) }}>
                 {pm10.toFixed(1)}
               </div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">VOC</div>
-              <div className="text-sm font-bold text-foreground" style={{ color: getColorFromValue(calculateVOCAqi, voc) }}>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">VOC</div>
+              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculateVOCAqi, voc) }}>
                 {Math.round(voc)}
               </div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">Humidity</div>
-              <div className="text-sm font-bold text-foreground" style={{ color: getHumidityColor(humidity) }}>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">Humidity</div>
+              <div className="text-base font-bold text-foreground" style={{ color: getHumidityColor(humidity) }}>
                 {humidity.toFixed(1)}%
               </div>
             </div>
@@ -175,20 +175,20 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
           {/* Tertiary Sensors - 3 columns */}
           <div className="grid grid-cols-3 gap-3 pb-3 border-b">
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">HCHO</div>
-              <div className="text-sm font-bold text-foreground" style={{ color: getColorFromValue(calculateHCHOAqi, hcho) }}>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">HCHO</div>
+              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculateHCHOAqi, hcho) }}>
                 {hcho.toFixed(1)}
               </div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">NOx</div>
-              <div className="text-sm font-bold text-foreground" style={{ color: getColorFromValue(calculateNOxAqi, nox) }}>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">NOx</div>
+              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculateNOxAqi, nox) }}>
                 {nox.toFixed(1)}
               </div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">PM0.3</div>
-              <div className="text-sm font-bold text-foreground" style={{ color: getPM03Color(pm03) }}>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">PM0.3</div>
+              <div className="text-base font-bold text-foreground" style={{ color: getPM03Color(pm03) }}>
                 {pm03.toFixed(1)}
               </div>
             </div>
@@ -197,17 +197,17 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
           {/* PM Mass Concentrations - 2 columns - NO COLOR */}
           <div className="grid grid-cols-2 gap-3 pb-3 border-b">
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">PM1</div>
-              <div className="text-sm font-bold text-foreground">{pm1.toFixed(1)} µg/m³</div>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">PM1</div>
+              <div className="text-base font-bold text-foreground">{pm1.toFixed(1)} µg/m³</div>
             </div>
             <div className="space-y-0.5">
-              <div className="text-xs text-muted-foreground font-bold uppercase tracking-wide">PM5</div>
-              <div className="text-sm font-bold text-foreground">{pm5.toFixed(1)} µg/m³</div>
+              <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">PM5</div>
+              <div className="text-base font-bold text-foreground">{pm5.toFixed(1)} µg/m³</div>
             </div>
           </div>
 
           {/* Particle Counts - 3 columns - NO COLOR */}
-          <div className="grid grid-cols-3 gap-2 text-xs">
+          <div className="grid grid-cols-3 gap-2 text-sm">
             <div className="space-y-0.5">
               <div className="text-muted-foreground font-bold uppercase tracking-wide">PC0.3</div>
               <div className="font-bold text-foreground">{Math.round(pc03).toLocaleString()}</div>

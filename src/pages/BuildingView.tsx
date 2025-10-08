@@ -29,6 +29,92 @@ const getAqiStatus = (aqi: number) => {
   return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
 };
 
+// Helper function to calculate AQI for each pollutant using Settings breakpoints
+const calculatePollutantAqi = (value: number, ranges: any): number => {
+  if (value <= ranges.R1_HIGH) return 50 * ((value - ranges.R1_LOW) / (ranges.R1_HIGH - ranges.R1_LOW));
+  if (value <= ranges.R2_HIGH) return 50 + 50 * ((value - ranges.R2_LOW) / (ranges.R2_HIGH - ranges.R2_LOW));
+  if (value <= ranges.R3_HIGH) return 100 + 50 * ((value - ranges.R3_LOW) / (ranges.R3_HIGH - ranges.R3_LOW));
+  if (value <= ranges.R4_HIGH) return 150 + 50 * ((value - ranges.R4_LOW) / (ranges.R4_HIGH - ranges.R4_LOW));
+  if (value <= ranges.R5_HIGH) return 200 + 100 * ((value - ranges.R5_LOW) / (ranges.R5_HIGH - ranges.R5_LOW));
+  if (value <= ranges.R6_HIGH) return 300 + 200 * ((value - ranges.R6_LOW) / (ranges.R6_HIGH - ranges.R6_LOW));
+  return 500;
+};
+
+// Helper function to determine dominant pollutant
+const getDominantPollutant = (sensorData: any) => {
+  const pollutants = [
+    { 
+      name: 'PM2.5', 
+      value: sensorData.pm25 || 0, 
+      unit: 'µg/m³',
+      aqi: calculatePollutantAqi(sensorData.pm25 || 0, {
+        R1_LOW: 0, R1_HIGH: 12.0,
+        R2_LOW: 12.1, R2_HIGH: 35.4,
+        R3_LOW: 35.5, R3_HIGH: 55.4,
+        R4_LOW: 55.5, R4_HIGH: 150.4,
+        R5_LOW: 150.5, R5_HIGH: 250.4,
+        R6_LOW: 250.5, R6_HIGH: 350.4
+      })
+    },
+    { 
+      name: 'PM10', 
+      value: sensorData.pm10 || 0, 
+      unit: 'µg/m³',
+      aqi: calculatePollutantAqi(sensorData.pm10 || 0, {
+        R1_LOW: 0, R1_HIGH: 54,
+        R2_LOW: 55, R2_HIGH: 154,
+        R3_LOW: 155, R3_HIGH: 254,
+        R4_LOW: 255, R4_HIGH: 354,
+        R5_LOW: 355, R5_HIGH: 424,
+        R6_LOW: 425, R6_HIGH: 604
+      })
+    },
+    { 
+      name: 'VOC', 
+      value: sensorData.voc || 0, 
+      unit: 'ppb',
+      aqi: calculatePollutantAqi(sensorData.voc || 0, {
+        R1_LOW: 0, R1_HIGH: 50,
+        R2_LOW: 51, R2_HIGH: 100,
+        R3_LOW: 101, R3_HIGH: 150,
+        R4_LOW: 151, R4_HIGH: 200,
+        R5_LOW: 201, R5_HIGH: 300,
+        R6_LOW: 301, R6_HIGH: 500
+      })
+    },
+    { 
+      name: 'HCHO', 
+      value: sensorData.hcho || 0, 
+      unit: 'µg/m³',
+      aqi: calculatePollutantAqi(sensorData.hcho || 0, {
+        R1_LOW: 0, R1_HIGH: 30,
+        R2_LOW: 31, R2_HIGH: 50,
+        R3_LOW: 51, R3_HIGH: 100,
+        R4_LOW: 101, R4_HIGH: 200,
+        R5_LOW: 201, R5_HIGH: 300,
+        R6_LOW: 301, R6_HIGH: 500
+      })
+    },
+    { 
+      name: 'NOx', 
+      value: sensorData.nox || 0, 
+      unit: 'ppb',
+      aqi: calculatePollutantAqi(sensorData.nox || 0, {
+        R1_LOW: 0, R1_HIGH: 50,
+        R2_LOW: 51, R2_HIGH: 100,
+        R3_LOW: 101, R3_HIGH: 150,
+        R4_LOW: 151, R4_HIGH: 200,
+        R5_LOW: 201, R5_HIGH: 300,
+        R6_LOW: 301, R6_HIGH: 500
+      })
+    }
+  ];
+
+  // Find pollutant with highest AQI
+  const dominant = pollutants.reduce((max, p) => p.aqi > max.aqi ? p : max, pollutants[0]);
+  return dominant;
+};
+
 // Memoized building card component for performance
 const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
   buildingId: string;
@@ -136,9 +222,15 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
                     key={idx}
                     className="flex flex-col gap-1"
                   >
-                    <div className={`h-12 rounded-lg ${getAqiColor(classroom.aqi)} transition-all duration-200 hover:scale-105 hover:shadow-md flex items-center justify-center`}>
-                      <span className="text-sm font-bold text-foreground">
+                    <div className={`h-16 rounded-lg ${getAqiColor(classroom.aqi)} transition-all duration-200 hover:scale-105 hover:shadow-md flex flex-col items-center justify-center p-1`}>
+                      <span className="text-lg font-bold text-foreground">
                         {classroom.aqi}
+                      </span>
+                      <span className="text-[9px] font-semibold text-foreground/80 leading-tight">
+                        {classroom.dominantPollutant}
+                      </span>
+                      <span className="text-[8px] font-medium text-foreground/70 leading-tight">
+                        {classroom.dominantValue} {classroom.dominantUnit}
                       </span>
                     </div>
                     <div className="text-[10px] font-medium text-muted-foreground text-center truncate">
@@ -229,15 +321,19 @@ const BuildingViewContent = memo(() => {
         (s.pm25 && s.pm25 > 100) || (s.voc && s.voc > 500) || (s.aqi && s.aqi > 100)
       ).length;
 
-      // Get classroom/device data with AQI
+      // Get classroom/device data with AQI and dominant pollutant
       const classrooms = buildingSensorData
         .filter(s => s.status === 'online')
         .map(sensor => {
           const device = buildingDevices.find(d => d.id === sensor.device_id);
+          const dominant = getDominantPollutant(sensor);
           return {
             name: device?.name.split(' ').slice(-2).join(' ') || 'Unknown',
             aqi: Math.round(sensor.aqi || 0),
-            status: sensor.status
+            status: sensor.status,
+            dominantPollutant: dominant.name,
+            dominantValue: dominant.value.toFixed(1),
+            dominantUnit: dominant.unit
           };
         })
         .sort((a, b) => b.aqi - a.aqi); // Sort by AQI descending

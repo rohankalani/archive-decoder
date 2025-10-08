@@ -33,7 +33,7 @@ export default function SummaryReport() {
     return date;
   });
 
-  const { data, isLoading, error } = useEnhancedReportData(startDate, endDate);
+  const { data, isLoading, error } = useEnhancedReportData(startDate, endDate, false);
 
   console.log('📊 SummaryReport state:', { isLoading, hasError: !!error, hasData: !!data });
 

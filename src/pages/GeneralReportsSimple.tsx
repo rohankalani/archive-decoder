@@ -20,7 +20,7 @@ export function GeneralReportsSimple() {
   });
 
   const reportRef = useRef<HTMLDivElement>(null);
-  const { data, isLoading, error } = useEnhancedReportData(dateRange.start, dateRange.end);
+  const { data, isLoading, error } = useEnhancedReportData(dateRange.start, dateRange.end, false);
 
   if (error) {
     return (

@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo } from 'react';
 import { SimplifiedReportData, useSimplifiedReportData } from './useSimplifiedReportData';
 
 export interface EnhancedReportData extends SimplifiedReportData {
@@ -29,7 +29,7 @@ export interface EnhancedReportData extends SimplifiedReportData {
   }>;
 }
 
-export function useEnhancedReportData(startDate: Date, endDate: Date) {
+export function useEnhancedReportData(startDate: Date, endDate: Date, includePreviousPeriod = false) {
   const currentPeriod = useSimplifiedReportData(startDate, endDate);
   
   // Calculate previous period dates
@@ -37,18 +37,19 @@ export function useEnhancedReportData(startDate: Date, endDate: Date) {
   const previousStartDate = new Date(startDate.getTime() - periodLength);
   const previousEndDate = new Date(startDate.getTime() - 1);
   
-  // Only fetch previous period if we need comparison (optimization)
-  const previousPeriod = useSimplifiedReportData(previousStartDate, previousEndDate);
-  
-  const [enhancedData, setEnhancedData] = useState<EnhancedReportData | null>(null);
+  // Only fetch previous period if requested
+  const previousPeriod = useSimplifiedReportData(
+    includePreviousPeriod ? previousStartDate : endDate,
+    includePreviousPeriod ? previousEndDate : endDate
+  );
 
-  useEffect(() => {
-    if (!currentPeriod.data) return;
+  const enhancedData = useMemo(() => {
+    if (!currentPeriod.data) return null;
 
     const generateInsights = (): EnhancedReportData['insights'] => {
       const insights: EnhancedReportData['insights'] = [];
       const current = currentPeriod.data!;
-      const previous = previousPeriod.data;
+      const previous = includePreviousPeriod ? previousPeriod.data : null;
 
       // AQI insights
       if (current.summary.avgAqi <= 50) {
@@ -198,18 +199,20 @@ export function useEnhancedReportData(startDate: Date, endDate: Date) {
       return trends;
     };
 
-    setEnhancedData({
+    const previous = includePreviousPeriod ? previousPeriod.data : null;
+
+    return {
       ...currentPeriod.data,
       previousPeriod: {
-        avgAqi: previousPeriod.data?.summary.avgAqi || 0,
-        totalAlerts: previousPeriod.data?.summary.totalAlerts || 0,
-        activeDevices: previousPeriod.data?.summary.activeDevices || 0,
+        avgAqi: previous?.summary.avgAqi || 0,
+        totalAlerts: previous?.summary.totalAlerts || 0,
+        activeDevices: previous?.summary.activeDevices || 0,
       },
       insights: generateInsights(),
       pollutants: generatePollutants(),
       alertTrends: generateAlertTrends()
-    });
-  }, [currentPeriod.data, previousPeriod.data, startDate, endDate]);
+    };
+  }, [currentPeriod.data, previousPeriod.data, includePreviousPeriod, startDate.getTime(), endDate.getTime()]);
 
   return {
     data: enhancedData,

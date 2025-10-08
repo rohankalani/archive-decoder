@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { supabase } from '@/integrations/supabase/client';
 
 // Flat, focused interfaces - no complex nesting
@@ -43,25 +43,14 @@ interface UseSimplifiedReportDataResult {
   data: SimplifiedReportData | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => Promise<void>;
+  refetch: () => void;
 }
 
-export function useSimplifiedReportData(
-  startDate: Date,
-  endDate: Date
-): UseSimplifiedReportDataResult {
-  const [data, setData] = useState<SimplifiedReportData | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-
-  const fetchData = async () => {
-    try {
-      console.log('📊 Fetching report data...', { 
-        startDate: startDate.toISOString(), 
-        endDate: endDate.toISOString()
-      });
-      setIsLoading(true);
-      setError(null);
+const fetchReportData = async (startDate: Date, endDate: Date): Promise<SimplifiedReportData> => {
+  console.log('📊 Fetching report data...', { 
+    startDate: startDate.toISOString(), 
+    endDate: endDate.toISOString()
+  });
 
       // Fetch sensor readings from Supabase
       const { data: readings, error: readingsError } = await supabase
@@ -191,25 +180,31 @@ export function useSimplifiedReportData(
         }))
         .sort((a, b) => a.hour - b.hour);
 
-      setData({
-        summary,
-        buildings: buildingMetrics,
-        classrooms,
-        co2Trends,
-      });
-    } catch (err) {
-      console.error('❌ Error fetching report data:', err);
-      setError(err as Error);
-    } finally {
-      console.log('✅ Report data fetch complete');
-      setIsLoading(false);
-    }
+  console.log('✅ Report data fetch complete');
+  
+  return {
+    summary,
+    buildings: buildingMetrics,
+    classrooms,
+    co2Trends,
   };
+};
 
-  useEffect(() => {
-    fetchData();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [startDate.getTime(), endDate.getTime()]);
+export function useSimplifiedReportData(
+  startDate: Date,
+  endDate: Date
+): UseSimplifiedReportDataResult {
+  const { data, isLoading, error, refetch } = useQuery({
+    queryKey: ['report-data', startDate.getTime(), endDate.getTime()],
+    queryFn: () => fetchReportData(startDate, endDate),
+    staleTime: 2 * 60 * 1000, // 2 minutes
+    gcTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  return { data, isLoading, error, refetch: fetchData };
+  return { 
+    data: data || null, 
+    isLoading, 
+    error: error as Error | null, 
+    refetch 
+  };
 }

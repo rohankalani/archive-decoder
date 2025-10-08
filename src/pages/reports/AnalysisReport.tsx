@@ -24,7 +24,7 @@ export default function AnalysisReport() {
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const { data, isLoading, error } = useEnhancedReportData(startDate, endDate);
+  const { data, isLoading, error } = useEnhancedReportData(startDate, endDate, false);
 
   if (isLoading) {
     return <InlineLoader text="Loading analysis..." />;

@@ -52,7 +52,7 @@ const ReportsComponent = React.memo(function ReportsComponent() {
   ];
 
   return (
-    <Layout title="Reports">
+    <Layout>
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold">Air Quality Reports</h1>

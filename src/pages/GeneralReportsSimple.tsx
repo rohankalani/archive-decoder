@@ -4,7 +4,7 @@ import { FileText } from 'lucide-react';
 
 export function GeneralReportsSimple() {
   return (
-    <Layout title="General Air Quality Reports">
+    <Layout>
       <div className="space-y-6">
         <Card>
           <CardHeader>

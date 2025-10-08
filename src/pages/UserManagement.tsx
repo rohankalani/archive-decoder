@@ -136,7 +136,7 @@ export default function UserManagement() {
 
   if (usersLoading || settingsLoading) {
     return (
-      <Layout title="User Management">
+      <Layout>
         <div className="container mx-auto p-6">
           <LoadingSpinner className="w-8 h-8 mx-auto" />
         </div>
@@ -146,7 +146,7 @@ export default function UserManagement() {
 
   if (!isAdmin) {
     return (
-      <Layout title="User Management">
+      <Layout>
         <div className="container mx-auto p-6">
           <Card>
             <CardContent className="p-8 text-center">
@@ -163,7 +163,7 @@ export default function UserManagement() {
   }
 
   return (
-    <Layout title="User Management">
+    <Layout>
       <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>

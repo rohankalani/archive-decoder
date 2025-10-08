@@ -70,7 +70,7 @@ export default function Alerts() {
 
   if (alertsLoading || notificationsLoading) {
     return (
-      <Layout title="Alerts & Notifications">
+      <Layout>
         <div className="container mx-auto p-6">
           <LoadingSpinner className="w-8 h-8 mx-auto" />
         </div>
@@ -79,7 +79,7 @@ export default function Alerts() {
   }
 
   return (
-    <Layout title="Alerts & Notifications">
+    <Layout>
       <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>

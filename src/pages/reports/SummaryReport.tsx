@@ -135,7 +135,11 @@ export default function SummaryReport() {
           <CardContent>
             <div className="text-2xl font-bold text-foreground">{data.summary.avgAqi}</div>
             <p className="text-xs text-muted-foreground">
-              {data.summary.avgAqi <= 50 ? 'Good' : data.summary.avgAqi <= 100 ? 'Moderate' : 'Unhealthy'}
+              {data.summary.avgAqi <= 50 ? 'Good' : 
+               data.summary.avgAqi <= 100 ? 'Moderate' : 
+               data.summary.avgAqi <= 150 ? 'Unhealthy for Sensitive' :
+               data.summary.avgAqi <= 200 ? 'Unhealthy' :
+               data.summary.avgAqi <= 300 ? 'Very Unhealthy' : 'Hazardous'}
             </p>
           </CardContent>
         </Card>

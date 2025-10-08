@@ -53,7 +53,10 @@ export function DeviceDetail() {
   const getAqiStatus = (aqi: number) => {
     if (aqi <= 50) return { label: 'Good', color: 'success' };
     if (aqi <= 100) return { label: 'Moderate', color: 'warning' };
-    return { label: 'Unhealthy', color: 'destructive' };
+    if (aqi <= 150) return { label: 'Unhealthy for Sensitive', color: 'orange' };
+    if (aqi <= 200) return { label: 'Unhealthy', color: 'destructive' };
+    if (aqi <= 300) return { label: 'Very Unhealthy', color: 'purple' };
+    return { label: 'Hazardous', color: 'maroon' };
   };
 
   const getBarColor = (aqi: number) => {

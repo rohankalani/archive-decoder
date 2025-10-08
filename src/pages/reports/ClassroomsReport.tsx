@@ -36,7 +36,8 @@ export default function ClassroomsReport() {
 
   const goodClassrooms = data.classrooms.filter(c => c.aqi <= 50).length;
   const moderateClassrooms = data.classrooms.filter(c => c.aqi > 50 && c.aqi <= 100).length;
-  const unhealthyClassrooms = data.classrooms.filter(c => c.aqi > 100).length;
+  const sensitiveClassrooms = data.classrooms.filter(c => c.aqi > 100 && c.aqi <= 150).length;
+  const unhealthyClassrooms = data.classrooms.filter(c => c.aqi > 150).length;
 
   return (
     <div className="container mx-auto p-6 space-y-6">
@@ -128,9 +129,16 @@ export default function ClassroomsReport() {
                   <span className={`px-3 py-1 rounded-full text-sm font-medium ${
                     classroom.aqi <= 50 ? 'bg-green-500/10 text-green-500' :
                     classroom.aqi <= 100 ? 'bg-yellow-500/10 text-yellow-500' :
-                    'bg-red-500/10 text-red-500'
+                    classroom.aqi <= 150 ? 'bg-orange-500/10 text-orange-500' :
+                    classroom.aqi <= 200 ? 'bg-red-500/10 text-red-500' :
+                    classroom.aqi <= 300 ? 'bg-purple-500/10 text-purple-500' :
+                    'bg-red-900/10 text-red-900'
                   }`}>
-                    {classroom.aqi <= 50 ? 'Good' : classroom.aqi <= 100 ? 'Moderate' : 'Unhealthy'}
+                    {classroom.aqi <= 50 ? 'Good' : 
+                     classroom.aqi <= 100 ? 'Moderate' : 
+                     classroom.aqi <= 150 ? 'Sensitive' :
+                     classroom.aqi <= 200 ? 'Unhealthy' :
+                     classroom.aqi <= 300 ? 'Very Unhealthy' : 'Hazardous'}
                   </span>
                 </div>
               </div>

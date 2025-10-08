@@ -30,7 +30,10 @@ import {
 const getAqiStatus = (aqi: number) => {
   if (aqi <= 50) return { label: 'Good', color: 'success', bgColor: 'bg-success/10', borderColor: 'border-success' };
   if (aqi <= 100) return { label: 'Moderate', color: 'warning', bgColor: 'bg-warning/10', borderColor: 'border-warning' };
-  return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
+  if (aqi <= 150) return { label: 'Unhealthy for Sensitive', color: 'orange', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500' };
+  if (aqi <= 200) return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
+  if (aqi <= 300) return { label: 'Very Unhealthy', color: 'purple', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500' };
+  return { label: 'Hazardous', color: 'maroon', bgColor: 'bg-red-900/10', borderColor: 'border-red-900' };
 };
 
 const getSensorTypeDisplay = (aqi: number) => {

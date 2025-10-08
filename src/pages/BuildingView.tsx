@@ -22,11 +22,14 @@ import {
   WifiOff
 } from 'lucide-react';
 
-// Helper function for AQI status
+// Helper function for AQI status - 6-level system
 const getAqiStatus = (aqi: number) => {
-  if (aqi <= 50) return { label: 'Good', color: 'success', bgColor: 'bg-success/10', borderColor: 'border-success' };
-  if (aqi <= 100) return { label: 'Moderate', color: 'warning', bgColor: 'bg-warning/10', borderColor: 'border-warning' };
-  return { label: 'Unhealthy', color: 'destructive', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
+  if (aqi <= 50) return { label: 'Good', color: 'hsl(120, 85%, 35%)', bgColor: 'bg-success/10', borderColor: 'border-success' };
+  if (aqi <= 100) return { label: 'Moderate', color: 'hsl(45, 100%, 40%)', bgColor: 'bg-warning/10', borderColor: 'border-warning' };
+  if (aqi <= 150) return { label: 'Unhealthy for Sensitive', color: 'hsl(30, 100%, 45%)', bgColor: 'bg-orange-500/10', borderColor: 'border-orange-500' };
+  if (aqi <= 200) return { label: 'Unhealthy', color: 'hsl(0, 100%, 45%)', bgColor: 'bg-destructive/10', borderColor: 'border-destructive' };
+  if (aqi <= 300) return { label: 'Very Unhealthy', color: 'hsl(280, 90%, 35%)', bgColor: 'bg-purple-500/10', borderColor: 'border-purple-500' };
+  return { label: 'Hazardous', color: 'hsl(320, 100%, 25%)', bgColor: 'bg-red-900/10', borderColor: 'border-red-900' };
 };
 
 // Helper function to calculate AQI for each pollutant using Settings breakpoints
@@ -127,7 +130,10 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
   const getAqiColor = (aqi: number) => {
     if (aqi <= 50) return 'bg-success';
     if (aqi <= 100) return 'bg-warning';
-    return 'bg-destructive';
+    if (aqi <= 150) return 'bg-orange-500';
+    if (aqi <= 200) return 'bg-destructive';
+    if (aqi <= 300) return 'bg-purple-500';
+    return 'bg-red-900';
   };
   
   return (
@@ -162,16 +168,10 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
               <div className="text-xs font-medium text-muted-foreground mb-1">
                 Average AQI
               </div>
-              <div className={`text-3xl font-bold ${
-                status.color === 'success' ? 'text-success' : 
-                status.color === 'warning' ? 'text-warning' : 'text-destructive'
-              }`}>
+              <div className="text-3xl font-bold" style={{ color: status.color }}>
                 {stats.avgAqi}
               </div>
-              <div className={`text-sm font-medium ${
-                status.color === 'success' ? 'text-success' : 
-                status.color === 'warning' ? 'text-warning' : 'text-destructive'
-              }`}>
+              <div className="text-sm font-medium" style={{ color: status.color }}>
                 {status.label}
               </div>
             </div>
@@ -200,10 +200,7 @@ const BuildingCard = memo(({ buildingId, stats, onBuildingClick }: {
 
               <div className="flex items-center justify-between pt-2 border-t border-border/50">
                 <span className="text-sm font-medium text-muted-foreground">Peak AQI</span>
-                <span className={`text-sm font-bold ${
-                  getAqiStatus(stats.maxAqi).color === 'success' ? 'text-success' : 
-                  getAqiStatus(stats.maxAqi).color === 'warning' ? 'text-warning' : 'text-destructive'
-                }`}>
+                <span className="text-sm font-bold" style={{ color: getAqiStatus(stats.maxAqi).color }}>
                   {stats.maxAqi}
                 </span>
               </div>

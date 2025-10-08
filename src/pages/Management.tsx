@@ -52,7 +52,7 @@ export default function Management() {
   const totalRooms = rooms.length
 
   return (
-    <Layout title="Management Portal" showBackButton>
+    <Layout showBackButton>
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="text-center space-y-4">

@@ -1,4 +1,4 @@
-import { useState, RefObject } from 'react';
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   DropdownMenu,
@@ -8,32 +8,29 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Download, FileText, Table } from 'lucide-react';
 import { toast } from 'sonner';
-import { captureElementToPDF } from '@/lib/pdfExport';
+import jsPDF from 'jspdf';
 
 interface ExportButtonProps {
   reportTitle: string;
-  reportContainerRef?: RefObject<HTMLDivElement>;
   onExportPDF?: () => void;
   onExportCSV?: () => void;
 }
 
-export function ExportButton({ reportTitle, reportContainerRef, onExportPDF, onExportCSV }: ExportButtonProps) {
+export function ExportButton({ reportTitle, onExportPDF, onExportCSV }: ExportButtonProps) {
   const [isExporting, setIsExporting] = useState(false);
 
   const handlePDFExport = async () => {
-    if (!reportContainerRef?.current) {
-      toast.error('Report content not found');
-      return;
-    }
-
     setIsExporting(true);
     try {
       if (onExportPDF) {
         onExportPDF();
       } else {
-        // Visual screen capture to PDF
-        const filename = `${reportTitle.toLowerCase().replace(/\s+/g, '-')}-${new Date().toISOString().split('T')[0]}.pdf`;
-        await captureElementToPDF(reportContainerRef.current, { filename });
+        const pdf = new jsPDF();
+        pdf.setFontSize(20);
+        pdf.text(reportTitle, 20, 20);
+        pdf.setFontSize(12);
+        pdf.text('Report generated on: ' + new Date().toLocaleDateString(), 20, 30);
+        pdf.save(`${reportTitle.toLowerCase().replace(/\s+/g, '-')}.pdf`);
       }
       toast.success('PDF exported successfully');
     } catch (error) {

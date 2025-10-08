@@ -1,4 +1,4 @@
-import { useState, useRef } from 'react';
+import { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useSimplifiedReportData } from '@/hooks/useSimplifiedReportData';
 import { InlineLoader } from '@/components/LoadingSpinner';
@@ -12,7 +12,6 @@ import { useNavigate } from 'react-router-dom';
 export default function SummaryReport() {
   console.log('🎯 SummaryReport component mounted');
   const navigate = useNavigate();
-  const reportRef = useRef<HTMLDivElement>(null);
   const [startDate, setStartDate] = useState(() => {
     const date = new Date();
     date.setDate(date.getDate() - 7);
@@ -58,30 +57,27 @@ export default function SummaryReport() {
 
   return (
     <div className="container mx-auto p-6 space-y-6">
-      <div className="flex items-center justify-between no-export">
+      <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Summary Report</h1>
           <p className="text-muted-foreground">Overview of air quality metrics</p>
         </div>
         <div className="flex items-center gap-2">
-          <ExportButton reportTitle="Summary Report" reportContainerRef={reportRef} />
+          <ExportButton reportTitle="Summary Report" />
           <Button variant="outline" onClick={() => navigate('/reports')}>
             Back to Reports
           </Button>
         </div>
       </div>
 
-      <div className="no-export">
-        <PeriodSelector
-          onPeriodChange={(start, end) => {
-            setStartDate(start);
-            setEndDate(end);
-          }}
-        />
-      </div>
+      <PeriodSelector
+        onPeriodChange={(start, end) => {
+          setStartDate(start);
+          setEndDate(end);
+        }}
+      />
 
-      <div ref={reportRef} className="space-y-6">
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card className="border-2 border-primary">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-foreground">Average AQI</CardTitle>
@@ -182,7 +178,6 @@ export default function SummaryReport() {
             </div>
           </CardContent>
         </Card>
-      </div>
       </div>
     </div>
   );

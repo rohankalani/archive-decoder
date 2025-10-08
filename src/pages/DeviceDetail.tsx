@@ -59,6 +59,22 @@ export function DeviceDetail() {
     return { label: 'Hazardous', color: 'maroon' };
   };
 
+  const getCO2Color = (co2: number): string => {
+    if (co2 < 800) return 'hsl(var(--success))';
+    if (co2 < 1200) return 'hsl(var(--warning))';
+    if (co2 < 1500) return '#ff9800'; // Orange
+    if (co2 < 2000) return 'hsl(var(--destructive))';
+    if (co2 < 3000) return '#9c27b0'; // Purple
+    return '#800000'; // Maroon
+  };
+
+  const getHumidityColor = (humidity: number): string => {
+    if (humidity >= 40 && humidity <= 60) return 'hsl(var(--success))';
+    if ((humidity >= 30 && humidity < 40) || (humidity > 60 && humidity <= 70)) return 'hsl(var(--warning))';
+    if ((humidity >= 20 && humidity < 30) || (humidity > 70 && humidity <= 80)) return '#ff9800'; // Orange
+    return 'hsl(var(--destructive))'; // Very low or very high
+  };
+
   const getBarColor = (aqi: number) => {
     return getAqiColor(aqi);
   };
@@ -273,13 +289,13 @@ export function DeviceDetail() {
                   <div className="text-sm text-muted-foreground">Temp</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-cyan-500">
+                  <div className="text-3xl font-bold" style={{ color: deviceSensorData.humidity ? getHumidityColor(deviceSensorData.humidity) : 'hsl(var(--muted-foreground))' }}>
                     {deviceSensorData.humidity ? Math.round(deviceSensorData.humidity) : '--'}%
                   </div>
                   <div className="text-sm text-muted-foreground">Humidity</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold text-blue-500">
+                  <div className="text-3xl font-bold" style={{ color: deviceSensorData.co2 ? getCO2Color(deviceSensorData.co2) : 'hsl(var(--muted-foreground))' }}>
                     {deviceSensorData.co2 ? Math.round(deviceSensorData.co2) : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">CO₂ ppm</div>

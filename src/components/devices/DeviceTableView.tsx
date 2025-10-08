@@ -107,12 +107,12 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                           <TableHead className="w-12">
                             <Checkbox />
                           </TableHead>
-                          <TableHead className="w-20">AQI</TableHead>
-                          <TableHead className="min-w-[150px]">Name</TableHead>
-                          <TableHead className="text-right">PM₂.₅</TableHead>
-                          <TableHead className="text-right">PM₁₀</TableHead>
-                          <TableHead className="text-right">CO₂</TableHead>
-                          <TableHead className="text-right">TVOC</TableHead>
+                          <TableHead className="w-20 text-base font-medium">AQI</TableHead>
+                          <TableHead className="min-w-[150px] text-base font-medium">Name</TableHead>
+                          <TableHead className="text-right text-base font-medium">PM₂.₅</TableHead>
+                          <TableHead className="text-right text-base font-medium">PM₁₀</TableHead>
+                          <TableHead className="text-right text-base font-medium">CO₂</TableHead>
+                          <TableHead className="text-right text-base font-medium">TVOC</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -154,8 +154,8 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               {/* Device Name */}
                               <TableCell>
                                 <div className="space-y-1">
-                                  <p className="font-medium text-foreground">{device.device_name}</p>
-                                  <p className="text-xs text-muted-foreground">{device.floor_name || 'Unknown Floor'}</p>
+                                  <p className="text-base font-medium text-foreground">{device.device_name}</p>
+                                  <p className="text-sm text-muted-foreground">{device.floor_name || 'Unknown Floor'}</p>
                                 </div>
                               </TableCell>
                               
@@ -163,13 +163,13 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.pm25, 'pm25') }}>
+                                    <span className="text-base font-medium" style={{ color: getValueColor(device.pm25, 'pm25') }}>
                                       {device.pm25?.toFixed(0) || '--'}
                                     </span>
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.pm25, 'pm25') }} />
                                   </div>
                                 ) : (
-                                  <span className="text-sm text-muted-foreground">--</span>
+                                  <span className="text-base text-muted-foreground">--</span>
                                 )}
                               </TableCell>
                               
@@ -177,13 +177,13 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.pm10, 'pm10') }}>
+                                    <span className="text-base font-medium" style={{ color: getValueColor(device.pm10, 'pm10') }}>
                                       {device.pm10?.toFixed(0) || '--'}
                                     </span>
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.pm10, 'pm10') }} />
                                   </div>
                                 ) : (
-                                  <span className="text-sm text-muted-foreground">--</span>
+                                  <span className="text-base text-muted-foreground">--</span>
                                 )}
                               </TableCell>
                               
@@ -191,13 +191,13 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.co2, 'co2') }}>
+                                    <span className="text-base font-medium" style={{ color: getValueColor(device.co2, 'co2') }}>
                                       {device.co2?.toFixed(0) || '--'}
                                     </span>
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.co2, 'co2') }} />
                                   </div>
                                 ) : (
-                                  <span className="text-sm text-muted-foreground">--</span>
+                                  <span className="text-base text-muted-foreground">--</span>
                                 )}
                               </TableCell>
                               
@@ -205,13 +205,13 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.voc, 'voc') }}>
+                                    <span className="text-base font-medium" style={{ color: getValueColor(device.voc, 'voc') }}>
                                       {device.voc?.toFixed(0) || '--'}
                                     </span>
                                     <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.voc, 'voc') }} />
                                   </div>
                                 ) : (
-                                  <span className="text-sm text-muted-foreground">--</span>
+                                  <span className="text-base text-muted-foreground">--</span>
                                 )}
                               </TableCell>
                             </TableRow>

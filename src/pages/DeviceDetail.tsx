@@ -60,19 +60,19 @@ export function DeviceDetail() {
   };
 
   const getCO2Color = (co2: number): string => {
-    if (co2 < 800) return 'hsl(var(--success))';
-    if (co2 < 1200) return 'hsl(var(--warning))';
-    if (co2 < 1500) return '#ff9800'; // Orange
-    if (co2 < 2000) return 'hsl(var(--destructive))';
-    if (co2 < 3000) return '#9c27b0'; // Purple
-    return '#800000'; // Maroon
+    if (co2 < 800) return 'hsl(120, 85%, 35%)';
+    if (co2 < 1200) return 'hsl(45, 100%, 40%)';
+    if (co2 < 1500) return 'hsl(30, 100%, 45%)';
+    if (co2 < 2000) return 'hsl(0, 100%, 45%)';
+    if (co2 < 3000) return 'hsl(280, 90%, 35%)';
+    return 'hsl(320, 100%, 25%)';
   };
 
   const getHumidityColor = (humidity: number): string => {
-    if (humidity >= 40 && humidity <= 60) return 'hsl(var(--success))';
-    if ((humidity >= 30 && humidity < 40) || (humidity > 60 && humidity <= 70)) return 'hsl(var(--warning))';
-    if ((humidity >= 20 && humidity < 30) || (humidity > 70 && humidity <= 80)) return '#ff9800'; // Orange
-    return 'hsl(var(--destructive))'; // Very low or very high
+    if (humidity >= 40 && humidity <= 60) return 'hsl(120, 85%, 35%)';
+    if ((humidity >= 30 && humidity < 40) || (humidity > 60 && humidity <= 70)) return 'hsl(45, 100%, 40%)';
+    if ((humidity >= 20 && humidity < 30) || (humidity > 70 && humidity <= 80)) return 'hsl(30, 100%, 45%)';
+    return 'hsl(0, 100%, 45%)';
   };
 
   const getBarColor = (aqi: number) => {

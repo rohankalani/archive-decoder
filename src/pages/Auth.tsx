@@ -209,7 +209,7 @@ export default function Auth() {
           <LogoBanner variant="full" />
           <div>
             <h1 className="text-2xl font-bold text-foreground">Air Quality Management System</h1>
-            <p className="text-muted-foreground">Powered by ROSAQI</p>
+            <p className="text-muted-foreground">Powered by ROSAIQ</p>
           </div>
         </div>
 

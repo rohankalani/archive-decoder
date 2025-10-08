@@ -114,7 +114,7 @@ const handler = async (req: Request): Promise<Response> => {
 
     // Send email with new password
     const emailResponse = await resend.emails.send({
-      from: "ROSAQI <noreply@rosaiq.com>",
+      from: "ROSAIQ <noreply@rosaiq.com>",
       to: [email],
       subject: "Your New Password - Air Quality Management System",
       html: `

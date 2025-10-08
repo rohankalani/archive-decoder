@@ -52,7 +52,7 @@ export default function Management() {
   const totalRooms = rooms.length
 
   return (
-    <Layout showBackButton>
+    <Layout>
       <div className="space-y-8">
         {/* Welcome Section */}
         <div className="text-center space-y-4">

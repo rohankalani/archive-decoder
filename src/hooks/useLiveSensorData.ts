@@ -73,7 +73,7 @@ export function useLiveSensorData() {
           .select('sensor_type, value, unit, timestamp')
           .eq('device_id', device.id)
           .order('timestamp', { ascending: false })
-          .limit(10) // Get latest readings for each sensor type
+          .limit(30) // Increased to capture all 19+ sensor types per reading batch
 
         if (readingsError) {
           console.error(`Error fetching readings for device ${device.id}:`, readingsError)

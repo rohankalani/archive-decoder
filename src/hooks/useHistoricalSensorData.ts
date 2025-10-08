@@ -122,8 +122,17 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
         Object.keys(sensorAverages).forEach(sensorType => {
           const avgValue = sensorAverages[sensorType] / sensorCounts[sensorType];
           switch (sensorType) {
+            case 'pm03':
+              averaged.pm03 = avgValue;
+              break;
+            case 'pm1':
+              averaged.pm1 = avgValue;
+              break;
             case 'pm25':
               averaged.pm25 = avgValue;
+              break;
+            case 'pm5':
+              averaged.pm5 = avgValue;
               break;
             case 'pm10':
               averaged.pm10 = avgValue;
@@ -148,6 +157,24 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
               break;
             case 'no2':
               averaged.no2 = avgValue;
+              break;
+            case 'pc03':
+              averaged.pc03 = avgValue;
+              break;
+            case 'pc05':
+              averaged.pc05 = avgValue;
+              break;
+            case 'pc1':
+              averaged.pc1 = avgValue;
+              break;
+            case 'pc25':
+              averaged.pc25 = avgValue;
+              break;
+            case 'pc5':
+              averaged.pc5 = avgValue;
+              break;
+            case 'pc10':
+              averaged.pc10 = avgValue;
               break;
           }
         });

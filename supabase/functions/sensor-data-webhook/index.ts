@@ -108,8 +108,11 @@ serve(async (req) => {
     }
 
     // Prepare sensor readings for batch insert
+    // Use server time instead of device timestamp (ESP32 RTC may not be synced)
+    const serverTimestamp = new Date().toISOString();
+    
     const readings = [];
-    const sensorTypes = ['pm03', 'pm05', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'hcho', 'pc03', 'pc05', 'pc1', 'pc25', 'pc5', 'aqi_overall'];
+    const sensorTypes = ['pm03', 'pm05', 'pm1', 'pm25', 'pm5', 'pm10', 'co2', 'temperature', 'humidity', 'voc', 'hcho', 'pc03', 'pc05', 'pc1', 'pc25', 'pc5', 'pc10', 'aqi_overall'];
     const units: Record<string, string> = {
       pm03: 'µg/m³',
       pm05: 'µg/m³',
@@ -127,6 +130,7 @@ serve(async (req) => {
       pc1: 'particles/cm³',
       pc25: 'particles/cm³',
       pc5: 'particles/cm³',
+      pc10: 'particles/cm³',
       aqi_overall: 'index'
     };
 
@@ -137,7 +141,7 @@ serve(async (req) => {
         sensor_type: 'nox',
         value: sensorData.nox,
         unit: 'ppb',
-        timestamp: sensorData.timestamp
+        timestamp: serverTimestamp
       });
     }
 
@@ -148,7 +152,7 @@ serve(async (req) => {
         sensor_type: 'dominant_pollutant',
         value: 0,
         unit: 'text',
-        timestamp: sensorData.timestamp
+        timestamp: serverTimestamp
       });
     }
 
@@ -160,7 +164,7 @@ serve(async (req) => {
           sensor_type: type,
           value: sensorData[type as keyof SensorPayload],
           unit: units[type],
-          timestamp: sensorData.timestamp
+          timestamp: serverTimestamp
         });
       }
     }

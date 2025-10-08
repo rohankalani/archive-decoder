@@ -210,7 +210,7 @@ export function Layout({ children, title, showBackButton = false }: LayoutProps)
       </header>
 
       {/* Main Content */}
-      <main className="container py-4 md:py-6 pt-20 md:pt-22 px-4">
+      <main className="container py-4 md:py-6 pt-24 md:pt-28 px-4">
         {children}
       </main>
     </div>

@@ -30,24 +30,49 @@ interface DeviceTableViewProps {
   onDeviceClick: (deviceId: string) => void;
 }
 
-const getValueColor = (value: number | undefined, sensor: 'pm' | 'co2' | 'voc') => {
-  if (!value) return 'text-muted-foreground';
+// Get color based on settings page breakpoints - returns HSL color string
+const getValueColor = (value: number | undefined, sensor: 'pm25' | 'pm10' | 'co2' | 'voc'): string => {
+  if (!value) return 'hsl(var(--muted-foreground))';
   
   switch (sensor) {
-    case 'pm':
-      if (value <= 12) return 'text-success';
-      if (value <= 35) return 'text-warning';
-      return 'text-destructive';
+    case 'pm25':
+      // PM2.5 breakpoints: 0-50 Good, 51-100 Moderate, 101-150 USG, 151-200 Unhealthy, 201-300 Very Unhealthy, 301+ Hazardous
+      if (value <= 50) return 'hsl(120, 85%, 35%)';
+      if (value <= 100) return 'hsl(45, 100%, 40%)';
+      if (value <= 150) return 'hsl(30, 100%, 45%)';
+      if (value <= 200) return 'hsl(0, 100%, 45%)';
+      if (value <= 300) return 'hsl(280, 90%, 35%)';
+      return 'hsl(320, 100%, 25%)';
+      
+    case 'pm10':
+      // PM10 breakpoints: 0-50 Good, 51-100 Moderate, 101-150 USG, 151-250 Unhealthy, 251-350 Very Unhealthy, 351+ Hazardous
+      if (value <= 50) return 'hsl(120, 85%, 35%)';
+      if (value <= 100) return 'hsl(45, 100%, 40%)';
+      if (value <= 150) return 'hsl(30, 100%, 45%)';
+      if (value <= 250) return 'hsl(0, 100%, 45%)';
+      if (value <= 350) return 'hsl(280, 90%, 35%)';
+      return 'hsl(320, 100%, 25%)';
+      
     case 'co2':
-      if (value <= 600) return 'text-success';
-      if (value <= 1000) return 'text-warning';
-      return 'text-destructive';
+      // CO2 breakpoints: 0-600 Good, 601-1000 Moderate, 1001-1500 USG, 1501-2500 Unhealthy, 2501-5000 Very Unhealthy, 5001+ Hazardous
+      if (value <= 600) return 'hsl(120, 85%, 35%)';
+      if (value <= 1000) return 'hsl(45, 100%, 40%)';
+      if (value <= 1500) return 'hsl(30, 100%, 45%)';
+      if (value <= 2500) return 'hsl(0, 100%, 45%)';
+      if (value <= 5000) return 'hsl(280, 90%, 35%)';
+      return 'hsl(320, 100%, 25%)';
+      
     case 'voc':
-      if (value <= 220) return 'text-success';
-      if (value <= 660) return 'text-warning';
-      return 'text-destructive';
+      // VOC breakpoints: 0-220 Good, 221-660 Moderate, 661-1430 USG, 1431-2200 Unhealthy, 2201-3300 Very Unhealthy, 3301+ Hazardous
+      if (value <= 220) return 'hsl(120, 85%, 35%)';
+      if (value <= 660) return 'hsl(45, 100%, 40%)';
+      if (value <= 1430) return 'hsl(30, 100%, 45%)';
+      if (value <= 2200) return 'hsl(0, 100%, 45%)';
+      if (value <= 3300) return 'hsl(280, 90%, 35%)';
+      return 'hsl(320, 100%, 25%)';
+      
     default:
-      return 'text-foreground';
+      return 'hsl(var(--foreground))';
   }
 };
 
@@ -138,10 +163,10 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className={cn('text-sm font-medium', getValueColor(device.pm25, 'pm'))}>
+                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.pm25, 'pm25') }}>
                                       {device.pm25?.toFixed(0) || '--'}
                                     </span>
-                                    <div className={cn('w-1.5 h-1.5 rounded-full', getValueColor(device.pm25, 'pm').replace('text-', 'bg-'))} />
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.pm25, 'pm25') }} />
                                   </div>
                                 ) : (
                                   <span className="text-sm text-muted-foreground">--</span>
@@ -152,10 +177,10 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className={cn('text-sm font-medium', getValueColor(device.pm10, 'pm'))}>
+                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.pm10, 'pm10') }}>
                                       {device.pm10?.toFixed(0) || '--'}
                                     </span>
-                                    <div className={cn('w-1.5 h-1.5 rounded-full', getValueColor(device.pm10, 'pm').replace('text-', 'bg-'))} />
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.pm10, 'pm10') }} />
                                   </div>
                                 ) : (
                                   <span className="text-sm text-muted-foreground">--</span>
@@ -166,10 +191,10 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className={cn('text-sm font-medium', getValueColor(device.co2, 'co2'))}>
+                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.co2, 'co2') }}>
                                       {device.co2?.toFixed(0) || '--'}
                                     </span>
-                                    <div className={cn('w-1.5 h-1.5 rounded-full', getValueColor(device.co2, 'co2').replace('text-', 'bg-'))} />
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.co2, 'co2') }} />
                                   </div>
                                 ) : (
                                   <span className="text-sm text-muted-foreground">--</span>
@@ -180,10 +205,10 @@ export function DeviceTableView({ groupedDevices, onDeviceClick }: DeviceTableVi
                               <TableCell className="text-right">
                                 {!isOffline ? (
                                   <div className="flex items-center justify-end gap-2">
-                                    <span className={cn('text-sm font-medium', getValueColor(device.voc, 'voc'))}>
+                                    <span className="text-sm font-medium" style={{ color: getValueColor(device.voc, 'voc') }}>
                                       {device.voc?.toFixed(0) || '--'}
                                     </span>
-                                    <div className={cn('w-1.5 h-1.5 rounded-full', getValueColor(device.voc, 'voc').replace('text-', 'bg-'))} />
+                                    <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: getValueColor(device.voc, 'voc') }} />
                                   </div>
                                 ) : (
                                   <span className="text-sm text-muted-foreground">--</span>

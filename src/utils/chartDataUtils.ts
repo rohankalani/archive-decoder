@@ -263,7 +263,7 @@ export function generateDeterministicSensorData(
     // Arduino MAX_AQI implementation - highest individual pollutant AQI
     const overallAqi = Math.max(pm25Aqi, pm10Aqi, hchoAqi, vocAqi, noxAqi);
 
-    // Generate particle data deterministically
+    // Particle data - use actual data if available, otherwise generate deterministically
     const basePM03 = deviceSensorData.pm03 || 8;
     const basePM1 = deviceSensorData.pm1 || 12;
     const basePM5 = deviceSensorData.pm5 || 18;
@@ -273,6 +273,16 @@ export function generateDeterministicSensorData(
     const basePC25 = deviceSensorData.pc25 || 1200;
     const basePC5 = deviceSensorData.pc5 || 150;
     const basePC10 = deviceSensorData.pc10 || 30;
+
+    const pm03Value = item.pm03 ?? getDeterministicVariation(item.timestamp, basePM03, 0.2);
+    const pm1Value = item.pm1 ?? getDeterministicVariation(item.timestamp, basePM1, 0.2);
+    const pm5Value = item.pm5 ?? getDeterministicVariation(item.timestamp, basePM5, 0.2);
+    const pc03Value = item.pc03 ?? getDeterministicVariation(item.timestamp, basePC03, 0.3);
+    const pc05Value = item.pc05 ?? getDeterministicVariation(item.timestamp, basePC05, 0.3);
+    const pc1Value = item.pc1 ?? getDeterministicVariation(item.timestamp, basePC1, 0.3);
+    const pc25Value = item.pc25 ?? getDeterministicVariation(item.timestamp, basePC25, 0.3);
+    const pc5Value = item.pc5 ?? getDeterministicVariation(item.timestamp, basePC5, 0.3);
+    const pc10Value = item.pc10 ?? getDeterministicVariation(item.timestamp, basePC10, 0.3);
 
     return {
       time: timeLabel,
@@ -290,15 +300,15 @@ export function generateDeterministicSensorData(
       nox: Math.max(0, noxValue),
       pm25: Math.max(0, pm25Value),
       pm10: Math.max(0, pm10Value),
-      pm03: Math.max(0, getDeterministicVariation(item.timestamp, basePM03, 0.2)),
-      pm1: Math.max(0, getDeterministicVariation(item.timestamp, basePM1, 0.2)),
-      pm5: Math.max(0, getDeterministicVariation(item.timestamp, basePM5, 0.2)),
-      pc03: Math.max(0, getDeterministicVariation(item.timestamp, basePC03, 0.3)),
-      pc05: Math.max(0, getDeterministicVariation(item.timestamp, basePC05, 0.3)),
-      pc1: Math.max(0, getDeterministicVariation(item.timestamp, basePC1, 0.3)),
-      pc25: Math.max(0, getDeterministicVariation(item.timestamp, basePC25, 0.3)),
-      pc5: Math.max(0, getDeterministicVariation(item.timestamp, basePC5, 0.3)),
-      pc10: Math.max(0, getDeterministicVariation(item.timestamp, basePC10, 0.3))
+      pm03: Math.max(0, pm03Value),
+      pm1: Math.max(0, pm1Value),
+      pm5: Math.max(0, pm5Value),
+      pc03: Math.max(0, pc03Value),
+      pc05: Math.max(0, pc05Value),
+      pc1: Math.max(0, pc1Value),
+      pc25: Math.max(0, pc25Value),
+      pc5: Math.max(0, pc5Value),
+      pc10: Math.max(0, pc10Value)
     };
   });
 }

@@ -132,26 +132,26 @@ const Index = () => {
     <Layout>
       <div className="h-full flex flex-col bg-background">
         {/* Header */}
-        <div className="border-b border-border px-4 md:px-6 py-3 md:py-4">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <div className="border-b border-border px-6 py-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground">Dashboard Overview</h1>
-              <p className="text-xs md:text-sm text-muted-foreground mt-1">
+              <h1 className="text-headline-large font-medium text-foreground">Dashboard Overview</h1>
+              <p className="text-body-large text-muted-foreground mt-2">
                 Real-time air quality monitoring across all locations
               </p>
             </div>
-            <div className="flex items-center gap-2 md:gap-3 overflow-x-auto pb-2 sm:pb-0">
-              <Button variant="outline" size="sm" onClick={handleRefresh} className="flex-shrink-0">
-                <RefreshCw className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Refresh</span>
+            <div className="flex items-center gap-3">
+              <Button variant="outline" size="sm" onClick={handleRefresh}>
+                <RefreshCw className="h-4 w-4 mr-2" />
+                Refresh
               </Button>
-              <Button variant="outline" size="sm" className="flex-shrink-0">
-                <Download className="h-4 w-4 md:mr-2" />
-                <span className="hidden md:inline">Export</span>
+              <Button variant="outline" size="sm">
+                <Download className="h-4 w-4 mr-2" />
+                Export
               </Button>
-              <Button size="sm" className="flex-shrink-0">
-                <Plus className="h-4 w-4 md:mr-2" />
-                <span className="hidden sm:inline">Add</span>
+              <Button size="sm">
+                <Plus className="h-4 w-4 mr-2" />
+                Add Device
               </Button>
             </div>
           </div>
@@ -160,13 +160,13 @@ const Index = () => {
         <div className="flex-1 flex overflow-hidden">
           {/* Main Content Area */}
           <div className="flex-1 overflow-auto">
-            <div className="p-6 space-y-6">
+            <div className="p-8 space-y-8">
             {/* Filters Bar */}
-            <Card className="p-3 md:p-4">
-              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-3 md:gap-4">
+            <Card className="p-6">
+              <div className="flex flex-col sm:flex-row sm:flex-wrap items-stretch sm:items-center gap-4">
                 {/* Location Filters */}
                 <Select value={selectedSite} onValueChange={setSelectedSite}>
-                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Site" />
                   </SelectTrigger>
                   <SelectContent>
@@ -178,7 +178,7 @@ const Index = () => {
                 </Select>
 
                 <Select value={selectedBuilding} onValueChange={setSelectedBuilding}>
-                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Building" />
                   </SelectTrigger>
                   <SelectContent>
@@ -190,7 +190,7 @@ const Index = () => {
                 </Select>
 
                 <Select value={selectedFloor} onValueChange={setSelectedFloor}>
-                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Floor" />
                   </SelectTrigger>
                   <SelectContent>
@@ -204,7 +204,7 @@ const Index = () => {
                 </Select>
 
                 <Select value={selectedStatus} onValueChange={setSelectedStatus}>
-                  <SelectTrigger className="w-full sm:w-[150px] md:w-[180px]">
+                  <SelectTrigger className="w-full sm:w-[180px]">
                     <SelectValue placeholder="Status" />
                   </SelectTrigger>
                   <SelectContent>
@@ -217,13 +217,13 @@ const Index = () => {
               </div>
 
               {/* Room Type Tabs */}
-              <Tabs value={selectedRoomType} onValueChange={setSelectedRoomType} className="mt-3 md:mt-4">
+              <Tabs value={selectedRoomType} onValueChange={setSelectedRoomType} className="mt-6">
                 <TabsList className="w-full justify-start flex-wrap h-auto gap-1">
-                  <TabsTrigger value="all" className="text-xs md:text-sm">All</TabsTrigger>
+                  <TabsTrigger value="all">All</TabsTrigger>
                   {roomTypes.map(type => (
-                    <TabsTrigger key={type} value={type} className="text-xs md:text-sm">{type}</TabsTrigger>
+                    <TabsTrigger key={type} value={type}>{type}</TabsTrigger>
                   ))}
-                  <TabsTrigger value="Untagged" className="text-xs md:text-sm">Untagged</TabsTrigger>
+                  <TabsTrigger value="Untagged">Untagged</TabsTrigger>
                 </TabsList>
               </Tabs>
             </Card>

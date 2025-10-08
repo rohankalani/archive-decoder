@@ -13,6 +13,22 @@ export default {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['Roboto', 'system-ui', 'sans-serif'],
+      },
+      spacing: {
+        '2': '8px',
+        '3': '12px',
+        '4': '16px',
+        '5': '20px',
+        '6': '24px',
+        '8': '32px',
+        '10': '40px',
+        '12': '48px',
+        '16': '64px',
+        '20': '80px',
+        '24': '96px',
+      },
       colors: {
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
@@ -90,9 +106,17 @@ export default {
         },
       },
       borderRadius: {
-        lg: "var(--radius)",
-        md: "calc(var(--radius) - 2px)",
-        sm: "calc(var(--radius) - 4px)",
+        lg: "16px",
+        md: "12px",
+        sm: "8px",
+      },
+      fontSize: {
+        'display-large': ['57px', { lineHeight: '64px', fontWeight: '400' }],
+        'headline-large': ['32px', { lineHeight: '40px', fontWeight: '500' }],
+        'title-large': ['22px', { lineHeight: '28px', fontWeight: '500' }],
+        'title-medium': ['16px', { lineHeight: '24px', fontWeight: '500' }],
+        'body-large': ['16px', { lineHeight: '24px', fontWeight: '400' }],
+        'label-medium': ['12px', { lineHeight: '16px', fontWeight: '500' }],
       },
       keyframes: {
         "accordion-down": {
@@ -131,32 +155,12 @@ export default {
             opacity: "1"
           }
         },
-        "float": {
-          "0%, 100%": { transform: "translateY(0px)" },
-          "50%": { transform: "translateY(-10px)" }
-        },
-        "pulse-glow": {
-          "0%": { 
-            boxShadow: "0 0 5px hsl(var(--primary) / 0.3)" 
-          },
-          "100%": { 
-            boxShadow: "0 0 20px hsl(var(--primary) / 0.8), 0 0 30px hsl(var(--primary) / 0.4)" 
-          }
-        },
-        "gradient-shift": {
-          "0%": { backgroundPosition: "0% 50%" },
-          "50%": { backgroundPosition: "100% 50%" },
-          "100%": { backgroundPosition: "0% 50%" }
-        }
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
         "fade-in": "fade-in 0.3s ease-out",
         "scale-in": "scale-in 0.2s ease-out",
-        "float": "float 3s ease-in-out infinite",
-        "pulse-glow": "pulse-glow 2s ease-in-out infinite alternate",
-        "gradient-shift": "gradient-shift 8s ease infinite",
       },
     },
   },

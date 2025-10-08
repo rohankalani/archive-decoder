@@ -75,13 +75,13 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {devicesByBuilding.map((buildingGroup) => (
-        <div key={buildingGroup.buildingId} className="space-y-4">
+        <div key={buildingGroup.buildingId} className="space-y-6">
           {/* Building Header */}
           <div className="flex items-center gap-3">
             <MapPin className="h-5 w-5 text-primary" />
-            <h2 className="text-xl font-bold text-foreground">
+            <h2 className="text-title-large font-medium text-foreground">
               {buildingGroup.buildingName}
             </h2>
             <Badge variant="secondary" className="ml-2">
@@ -90,7 +90,7 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
           </div>
 
           {/* Device Cards Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-4 md:gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
             {buildingGroup.devices.map((device) => {
               const isSelected = device.id === selectedDeviceId;
               const aqi = device.sensor?.aqi || 0;
@@ -99,56 +99,47 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
               const StatusIcon = statusInfo.icon;
 
               return (
-                <Card
+                 <Card
                   key={device.id}
                   className={cn(
-                    'group relative cursor-pointer transition-all duration-300 hover-lift overflow-hidden',
-                    'backdrop-blur-sm bg-card/50 border-2 active:scale-95',
+                    'group relative cursor-pointer transition-all duration-200 overflow-hidden',
+                    'bg-card border',
                     isSelected
-                      ? 'border-primary shadow-2xl ring-2 ring-primary/30 scale-105'
-                      : 'border-border/50 hover:border-primary/40 hover:shadow-xl'
+                      ? 'border-primary ring-2 ring-primary/20'
+                      : 'border-border hover:border-primary/40'
                   )}
+                  style={{ boxShadow: isSelected ? 'var(--elevation-2)' : 'var(--elevation-1)' }}
                   onClick={() => onDeviceSelect(device.id)}
                 >
-                  {/* Gradient Background Overlay */}
-                  {isOnline && (
-                    <div 
-                      className={cn(
-                        'absolute inset-0 bg-gradient-to-br opacity-0 group-hover:opacity-100 transition-opacity duration-500',
-                        getAqiGradient(aqi)
-                      )}
-                    />
-                  )}
-
-                  <CardContent className="relative p-4 md:p-5 space-y-3 md:space-y-4">
+                  <CardContent className="relative p-6 space-y-4">
                     {/* Header Section */}
-                    <div className="flex items-start justify-between gap-2 md:gap-3">
-                      <div className="flex-1 min-w-0 space-y-1.5 md:space-y-2">
+                    <div className="flex items-start justify-between gap-3">
+                      <div className="flex-1 min-w-0 space-y-2">
                         {/* Status Indicator */}
                         <div className="flex items-center gap-2">
                           <div className="relative">
-                            <div className={cn('w-2.5 h-2.5 rounded-full', statusInfo.color)} />
+                            <div className={cn('w-2 h-2 rounded-full', statusInfo.color)} />
                             {statusInfo.pulse && (
                               <div className={cn(
-                                'absolute inset-0 w-2.5 h-2.5 rounded-full animate-ping',
+                                'absolute inset-0 w-2 h-2 rounded-full animate-ping',
                                 statusInfo.color,
                                 'opacity-75'
                               )} />
                             )}
                           </div>
-                          <span className="text-xs font-medium text-muted-foreground uppercase tracking-wide">
+                          <span className="text-xs font-medium text-muted-foreground uppercase">
                             {isOnline ? 'Live' : 'Offline'}
                           </span>
                         </div>
 
-                        {/* Device Name - Show room name only */}
-                        <h3 className="font-semibold text-sm md:text-base leading-tight truncate group-hover:text-primary transition-colors">
+                        {/* Device Name */}
+                        <h3 className="font-medium text-base leading-tight">
                           {device.room?.name || device.name}
                         </h3>
 
-                        {/* Location - Show floor only */}
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                          <MapPin className="h-3 w-3 md:h-3.5 md:w-3.5 flex-shrink-0" />
+                        {/* Location */}
+                        <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                          <MapPin className="h-4 w-4 flex-shrink-0" />
                           <span className="truncate">
                             {device.floor?.name || `Floor ${device.floor?.floor_number || 'N/A'}`}
                           </span>
@@ -159,7 +150,7 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
                       {device.roomType && device.roomType !== 'Untagged' && (
                         <Badge 
                           variant="secondary" 
-                          className="text-[10px] px-2 py-0.5 bg-primary/10 text-primary border-primary/20 font-medium flex-shrink-0"
+                          className="text-xs"
                         >
                           {device.roomType}
                         </Badge>
@@ -167,29 +158,22 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
                     </div>
 
                     {/* Divider */}
-                    <div className="h-px bg-gradient-to-r from-transparent via-border to-transparent" />
+                    <div className="h-px bg-border" />
 
                     {/* AQI/Status Display */}
                     {isOnline ? (
                       <div className="flex items-center justify-between">
-                        {/* Large AQI Circle */}
-                        <div className="flex items-center gap-3 md:gap-4">
-                          <div className="relative group/aqi">
-                            <div
-                              className="flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-2xl text-xl md:text-2xl font-bold text-white shadow-lg transition-transform duration-300 active:scale-95 group-hover/aqi:scale-110"
-                              style={{ backgroundColor: getAqiColor(aqi) }}
-                            >
-                              {aqi}
-                            </div>
-                            {/* Glow Effect */}
-                            <div 
-                              className="absolute inset-0 rounded-2xl blur-xl opacity-40 group-hover/aqi:opacity-60 transition-opacity"
-                              style={{ backgroundColor: getAqiColor(aqi) }}
-                            />
+                        <div className="flex items-center gap-4">
+                          {/* AQI Value */}
+                          <div
+                            className="flex items-center justify-center w-16 h-16 rounded-xl text-2xl font-bold text-white transition-transform duration-200 hover:scale-105"
+                            style={{ backgroundColor: getAqiColor(aqi) }}
+                          >
+                            {aqi}
                           </div>
 
                           {/* AQI Details */}
-                          <div className="space-y-0.5">
+                          <div className="space-y-1">
                             <p className="text-xs text-muted-foreground font-medium">Air Quality</p>
                             <p className="text-sm font-bold" style={{ color: getAqiColor(aqi) }}>
                               {getAqiLabel(aqi)}
@@ -203,19 +187,14 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
 
                         {/* Alert Icon */}
                         {aqi > 100 && (
-                          <div className="animate-pulse">
-                            <StatusIcon className="h-5 w-5 text-destructive" />
-                          </div>
+                          <AlertCircle className="h-5 w-5 text-destructive" />
                         )}
                       </div>
                     ) : (
-                      <div className="flex items-center gap-3 md:gap-4 py-2">
-                        {/* Offline Icon */}
-                        <div className="flex items-center justify-center w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-muted/50 backdrop-blur">
-                          <WifiOff className="h-6 w-6 md:h-7 md:w-7 text-muted-foreground" />
+                      <div className="flex items-center gap-4 py-2">
+                        <div className="flex items-center justify-center w-16 h-16 rounded-xl bg-muted">
+                          <WifiOff className="h-7 w-7 text-muted-foreground" />
                         </div>
-
-                        {/* Offline Status */}
                         <div className="space-y-1">
                           <p className="text-xs text-muted-foreground font-medium">Status</p>
                           <p className="text-sm font-bold text-muted-foreground">Offline</p>
@@ -224,13 +203,6 @@ export function DeviceGrid({ devicesByBuilding, selectedDeviceId, onDeviceSelect
                       </div>
                     )}
                   </CardContent>
-
-                  {/* Selection Indicator */}
-                  {isSelected && (
-                    <div className="absolute top-0 right-0 w-0 h-0 border-t-[40px] border-l-[40px] border-t-primary border-l-transparent">
-                      <div className="absolute -top-9 -left-7 w-3 h-3 bg-primary-foreground rounded-full" />
-                    </div>
-                  )}
                 </Card>
               );
             })}

@@ -167,15 +167,24 @@ export default function Auth() {
       const email = z.string().email().parse(resetEmail)
       setIsLoading(true)
       
-      const { error } = await resetPassword(email)
+      const { supabase } = await import('@/integrations/supabase/client')
+      
+      const { error } = await supabase.functions.invoke('reset-user-password', {
+        body: { email }
+      })
       
       if (!error) {
         setShowForgotPassword(false)
         setResetEmail('')
+        alert('A new password has been sent to your email address. Please check your inbox.')
+      } else {
+        throw error
       }
-    } catch (error) {
+    } catch (error: any) {
       if (error instanceof z.ZodError) {
         setErrors({ resetEmail: 'Please enter a valid email address' })
+      } else {
+        setErrors({ resetEmail: error.message || 'Failed to reset password. Please try again.' })
       }
     } finally {
       setIsLoading(false)
@@ -190,82 +199,7 @@ export default function Auth() {
     )
   }
 
-  // Show password update form if user is in recovery mode
-  if (isRecoveringPassword) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
-        <div className="w-full max-w-md space-y-6">
-          {/* Header */}
-          <div className="text-center space-y-4">
-            <LogoBanner variant="full" />
-            <div>
-              <h1 className="text-2xl font-bold text-foreground">Set New Password</h1>
-              <p className="text-muted-foreground">Enter your new password below</p>
-            </div>
-          </div>
-
-          <Card className="w-full shadow-lg border-0 bg-card/95 backdrop-blur">
-            <CardHeader className="space-y-1 pb-4">
-              <CardTitle className="text-xl text-center">Update Password</CardTitle>
-              <CardDescription className="text-center">
-                Choose a strong password for your account
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleUpdatePassword} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">New Password</Label>
-                  <Input
-                    id="new-password"
-                    type="password"
-                    placeholder="Enter new password"
-                    value={newPasswordData.password}
-                    onChange={(e) => setNewPasswordData(prev => ({ ...prev, password: e.target.value }))}
-                    className={errors.password ? 'border-destructive' : ''}
-                    disabled={isLoading}
-                  />
-                  {errors.password && (
-                    <p className="text-sm text-destructive">{errors.password}</p>
-                  )}
-                </div>
-                
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">Confirm Password</Label>
-                  <Input
-                    id="confirm-password"
-                    type="password"
-                    placeholder="Confirm new password"
-                    value={newPasswordData.confirmPassword}
-                    onChange={(e) => setNewPasswordData(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                    className={errors.confirmPassword ? 'border-destructive' : ''}
-                    disabled={isLoading}
-                  />
-                  {errors.confirmPassword && (
-                    <p className="text-sm text-destructive">{errors.confirmPassword}</p>
-                  )}
-                </div>
-
-                <Button 
-                  type="submit" 
-                  className="w-full bg-gradient-to-r from-primary to-primary-glow hover:opacity-90 transition-opacity"
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Updating Password...
-                    </>
-                  ) : (
-                    'Update Password'
-                  )}
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
-        </div>
-      </div>
-    )
-  }
+  // Password recovery mode is no longer used - passwords are sent via email
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-background to-muted p-4">
@@ -452,7 +386,7 @@ export default function Auth() {
               <CardHeader>
                 <CardTitle>Reset Password</CardTitle>
                 <CardDescription>
-                  Enter your email address and we'll send you a link to reset your password.
+                  Enter your email address and we'll send you a new password.
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -466,6 +400,7 @@ export default function Auth() {
                       value={resetEmail}
                       onChange={(e) => setResetEmail(e.target.value)}
                       className={errors.resetEmail ? 'border-destructive' : ''}
+                      autoFocus
                       disabled={isLoading}
                     />
                     {errors.resetEmail && (
@@ -498,7 +433,7 @@ export default function Auth() {
                           Sending...
                         </>
                       ) : (
-                        'Send Reset Link'
+                        'Reset Password'
                       )}
                     </Button>
                   </div>

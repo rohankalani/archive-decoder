@@ -32,6 +32,7 @@ export interface LiveSensorData {
   pc25?: number;
   pc5?: number;
   pc10?: number;
+  aqi_overall?: number;
   aqi?: number;
   status: 'online' | 'offline' | 'maintenance' | 'error' | 'pending';
   last_updated: string;
@@ -142,8 +143,10 @@ export class OptimizedSensorApi {
     deviceMap.forEach((device, deviceId) => {
       const readings = latestReadings[deviceId] || {};
       
+      // Use AQI from ESP32 if available, otherwise fallback to calculation
+      const aqiOverall = readings.aqi_overall?.value;
       const pm25Value = readings.pm25?.value || 0;
-      const aqi = pm25Value > 0 ? calculateAQI(pm25Value) : undefined;
+      const aqi = aqiOverall || (pm25Value > 0 ? calculateAQI(pm25Value) : undefined);
       
       const lastUpdated = Object.values(readings).reduce((latest, reading) => {
         return !latest || new Date(reading.timestamp) > new Date(latest) 
@@ -172,6 +175,7 @@ export class OptimizedSensorApi {
         pc25: readings.pc25?.value,
         pc5: readings.pc5?.value,
         pc10: readings.pc10?.value,
+        aqi_overall: aqiOverall,
         aqi,
         status: device.status as 'online' | 'offline' | 'maintenance' | 'error',
         last_updated: lastUpdated
@@ -201,8 +205,10 @@ export class OptimizedSensorApi {
         readingMap[reading.sensor_type] = reading.value;
       });
       
+      // Use AQI from ESP32 if available, otherwise fallback to calculation
+      const aqiOverall = readingMap.aqi_overall;
       const pm25Value = readingMap.pm25 || 0;
-      const aqi = pm25Value > 0 ? calculateAQI(pm25Value) : undefined;
+      const aqi = aqiOverall || (pm25Value > 0 ? calculateAQI(pm25Value) : undefined);
       
       const lastUpdated = deviceReadings.reduce((latest, reading) => {
         return !latest || new Date(reading.reading_timestamp) > new Date(latest) 
@@ -231,6 +237,7 @@ export class OptimizedSensorApi {
         pc25: readingMap.pc25,
         pc5: readingMap.pc5,
         pc10: readingMap.pc10,
+        aqi_overall: aqiOverall,
         aqi,
         status: firstReading.device_status,
         last_updated: lastUpdated

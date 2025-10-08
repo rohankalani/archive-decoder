@@ -41,7 +41,9 @@ const handler = async (req: Request): Promise<Response> => {
   }
 
   try {
+    console.log("Reset password function called");
     const { email } = await req.json();
+    console.log("Email received:", email);
 
     if (!email) {
       return new Response(
@@ -113,6 +115,7 @@ const handler = async (req: Request): Promise<Response> => {
       : "User";
 
     // Send email with new password
+    console.log("Attempting to send email to:", email);
     const emailResponse = await resend.emails.send({
       from: "ROSAIQ <onboarding@resend.dev>",
       to: [email],
@@ -135,7 +138,7 @@ const handler = async (req: Request): Promise<Response> => {
       `,
     });
 
-    console.log("Password reset email sent successfully:", emailResponse);
+    console.log("Email sent successfully. Response:", JSON.stringify(emailResponse));
 
     return new Response(
       JSON.stringify({ 

@@ -73,6 +73,16 @@ const getHumidityColor = (value: number) => {
 };
 
 export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardProps) {
+  // Add safety checks and logging
+  if (!device) {
+    console.error('GlanceViewCard: device is null or undefined');
+    return null;
+  }
+
+  if (!device.sensor) {
+    console.warn('GlanceViewCard: device.sensor is missing for device:', device.id);
+  }
+
   const aqi = device.sensor?.aqi || 0;
   const pm25 = device.sensor?.pm25 || 0;
   const pm10 = device.sensor?.pm10 || 0;
@@ -93,7 +103,7 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
   const pc10 = device.sensor?.pc10 || 0;
   const isOffline = device.status !== 'online';
 
-  const displayName = device.room?.name || device.name.split(' ').slice(-2).join(' ') || device.name;
+  const displayName = device.room?.name || device.name?.split(' ').slice(-2).join(' ') || device.name || 'Unknown Device';
   const floorName = device.floor?.name || `Floor ${device.floor?.floor_number || 'N/A'}`;
 
   return (

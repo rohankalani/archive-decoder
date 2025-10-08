@@ -65,6 +65,19 @@ const DeviceViewContent = memo(() => {
     getFloorLocation
   } = useLocations();
 
+  // Debug logging
+  console.log('DeviceView Debug:', {
+    sensorLoading,
+    devicesLoading,
+    locationsLoading,
+    sensorDataCount: sensorData.length,
+    devicesCount: devices.length,
+    sitesCount: sites.length,
+    buildingsCount: buildings.length,
+    floorsCount: floors.length,
+    error
+  });
+
 
   // Filter buildings based on selected site
   const filteredBuildings = useMemo(() => {

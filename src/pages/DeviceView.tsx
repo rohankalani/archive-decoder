@@ -410,12 +410,12 @@ const DeviceViewContent = memo(() => {
                         gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))'
                       }}>
                         {buildingGroup.devices.map((device) => (
-                          <GlanceViewCard
-                            key={device.id}
-                            device={device}
-                            isSelected={false}
-                            onClick={() => {}}
-                          />
+                  <GlanceViewCard
+                    key={device.id}
+                    device={device}
+                    isSelected={false}
+                    onClick={() => navigate(`/device/${device.id}`)}
+                  />
                         ))}
                       </div>
                     </div>

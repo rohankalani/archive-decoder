@@ -8,6 +8,7 @@ import { ExportButton } from '@/components/reports/ExportButton';
 import { Button } from '@/components/ui/button';
 import { useNavigate } from 'react-router-dom';
 import { Building2 } from 'lucide-react';
+import { Layout } from '@/components/Layout';
 
 const BuildingComparisonChart = lazy(() => import('@/components/reports/BuildingComparisonChart'));
 
@@ -39,7 +40,8 @@ export default function BuildingsReport() {
   const unhealthyBuildings = data.buildings.filter(b => b.status === 'unhealthy').length;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <Layout>
+      <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold">Buildings Report</h1>
@@ -138,6 +140,7 @@ export default function BuildingsReport() {
           </div>
         </CardContent>
       </Card>
-    </div>
+      </div>
+    </Layout>
   );
 }

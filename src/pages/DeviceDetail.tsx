@@ -292,26 +292,56 @@ export function DeviceDetail() {
             <CardTitle className="text-lg">Pollutants</CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-3 gap-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-purple-500">
-                  {deviceSensorData.voc ? Math.round(deviceSensorData.voc) : '--'}
+              <div className="grid grid-cols-3 gap-4">
+                <div className="text-center">
+                  <div 
+                    className="text-2xl font-bold" 
+                    style={{ color: deviceSensorData.voc ? (
+                      deviceSensorData.voc <= 100 ? getQualityColor('Good') :
+                      deviceSensorData.voc <= 200 ? getQualityColor('Moderate') :
+                      deviceSensorData.voc <= 300 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                      deviceSensorData.voc <= 400 ? getQualityColor('Unhealthy') :
+                      deviceSensorData.voc <= 450 ? getQualityColor('Very Unhealthy') :
+                      getQualityColor('Hazardous')
+                    ) : 'hsl(var(--muted-foreground))' }}
+                  >
+                    {deviceSensorData.voc ? Math.round(deviceSensorData.voc) : '--'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">VOC (index)</div>
                 </div>
-                <div className="text-sm text-muted-foreground">VOC (index)</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-500">
-                  {deviceSensorData.hcho ? Math.round(deviceSensorData.hcho) : '--'}
+                <div className="text-center">
+                  <div 
+                    className="text-2xl font-bold" 
+                    style={{ color: deviceSensorData.hcho ? (
+                      deviceSensorData.hcho <= 30 ? getQualityColor('Good') :
+                      deviceSensorData.hcho <= 80 ? getQualityColor('Moderate') :
+                      deviceSensorData.hcho <= 120 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                      deviceSensorData.hcho <= 200 ? getQualityColor('Unhealthy') :
+                      deviceSensorData.hcho <= 300 ? getQualityColor('Very Unhealthy') :
+                      getQualityColor('Hazardous')
+                    ) : 'hsl(var(--muted-foreground))' }}
+                  >
+                    {deviceSensorData.hcho ? Math.round(deviceSensorData.hcho) : '--'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">HCHO (ppb)</div>
                 </div>
-                <div className="text-sm text-muted-foreground">HCHO (ppb)</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-yellow-500">
-                  {deviceSensorData.nox ? Math.round(deviceSensorData.nox) : '--'}
+                <div className="text-center">
+                  <div 
+                    className="text-2xl font-bold" 
+                    style={{ color: deviceSensorData.nox ? (
+                      deviceSensorData.nox <= 100 ? getQualityColor('Good') :
+                      deviceSensorData.nox <= 200 ? getQualityColor('Moderate') :
+                      deviceSensorData.nox <= 300 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                      deviceSensorData.nox <= 400 ? getQualityColor('Unhealthy') :
+                      deviceSensorData.nox <= 450 ? getQualityColor('Very Unhealthy') :
+                      getQualityColor('Hazardous')
+                    ) : 'hsl(var(--muted-foreground))' }}
+                  >
+                    {deviceSensorData.nox ? Math.round(deviceSensorData.nox) : '--'}
+                  </div>
+                  <div className="text-sm text-muted-foreground">NOx (index)</div>
                 </div>
-                <div className="text-sm text-muted-foreground">NOx (index)</div>
               </div>
-            </div>
           </CardContent>
         </Card>
 
@@ -336,7 +366,17 @@ export function DeviceDetail() {
                   <div className="text-sm text-muted-foreground">PM1</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold text-red-500">
+                  <div 
+                    className="text-lg font-bold" 
+                    style={{ color: deviceSensorData.pm25 ? (
+                      deviceSensorData.pm25 <= 50.4 ? getQualityColor('Good') :
+                      deviceSensorData.pm25 <= 60.4 ? getQualityColor('Moderate') :
+                      deviceSensorData.pm25 <= 75.4 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                      deviceSensorData.pm25 <= 150.4 ? getQualityColor('Unhealthy') :
+                      deviceSensorData.pm25 <= 250.4 ? getQualityColor('Very Unhealthy') :
+                      getQualityColor('Hazardous')
+                    ) : 'hsl(var(--muted-foreground))' }}
+                  >
                     {deviceSensorData.pm25?.toFixed(1) || '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PM2.5</div>
@@ -348,7 +388,17 @@ export function DeviceDetail() {
                   <div className="text-sm text-muted-foreground">PM5</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-lg font-bold">
+                  <div 
+                    className="text-lg font-bold" 
+                    style={{ color: deviceSensorData.pm10 ? (
+                      deviceSensorData.pm10 <= 75.0 ? getQualityColor('Good') :
+                      deviceSensorData.pm10 <= 150.0 ? getQualityColor('Moderate') :
+                      deviceSensorData.pm10 <= 250.0 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                      deviceSensorData.pm10 <= 350.0 ? getQualityColor('Unhealthy') :
+                      deviceSensorData.pm10 <= 420.0 ? getQualityColor('Very Unhealthy') :
+                      getQualityColor('Hazardous')
+                    ) : 'hsl(var(--muted-foreground))' }}
+                  >
                     {deviceSensorData.pm10?.toFixed(1) || '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PM10</div>

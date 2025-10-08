@@ -55,13 +55,55 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
   const displayName = device.room?.name || device.name?.split(' ').slice(-2).join(' ') || device.name || 'Unknown Device';
   const floorName = device.floor?.name || `Floor ${device.floor?.floor_number || 'N/A'}`;
 
-  // Calculate AQI for each sensor and get color based on level
-  const getColorFromValue = (calculateFn: (val: number) => number, value: number) => {
+  // Get color based on raw concentration values against Settings breakpoints
+  const getPM25Color = (value: number) => {
     if (value === 0) return 'text-muted-foreground';
-    const aqiValue = calculateFn(value);
-    const level = getQualityFromAqi(aqiValue);
-    const color = getQualityColor(level);
-    return color;
+    if (value <= 50.4) return getQualityColor('Good');
+    if (value <= 60.4) return getQualityColor('Moderate');
+    if (value <= 75.4) return getQualityColor('Unhealthy for Sensitive Groups');
+    if (value <= 150.4) return getQualityColor('Unhealthy');
+    if (value <= 250.4) return getQualityColor('Very Unhealthy');
+    return getQualityColor('Hazardous');
+  };
+
+  const getPM10Color = (value: number) => {
+    if (value === 0) return 'text-muted-foreground';
+    if (value <= 75.0) return getQualityColor('Good');
+    if (value <= 150.0) return getQualityColor('Moderate');
+    if (value <= 250.0) return getQualityColor('Unhealthy for Sensitive Groups');
+    if (value <= 350.0) return getQualityColor('Unhealthy');
+    if (value <= 420.0) return getQualityColor('Very Unhealthy');
+    return getQualityColor('Hazardous');
+  };
+
+  const getVOCColor = (value: number) => {
+    if (value === 0) return 'text-muted-foreground';
+    if (value <= 100.0) return getQualityColor('Good');
+    if (value <= 200.0) return getQualityColor('Moderate');
+    if (value <= 300.0) return getQualityColor('Unhealthy for Sensitive Groups');
+    if (value <= 400.0) return getQualityColor('Unhealthy');
+    if (value <= 450.0) return getQualityColor('Very Unhealthy');
+    return getQualityColor('Hazardous');
+  };
+
+  const getHCHOColor = (value: number) => {
+    if (value === 0) return 'text-muted-foreground';
+    if (value <= 30.0) return getQualityColor('Good');
+    if (value <= 80.0) return getQualityColor('Moderate');
+    if (value <= 120.0) return getQualityColor('Unhealthy for Sensitive Groups');
+    if (value <= 200.0) return getQualityColor('Unhealthy');
+    if (value <= 300.0) return getQualityColor('Very Unhealthy');
+    return getQualityColor('Hazardous');
+  };
+
+  const getNOxColor = (value: number) => {
+    if (value === 0) return 'text-muted-foreground';
+    if (value <= 100.0) return getQualityColor('Good');
+    if (value <= 200.0) return getQualityColor('Moderate');
+    if (value <= 300.0) return getQualityColor('Unhealthy for Sensitive Groups');
+    if (value <= 400.0) return getQualityColor('Unhealthy');
+    if (value <= 450.0) return getQualityColor('Very Unhealthy');
+    return getQualityColor('Hazardous');
   };
 
   // CO2 color based on standard thresholds mapped to AQI levels
@@ -132,7 +174,7 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
           <div className="grid grid-cols-3 gap-3 pb-3 border-b">
             <div className="space-y-0.5">
               <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">PM2.5</div>
-              <div className="text-lg font-semibold" style={{ color: getColorFromValue(calculatePM25Aqi, pm25) }}>
+              <div className="text-lg font-semibold" style={{ color: getPM25Color(pm25) }}>
                 {pm25.toFixed(1)} <span className="text-sm text-foreground font-medium">µg/m³</span>
               </div>
             </div>
@@ -154,13 +196,13 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
           <div className="grid grid-cols-3 gap-3 pb-3 border-b">
             <div className="space-y-0.5">
               <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">PM10</div>
-              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculatePM10Aqi, pm10) }}>
+              <div className="text-base font-bold text-foreground" style={{ color: getPM10Color(pm10) }}>
                 {pm10.toFixed(1)}
               </div>
             </div>
             <div className="space-y-0.5">
               <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">VOC</div>
-              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculateVOCAqi, voc) }}>
+              <div className="text-base font-bold text-foreground" style={{ color: getVOCColor(voc) }}>
                 {Math.round(voc)}
               </div>
             </div>
@@ -176,13 +218,13 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
           <div className="grid grid-cols-3 gap-3 pb-3 border-b">
             <div className="space-y-0.5">
               <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">HCHO</div>
-              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculateHCHOAqi, hcho) }}>
+              <div className="text-base font-bold text-foreground" style={{ color: getHCHOColor(hcho) }}>
                 {hcho.toFixed(1)}
               </div>
             </div>
             <div className="space-y-0.5">
               <div className="text-sm text-muted-foreground font-bold uppercase tracking-wide">NOx</div>
-              <div className="text-base font-bold text-foreground" style={{ color: getColorFromValue(calculateNOxAqi, nox) }}>
+              <div className="text-base font-bold text-foreground" style={{ color: getNOxColor(nox) }}>
                 {nox.toFixed(1)}
               </div>
             </div>

@@ -37,6 +37,7 @@ export function useEnhancedReportData(startDate: Date, endDate: Date) {
   const previousStartDate = new Date(startDate.getTime() - periodLength);
   const previousEndDate = new Date(startDate.getTime() - 1);
   
+  // Only fetch previous period if we need comparison (optimization)
   const previousPeriod = useSimplifiedReportData(previousStartDate, previousEndDate);
   
   const [enhancedData, setEnhancedData] = useState<EnhancedReportData | null>(null);

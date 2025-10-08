@@ -26,20 +26,20 @@ export default function ClassroomHeatmap({ classrooms }: ClassroomHeatmapProps) 
   }
 
   return (
-    <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
       {classrooms.map((classroom) => (
         <div
           key={classroom.id}
-          className="relative aspect-square rounded-lg border p-3 flex flex-col items-center justify-center gap-2 hover:shadow-lg transition-shadow"
+          className="relative aspect-square rounded-2xl border-2 p-8 flex flex-col items-center justify-center gap-4 hover:shadow-lg transition-shadow"
         >
-          <div className={`absolute inset-0 ${getColor(classroom.aqi)} opacity-10 rounded-lg`} />
+          <div className={`absolute inset-0 ${getColor(classroom.aqi)} opacity-10 rounded-2xl`} />
           <div className="relative z-10 text-center">
-            <p className="text-xs font-medium truncate w-full">{classroom.name}</p>
-            <p className="text-xs text-muted-foreground">{classroom.roomNumber}</p>
-            <p className={`text-2xl font-bold mt-2 ${getTextColor(classroom.aqi)}`}>
+            <p className="text-2xl font-medium truncate w-full">{classroom.name}</p>
+            <p className="text-xl text-muted-foreground">{classroom.roomNumber}</p>
+            <p className={`text-6xl font-bold mt-4 ${getTextColor(classroom.aqi)}`}>
               {classroom.aqi}
             </p>
-            <p className="text-xs text-muted-foreground">AQI</p>
+            <p className="text-xl text-muted-foreground">AQI</p>
           </div>
         </div>
       ))}

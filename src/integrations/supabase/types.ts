@@ -114,13 +114,6 @@ export type Database = {
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
-          {
-            foreignKeyName: "alerts_resolved_by_fkey"
-            columns: ["resolved_by"]
-            isOneToOne: false
-            referencedRelation: "role_consistency_check"
-            referencedColumns: ["id"]
-          },
         ]
       }
       audit_logs: {
@@ -166,13 +159,6 @@ export type Database = {
             columns: ["user_id"]
             isOneToOne: false
             referencedRelation: "profiles"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "audit_logs_user_id_fkey"
-            columns: ["user_id"]
-            isOneToOne: false
-            referencedRelation: "role_consistency_check"
             referencedColumns: ["id"]
           },
         ]
@@ -620,21 +606,22 @@ export type Database = {
       }
     }
     Views: {
-      role_consistency_check: {
-        Row: {
-          actual_role: string | null
-          email: string | null
-          id: string | null
-          profile_role: string | null
-          status: string | null
-        }
-        Relationships: []
-      }
+      [_ in never]: never
     }
     Functions: {
       anonymize_ip: {
         Args: { ip_address: unknown }
         Returns: unknown
+      }
+      check_role_consistency: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          actual_role: string
+          email: string
+          id: string
+          profile_role: string
+          status: string
+        }[]
       }
       cleanup_old_audit_logs: {
         Args: Record<PropertyKey, never>

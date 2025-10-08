@@ -33,15 +33,17 @@ import { Floor, useLocations } from '@/hooks/useLocations'
 import { MapPin, Settings } from 'lucide-react'
 
 const deviceSchema = z.object({
-  name: z.string().min(1, "Name is required"),
+  name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
   device_type: z.string().min(1, "Device type is required"),
-  serial_number: z.string().min(1, "Serial number is required"),
+  serial_number: z.string().trim().min(1, "Serial number is required").max(100, "Serial number must be less than 100 characters"),
   mac_address: z.string()
+    .trim()
     .min(1, "MAC address is required")
-    .regex(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, "Invalid MAC address format (XX:XX:XX:XX:XX:XX)"),
+    .regex(/^([0-9A-Fa-f]{2}[:-]){5}([0-9A-Fa-f]{2})$/, "Invalid MAC address format (XX:XX:XX:XX:XX:XX)")
+    .transform(val => val.toUpperCase()),
   status: z.enum(['online', 'offline', 'error', 'pending']),
-  floor_id: z.string().uuid("Must select a floor").optional(),
-  room_id: z.string().uuid().optional(),
+  floor_id: z.string().uuid().optional().nullable(),
+  room_id: z.string().uuid().optional().nullable(),
   firmware_version: z.string().optional(),
   installation_date: z.string().optional(),
   calibration_due_date: z.string().optional(),
@@ -72,13 +74,42 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
       serial_number: device?.serial_number || '',
       mac_address: device?.mac_address || '',
       status: device?.status || 'offline',
-      floor_id: device?.floor_id || '',
-      room_id: device?.room_id || '',
+      floor_id: device?.floor_id || undefined,
+      room_id: device?.room_id || undefined,
       firmware_version: device?.firmware_version || '',
       installation_date: device?.installation_date || '',
       calibration_due_date: device?.calibration_due_date || '',
     },
   })
+
+  // Initialize location selectors from device data
+  React.useEffect(() => {
+    if (device && device.room_id) {
+      const room = rooms.find(r => r.id === device.room_id)
+      if (room) {
+        const floor = allFloors.find(f => f.id === room.floor_id)
+        if (floor) {
+          const building = buildings.find(b => b.id === floor.building_id)
+          if (building) {
+            setSelectedSite(building.site_id)
+            setSelectedBuilding(building.id)
+            setSelectedFloor(floor.id)
+            setSelectedRoom(room.id)
+          }
+        }
+      }
+    } else if (device && device.floor_id) {
+      const floor = allFloors.find(f => f.id === device.floor_id)
+      if (floor) {
+        const building = buildings.find(b => b.id === floor.building_id)
+        if (building) {
+          setSelectedSite(building.site_id)
+          setSelectedBuilding(building.id)
+          setSelectedFloor(floor.id)
+        }
+      }
+    }
+  }, [device, rooms, allFloors, buildings])
 
   // Filter buildings by selected site
   const filteredBuildings = React.useMemo(() => {
@@ -116,20 +147,26 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
   }, [selectedSite, selectedBuilding, selectedFloor, selectedRoom, sites, buildings, allFloors, rooms])
 
   const handleSubmit = (data: DeviceFormData) => {
+    console.log('Form submitted with data:', data)
+    
     // Auto-fill floor_id from selected room if room is selected
     if (selectedRoom) {
       const room = rooms.find(r => r.id === selectedRoom)
       if (room) {
         data.floor_id = room.floor_id
         data.room_id = selectedRoom
-        // If room is assigned, set status to offline (ready to go online when device connects)
-        data.status = 'offline'
+        // If room is assigned and this is a new device, set status to offline
+        if (!device) {
+          data.status = 'offline'
+        }
       }
     } else {
-      // If no room selected, set status to pending
-      data.status = 'pending'
-      data.floor_id = undefined
-      data.room_id = undefined
+      // If no room selected and this is a new device, set status to pending
+      if (!device) {
+        data.status = 'pending'
+      }
+      data.floor_id = null
+      data.room_id = null
     }
 
     // If calibration_due_date is not provided and installation_date is available,
@@ -141,6 +178,7 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
       data.calibration_due_date = calibrationDate.toISOString().split('T')[0]
     }
 
+    console.log('Submitting device data:', data)
     onSubmit(data as any)
   }
 

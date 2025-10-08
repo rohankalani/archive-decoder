@@ -136,13 +136,13 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
 
     const getQualityColor = (level: AqiLevel): string => {
         switch (level) {
-            case 'Good': return 'hsl(120, 100%, 40%)';
-            case 'Moderate': return 'hsl(60, 100%, 50%)';
-            case 'Unhealthy for Sensitive Groups': return 'hsl(30, 100%, 50%)';
-            case 'Unhealthy': return 'hsl(0, 100%, 50%)';
-            case 'Very Unhealthy': return 'hsl(300, 100%, 40%)';
+            case 'Good': return 'hsl(120, 85%, 35%)';
+            case 'Moderate': return 'hsl(45, 100%, 40%)';
+            case 'Unhealthy for Sensitive Groups': return 'hsl(30, 100%, 45%)';
+            case 'Unhealthy': return 'hsl(0, 100%, 45%)';
+            case 'Very Unhealthy': return 'hsl(280, 90%, 35%)';
             case 'Hazardous': return 'hsl(320, 100%, 25%)';
-            default: return 'hsl(120, 100%, 40%)';
+            default: return 'hsl(120, 85%, 35%)';
         }
     };
 

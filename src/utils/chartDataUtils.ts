@@ -106,12 +106,12 @@ const NOX_RANGES = {
 
 // AQI color function based on ROSAIQ 6-level system
 export function getAqiColor(aqi: number): string {
-  if (aqi <= 50) return 'hsl(120, 100%, 40%)';        // Good - Green
-  if (aqi <= 100) return 'hsl(60, 100%, 50%)';       // Moderate - Yellow
-  if (aqi <= 150) return 'hsl(30, 100%, 50%)';       // Unhealthy for Sensitive - Orange
-  if (aqi <= 200) return 'hsl(0, 100%, 50%)';        // Unhealthy - Red
-  if (aqi <= 300) return 'hsl(300, 100%, 40%)';      // Very Unhealthy - Purple
-  return 'hsl(320, 100%, 25%)';                      // Hazardous - Maroon
+  if (aqi <= 50) return 'hsl(120, 85%, 35%)';        // Good - Darker Green
+  if (aqi <= 100) return 'hsl(45, 100%, 40%)';      // Moderate - Darker Yellow/Gold
+  if (aqi <= 150) return 'hsl(30, 100%, 45%)';      // Unhealthy for Sensitive - Darker Orange
+  if (aqi <= 200) return 'hsl(0, 100%, 45%)';       // Unhealthy - Darker Red
+  if (aqi <= 300) return 'hsl(280, 90%, 35%)';      // Very Unhealthy - Darker Purple
+  return 'hsl(320, 100%, 25%)';                     // Hazardous - Maroon
 }
 
 // Arduino AQI calculation formula matching device firmware

@@ -144,22 +144,22 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
   return (
     <Card
       className={cn(
-        'cursor-pointer transition-all hover:shadow-lg p-6 relative min-h-[400px]',
+        'cursor-pointer transition-all hover:shadow-lg p-12 relative min-h-[800px]',
         isSelected && 'ring-2 ring-primary shadow-lg'
       )}
       onClick={onClick}
     >
       {/* Header Row */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-8">
         <div>
-          <div className="text-2xl font-bold text-foreground">{displayName}</div>
-          <div className="text-base text-muted-foreground font-medium">{floorName}</div>
+          <div className="text-4xl font-bold text-foreground">{displayName}</div>
+          <div className="text-2xl text-muted-foreground font-medium">{floorName}</div>
         </div>
         {!isOffline && (
           <div className="text-right">
-            <div className="text-base text-muted-foreground font-bold uppercase tracking-wide mb-1">AQI</div>
+            <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide mb-2">AQI</div>
             <div
-              className="font-bold text-5xl leading-none"
+              className="font-bold text-8xl leading-none"
               style={{ color: getAqiColor(aqi) }}
             >
               {aqi}
@@ -169,117 +169,117 @@ export function GlanceViewCard({ device, isSelected, onClick }: GlanceViewCardPr
       </div>
 
       {!isOffline ? (
-        <div className="space-y-4">
+        <div className="space-y-8">
           {/* Primary Sensors - 3 columns */}
-          <div className="grid grid-cols-3 gap-4 pb-4 border-b">
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">PM2.5</div>
-              <div className="text-2xl font-semibold" style={{ color: getPM25Color(pm25) }}>
-                {pm25.toFixed(1)} <span className="text-base text-foreground font-medium">µg/m³</span>
+          <div className="grid grid-cols-3 gap-8 pb-8 border-b-2">
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">PM2.5</div>
+              <div className="text-4xl font-semibold" style={{ color: getPM25Color(pm25) }}>
+                {pm25.toFixed(1)} <span className="text-2xl text-foreground font-medium">µg/m³</span>
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">CO₂</div>
-              <div className="text-2xl font-semibold" style={{ color: getCO2Color(co2) }}>
-                {Math.round(co2)} <span className="text-base text-foreground font-medium">ppm</span>
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">CO₂</div>
+              <div className="text-4xl font-semibold" style={{ color: getCO2Color(co2) }}>
+                {Math.round(co2)} <span className="text-2xl text-foreground font-medium">ppm</span>
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">Temp</div>
-              <div className="text-2xl font-semibold" style={{ color: getTempColor(temperature) }}>
-                {temperature.toFixed(1)}<span className="text-base text-foreground font-medium">°C</span>
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">Temp</div>
+              <div className="text-4xl font-semibold" style={{ color: getTempColor(temperature) }}>
+                {temperature.toFixed(1)}<span className="text-2xl text-foreground font-medium">°C</span>
               </div>
             </div>
           </div>
 
           {/* Secondary Sensors - 3 columns */}
-          <div className="grid grid-cols-3 gap-4 pb-4 border-b">
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">PM10</div>
-              <div className="text-xl font-bold text-foreground" style={{ color: getPM10Color(pm10) }}>
+          <div className="grid grid-cols-3 gap-8 pb-8 border-b-2">
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">PM10</div>
+              <div className="text-3xl font-bold text-foreground" style={{ color: getPM10Color(pm10) }}>
                 {pm10.toFixed(1)}
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">VOC</div>
-              <div className="text-xl font-bold text-foreground" style={{ color: getVOCColor(voc) }}>
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">VOC</div>
+              <div className="text-3xl font-bold text-foreground" style={{ color: getVOCColor(voc) }}>
                 {Math.round(voc)}
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">Humidity</div>
-              <div className="text-xl font-bold text-foreground" style={{ color: getHumidityColor(humidity) }}>
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">Humidity</div>
+              <div className="text-3xl font-bold text-foreground" style={{ color: getHumidityColor(humidity) }}>
                 {humidity.toFixed(1)}%
               </div>
             </div>
           </div>
 
           {/* Tertiary Sensors - 3 columns */}
-          <div className="grid grid-cols-3 gap-4 pb-4 border-b">
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">HCHO</div>
-              <div className="text-xl font-bold text-foreground" style={{ color: getHCHOColor(hcho) }}>
+          <div className="grid grid-cols-3 gap-8 pb-8 border-b-2">
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">HCHO</div>
+              <div className="text-3xl font-bold text-foreground" style={{ color: getHCHOColor(hcho) }}>
                 {hcho.toFixed(1)}
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">NOx</div>
-              <div className="text-xl font-bold text-foreground" style={{ color: getNOxColor(nox) }}>
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">NOx</div>
+              <div className="text-3xl font-bold text-foreground" style={{ color: getNOxColor(nox) }}>
                 {nox.toFixed(1)}
               </div>
             </div>
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">PM0.3</div>
-              <div className="text-xl font-bold text-foreground" style={{ color: getPM03Color(pm03) }}>
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">PM0.3</div>
+              <div className="text-3xl font-bold text-foreground" style={{ color: getPM03Color(pm03) }}>
                 {pm03.toFixed(1)}
               </div>
             </div>
           </div>
 
           {/* PM Mass Concentrations - 2 columns - NO COLOR */}
-          <div className="grid grid-cols-2 gap-4 pb-4 border-b">
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">PM1</div>
-              <div className="text-xl font-bold text-foreground">{pm1.toFixed(1)} µg/m³</div>
+          <div className="grid grid-cols-2 gap-8 pb-8 border-b-2">
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">PM1</div>
+              <div className="text-3xl font-bold text-foreground">{pm1.toFixed(1)} µg/m³</div>
             </div>
-            <div className="space-y-1">
-              <div className="text-base text-muted-foreground font-bold uppercase tracking-wide">PM5</div>
-              <div className="text-xl font-bold text-foreground">{pm5.toFixed(1)} µg/m³</div>
+            <div className="space-y-2">
+              <div className="text-2xl text-muted-foreground font-bold uppercase tracking-wide">PM5</div>
+              <div className="text-3xl font-bold text-foreground">{pm5.toFixed(1)} µg/m³</div>
             </div>
           </div>
 
           {/* Particle Counts - 3 columns - NO COLOR */}
-          <div className="grid grid-cols-3 gap-3 text-base">
-            <div className="space-y-1">
+          <div className="grid grid-cols-3 gap-6 text-2xl">
+            <div className="space-y-2">
               <div className="text-muted-foreground font-bold uppercase tracking-wide">PC0.3</div>
               <div className="font-bold text-foreground">{Math.round(pc03).toLocaleString()}</div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="text-muted-foreground font-bold uppercase tracking-wide">PC0.5</div>
               <div className="font-bold text-foreground">{Math.round(pc05).toLocaleString()}</div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="text-muted-foreground font-bold uppercase tracking-wide">PC1</div>
               <div className="font-bold text-foreground">{Math.round(pc1).toLocaleString()}</div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="text-muted-foreground font-bold uppercase tracking-wide">PC2.5</div>
               <div className="font-bold text-foreground">{Math.round(pc25).toLocaleString()}</div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="text-muted-foreground font-bold uppercase tracking-wide">PC5</div>
               <div className="font-bold text-foreground">{Math.round(pc5).toLocaleString()}</div>
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               <div className="text-muted-foreground font-bold uppercase tracking-wide">PC10</div>
               <div className="font-bold text-foreground">{Math.round(pc10).toLocaleString()}</div>
             </div>
           </div>
         </div>
       ) : (
-        <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
-          <WifiOff className="h-12 w-12 mb-3" />
-          <span className="text-base font-medium">Offline</span>
+        <div className="flex flex-col items-center justify-center py-24 text-muted-foreground">
+          <WifiOff className="h-24 w-24 mb-6" />
+          <span className="text-2xl font-medium">Offline</span>
         </div>
       )}
     </Card>

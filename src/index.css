@@ -9,13 +9,13 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* Premium Glass Morphism Dark Theme */
-    --background: 220 15% 6%;
+    --background: 220 45% 12%;
     --foreground: 220 15% 95%;
 
-    --card: 220 15% 8%;
+    --card: 220 55% 20%;
     --card-foreground: 220 15% 95%;
 
-    --popover: 220 15% 8%;
+    --popover: 220 55% 20%;
     --popover-foreground: 220 15% 95%;
 
     /* Stunning Color Palette */
@@ -36,14 +36,14 @@ All colors MUST be HSL.
     --accent-foreground: 220 15% 6%;
     --accent-glow: 46 87% 85%;
 
-    --muted: 220 15% 15%;
+    --muted: 220 45% 18%;
     --muted-foreground: 220 15% 70%;
 
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 15% 20%;
-    --input: 220 15% 12%;
+    --border: 220 45% 25%;
+    --input: 220 45% 15%;
     --ring: 259 94% 51%;
 
     --radius: 1rem;
@@ -84,25 +84,25 @@ All colors MUST be HSL.
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
     
     /* Sidebar Premium */
-    --sidebar-background: 220 15% 6%;
+    --sidebar-background: 220 45% 12%;
     --sidebar-foreground: 220 15% 95%;
     --sidebar-primary: 259 94% 51%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 15% 12%;
+    --sidebar-accent: 220 45% 15%;
     --sidebar-accent-foreground: 220 15% 95%;
-    --sidebar-border: 220 15% 20%;
+    --sidebar-border: 220 45% 25%;
     --sidebar-ring: 259 94% 51%;
   }
 
   .dark {
     /* Enhanced Dark Mode with Premium Colors */
-    --background: 220 18% 4%;
+    --background: 220 45% 12%;
     --foreground: 220 18% 98%;
 
-    --card: 220 18% 6%;
+    --card: 220 55% 20%;
     --card-foreground: 220 18% 98%;
 
-    --popover: 220 18% 6%;
+    --popover: 220 55% 20%;
     --popover-foreground: 220 18% 98%;
 
     --primary: 259 94% 61%;
@@ -121,14 +121,14 @@ All colors MUST be HSL.
     --accent-foreground: 220 18% 4%;
     --accent-glow: 46 87% 95%;
 
-    --muted: 220 18% 12%;
+    --muted: 220 45% 18%;
     --muted-foreground: 220 18% 75%;
 
     --destructive: 0 84% 70%;
     --destructive-foreground: 0 0% 100%;
 
-    --border: 220 18% 18%;
-    --input: 220 18% 10%;
+    --border: 220 45% 25%;
+    --input: 220 45% 15%;
     --ring: 259 94% 61%;
 
     --success: 142 76% 60%;
@@ -157,13 +157,13 @@ All colors MUST be HSL.
     --glass-border: rgba(255, 255, 255, 0.08);
     --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.5);
 
-    --sidebar-background: 220 18% 3%;
+    --sidebar-background: 220 45% 12%;
     --sidebar-foreground: 220 18% 98%;
     --sidebar-primary: 259 94% 61%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 220 18% 10%;
+    --sidebar-accent: 220 45% 15%;
     --sidebar-accent-foreground: 220 18% 98%;
-    --sidebar-border: 220 18% 18%;
+    --sidebar-border: 220 45% 25%;
     --sidebar-ring: 259 94% 61%;
   }
 }

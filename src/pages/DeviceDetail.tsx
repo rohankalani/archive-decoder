@@ -43,12 +43,7 @@ export function DeviceDetail() {
   
   const { sensorData, loading: sensorLoading } = useLiveSensorData();
   
-  // Use live timeseries for 10min, historical for others
-  const isLiveMode = timePeriod === '10min';
-  const { series: liveSeries, loading: liveLoading, lastUpdate: liveLastUpdate } = useLiveTimeseriesData(
-    deviceId || '',
-    { windowMs: 10 * 60 * 1000, bucketMs: 10 * 1000 }
-  );
+  // Always use historical data, update in real-time via subscription
   const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(
     deviceId || '',
     timePeriod,
@@ -60,12 +55,10 @@ export function DeviceDetail() {
 
   // Update timestamp when data changes
   React.useEffect(() => {
-    if (isLiveMode && liveSeries.length > 0) {
-      setLastUpdate(liveLastUpdate);
-    } else if (historicalData.length > 0) {
+    if (historicalData.length > 0) {
       setLastUpdate(new Date());
     }
-  }, [isLiveMode, liveSeries, liveLastUpdate, historicalData]);
+  }, [historicalData]);
 
   const device = devices.find(d => d.id === deviceId);
   const deviceSensorData = sensorData.find(s => s.device_id === deviceId);
@@ -136,10 +129,8 @@ export function DeviceDetail() {
       };
     }
 
-    // Use live series for 10min, historical processing for others
-    const processedData = isLiveMode 
-      ? liveSeries 
-      : generateDeterministicSensorData(historicalData, deviceSensorData, timePeriod);
+    // Process historical data for all time periods
+    const processedData = generateDeterministicSensorData(historicalData, deviceSensorData, timePeriod);
 
     if (!processedData.length) {
       return { 
@@ -197,7 +188,7 @@ export function DeviceDetail() {
       particulateCount: processedData,
       bar: barData 
     };
-  }, [isLiveMode, liveSeries, historicalData, deviceSensorData, timePeriod]);
+  }, [historicalData, deviceSensorData, timePeriod]);
 
   // Debug particle count data
   console.log('Particle Count Debug:', {
@@ -213,8 +204,8 @@ export function DeviceDetail() {
     pmCountParam: pmCountParam
   });
 
-  // Only show full loading on initial load (not when changing time period)
-  if ((sensorLoading || devicesLoading) && !device) {
+  // Only show loading spinner on initial device load
+  if (devicesLoading && !device) {
     return (
       <Layout showBackButton>
         <div className="flex items-center justify-center min-h-[400px]">
@@ -533,7 +524,7 @@ export function DeviceDetail() {
 
           {/* Loading overlay for charts - only on initial load */}
           <div className="relative">
-            {((isLiveMode && liveLoading) || (!isLiveMode && historicalLoading)) && (
+            {historicalLoading && (
               <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/50 backdrop-blur-sm rounded-lg">
                 <div className="flex items-center gap-2">
                   <Activity className="h-5 w-5 animate-spin" />
@@ -542,7 +533,7 @@ export function DeviceDetail() {
               </div>
             )}
 
-            <div className={cn(((isLiveMode && liveLoading) || (!isLiveMode && historicalLoading)) && "opacity-50 pointer-events-none")}>
+            <div className={cn(historicalLoading && "opacity-50 pointer-events-none")}>
               {/* Key Pollutants Bar Chart - Average AQI for selected time period */}
               <Card>
             <CardHeader>

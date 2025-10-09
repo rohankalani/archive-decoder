@@ -209,8 +209,14 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
       })
       .subscribe();
     
+    // Polling fallback for real-time updates every 10 seconds
+    const pollInterval = setInterval(() => {
+      fetchHistoricalData({ silent: true, suppressToast: true });
+    }, 10000);
+
     return () => {
       supabase.removeChannel(channel);
+      clearInterval(pollInterval);
     };
   }, [deviceId, period]);
 

@@ -53,7 +53,7 @@ export function useLiveSensorData() {
     return Math.round(((500 - 301) / (500.4 - 250.5)) * (pm25 - 250.5) + 301)
   }
 
-  const fetchLatestSensorData = async () => {
+  const fetchLatestSensorData = async (options?: { silent?: boolean; suppressToast?: boolean }) => {
     try {
       // Get all devices with their latest sensor readings
       const { data: devices, error: devicesError } = await supabase
@@ -136,9 +136,9 @@ export function useLiveSensorData() {
       setSensorData(validResults)
     } catch (error) {
       console.error('Error fetching sensor data:', error)
-      toast.error('Failed to fetch sensor data')
+      if (!options?.suppressToast) toast.error('Failed to fetch sensor data')
     } finally {
-      setLoading(false)
+      if (!options?.silent) setLoading(false)
     }
   }
 
@@ -183,7 +183,7 @@ export function useLiveSensorData() {
         },
         () => {
           // Refresh data when new readings arrive
-          fetchLatestSensorData()
+          fetchLatestSensorData({ silent: true, suppressToast: true })
         }
       )
       .on(
@@ -195,13 +195,13 @@ export function useLiveSensorData() {
         },
         () => {
           // Refresh data when device status changes
-          fetchLatestSensorData()
+          fetchLatestSensorData({ silent: true, suppressToast: true })
         }
       )
       .subscribe()
 
     // Also refresh every 30 seconds as fallback
-    const interval = setInterval(fetchLatestSensorData, 30000)
+    const interval = setInterval(() => fetchLatestSensorData({ silent: true, suppressToast: true }), 30000)
 
     return () => {
       supabase.removeChannel(channel)

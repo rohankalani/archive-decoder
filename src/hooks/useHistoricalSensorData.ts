@@ -70,10 +70,10 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
     }
   };
 
-  const fetchHistoricalData = async () => {
+  const fetchHistoricalData = async (options?: { silent?: boolean; suppressToast?: boolean }) => {
     if (!deviceId) return;
     
-    setLoading(true);
+    if (!options?.silent) setLoading(true);
     try {
       const { startTime, intervals } = getTimeRange();
       const intervalDuration = getIntervalDuration();
@@ -185,9 +185,9 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
       setData(averagedData);
     } catch (error) {
       console.error('Error fetching historical sensor data:', error);
-      toast.error('Failed to fetch historical data');
+      if (!options?.suppressToast) toast.error('Failed to fetch historical data');
     } finally {
-      setLoading(false);
+      if (!options?.silent) setLoading(false);
     }
   };
 
@@ -205,7 +205,7 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
       }, () => {
         console.log('[Realtime] New sensor_readings INSERT for device', deviceId);
         // Simple and reliable: refetch the entire window to keep buckets and x-axis correct
-        fetchHistoricalData();
+        fetchHistoricalData({ silent: true, suppressToast: true });
       })
       .subscribe();
     

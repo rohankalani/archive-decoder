@@ -532,7 +532,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[0, 500]}
+                        domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.2))]}
                         label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
                       />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -565,7 +565,7 @@ export function DeviceDetail() {
                     <YAxis 
                       stroke="hsl(var(--muted-foreground))" 
                       fontSize={12}
-                      domain={[0, 500]}
+                      domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.2))]}
                       label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
                     />
                     <Legend />
@@ -623,13 +623,12 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.95)),
+                          0,
                           (dataMax: number) => {
-                            const ceiling = Math.ceil((dataMax ?? 10) * 1.05);
-                            if (environmentalParam === 'temperature') return Math.max(30, ceiling);
-                            if (environmentalParam === 'humidity') return Math.max(50, Math.min(100, ceiling));
-                            if (environmentalParam === 'co2') return Math.max(600, ceiling);
-                            return ceiling;
+                            if (environmentalParam === 'temperature') return Math.max(35, Math.ceil((dataMax ?? 20) * 1.15));
+                            if (environmentalParam === 'humidity') return Math.min(100, Math.max(70, Math.ceil((dataMax ?? 40) * 1.1)));
+                            if (environmentalParam === 'co2') return Math.max(1200, Math.ceil((dataMax ?? 400) * 1.15));
+                            return Math.ceil((dataMax ?? 10) * 1.1);
                           }
                         ]}
                         label={{ 
@@ -707,12 +706,8 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.95)),
-                          (dataMax: number) => {
-                            const ceiling = Math.ceil((dataMax ?? 1) * 1.05);
-                            if (pollutantParam === 'hcho') return Math.max(50, ceiling);
-                            return Math.max(10, ceiling);
-                          }
+                          0,
+                          (dataMax: number) => Math.ceil((dataMax ?? 1) * 1.3)
                         ]}
                         label={{ 
                           value: pollutantParam === 'voc' ? 'index' :
@@ -804,7 +799,7 @@ export function DeviceDetail() {
                         fontSize={12}
                         domain={[
                           0,
-                          (dataMax: number) => Math.max(50, Math.ceil((dataMax ?? 1) * 1.1))
+                          (dataMax: number) => Math.ceil((dataMax ?? 1) * 1.2)
                         ]}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
@@ -893,7 +888,7 @@ export function DeviceDetail() {
                         fontSize={12}
                         domain={[
                           0,
-                          (dataMax: number) => snapTopValue((dataMax ?? 1) * 1.1)
+                          (dataMax: number) => snapTopValue(Math.max((dataMax ?? 1000) * 1.1, 1000))
                         ]}
                         tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}

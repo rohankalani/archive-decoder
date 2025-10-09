@@ -274,7 +274,7 @@ export function DeviceDetail() {
                 status.color === 'success' ? 'text-success' : 
                 status.color === 'warning' ? 'text-warning' : 'text-destructive'
               }`}>
-                {deviceSensorData.aqi || '--'}
+                {deviceSensorData?.aqi ?? '--'}
               </div>
               <div className={`text-sm font-semibold ${
                 status.color === 'success' ? 'text-success' : 
@@ -299,14 +299,14 @@ export function DeviceDetail() {
                   <div className="text-sm text-muted-foreground">Temp</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold" style={{ color: deviceSensorData.humidity ? getHumidityColor(deviceSensorData.humidity) : 'hsl(var(--muted-foreground))' }}>
-                    {deviceSensorData.humidity ? Math.round(deviceSensorData.humidity) : '--'}%
+                  <div className="text-3xl font-bold" style={{ color: deviceSensorData?.humidity ? getHumidityColor(deviceSensorData?.humidity) : 'hsl(var(--muted-foreground))' }}>
+                    {deviceSensorData?.humidity ? Math.round(deviceSensorData?.humidity) : '--'}%
                   </div>
                   <div className="text-sm text-muted-foreground">Humidity</div>
                 </div>
                 <div className="text-center">
-                  <div className="text-3xl font-bold" style={{ color: deviceSensorData.co2 ? getCO2Color(deviceSensorData.co2) : 'hsl(var(--muted-foreground))' }}>
-                    {deviceSensorData.co2 ? Math.round(deviceSensorData.co2) : '--'}
+                  <div className="text-3xl font-bold" style={{ color: deviceSensorData?.co2 ? getCO2Color(deviceSensorData?.co2) : 'hsl(var(--muted-foreground))' }}>
+                    {deviceSensorData?.co2 ? Math.round(deviceSensorData?.co2) : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">CO₂ ppm</div>
                 </div>
@@ -325,48 +325,48 @@ export function DeviceDetail() {
                 <div className="text-center">
                   <div 
                     className="text-2xl font-bold" 
-                    style={{ color: deviceSensorData.voc ? (
-                      deviceSensorData.voc <= 100 ? getQualityColor('Good') :
-                      deviceSensorData.voc <= 200 ? getQualityColor('Moderate') :
-                      deviceSensorData.voc <= 300 ? getQualityColor('Unhealthy for Sensitive Groups') :
-                      deviceSensorData.voc <= 400 ? getQualityColor('Unhealthy') :
-                      deviceSensorData.voc <= 450 ? getQualityColor('Very Unhealthy') :
-                      getQualityColor('Hazardous')
-                    ) : 'hsl(var(--muted-foreground))' }}
+                     style={{ color: deviceSensorData?.voc ? (
+                       deviceSensorData?.voc <= 100 ? getQualityColor('Good') :
+                       deviceSensorData?.voc <= 200 ? getQualityColor('Moderate') :
+                       deviceSensorData?.voc <= 300 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                       deviceSensorData?.voc <= 400 ? getQualityColor('Unhealthy') :
+                       deviceSensorData?.voc <= 450 ? getQualityColor('Very Unhealthy') :
+                       getQualityColor('Hazardous')
+                     ) : 'hsl(var(--muted-foreground))' }}
                   >
-                    {deviceSensorData.voc ? Math.round(deviceSensorData.voc) : '--'}
+                    {deviceSensorData?.voc ? Math.round(deviceSensorData?.voc) : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">VOC (index)</div>
                 </div>
                 <div className="text-center">
                   <div 
                     className="text-2xl font-bold" 
-                    style={{ color: deviceSensorData.hcho ? (
-                      deviceSensorData.hcho <= 30 ? getQualityColor('Good') :
-                      deviceSensorData.hcho <= 80 ? getQualityColor('Moderate') :
-                      deviceSensorData.hcho <= 120 ? getQualityColor('Unhealthy for Sensitive Groups') :
-                      deviceSensorData.hcho <= 200 ? getQualityColor('Unhealthy') :
-                      deviceSensorData.hcho <= 300 ? getQualityColor('Very Unhealthy') :
-                      getQualityColor('Hazardous')
-                    ) : 'hsl(var(--muted-foreground))' }}
+                     style={{ color: deviceSensorData?.hcho ? (
+                       deviceSensorData?.hcho <= 30 ? getQualityColor('Good') :
+                       deviceSensorData?.hcho <= 80 ? getQualityColor('Moderate') :
+                       deviceSensorData?.hcho <= 120 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                       deviceSensorData?.hcho <= 200 ? getQualityColor('Unhealthy') :
+                       deviceSensorData?.hcho <= 300 ? getQualityColor('Very Unhealthy') :
+                       getQualityColor('Hazardous')
+                     ) : 'hsl(var(--muted-foreground))' }}
                   >
-                    {deviceSensorData.hcho ? Math.round(deviceSensorData.hcho) : '--'}
+                    {deviceSensorData?.hcho ? Math.round(deviceSensorData?.hcho) : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">HCHO (ppb)</div>
                 </div>
                 <div className="text-center">
                   <div 
                     className="text-2xl font-bold" 
-                    style={{ color: deviceSensorData.nox ? (
-                      deviceSensorData.nox <= 100 ? getQualityColor('Good') :
-                      deviceSensorData.nox <= 200 ? getQualityColor('Moderate') :
-                      deviceSensorData.nox <= 300 ? getQualityColor('Unhealthy for Sensitive Groups') :
-                      deviceSensorData.nox <= 400 ? getQualityColor('Unhealthy') :
-                      deviceSensorData.nox <= 450 ? getQualityColor('Very Unhealthy') :
-                      getQualityColor('Hazardous')
-                    ) : 'hsl(var(--muted-foreground))' }}
+                     style={{ color: deviceSensorData?.nox ? (
+                       deviceSensorData?.nox <= 100 ? getQualityColor('Good') :
+                       deviceSensorData?.nox <= 200 ? getQualityColor('Moderate') :
+                       deviceSensorData?.nox <= 300 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                       deviceSensorData?.nox <= 400 ? getQualityColor('Unhealthy') :
+                       deviceSensorData?.nox <= 450 ? getQualityColor('Very Unhealthy') :
+                       getQualityColor('Hazardous')
+                     ) : 'hsl(var(--muted-foreground))' }}
                   >
-                    {deviceSensorData.nox ? Math.round(deviceSensorData.nox) : '--'}
+                    {deviceSensorData?.nox ? Math.round(deviceSensorData?.nox) : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">NOx (index)</div>
                 </div>
@@ -397,12 +397,12 @@ export function DeviceDetail() {
                 <div className="text-center">
                   <div 
                     className="text-lg font-bold" 
-                    style={{ color: deviceSensorData.pm25 ? (
-                      deviceSensorData.pm25 <= 50.4 ? getQualityColor('Good') :
-                      deviceSensorData.pm25 <= 60.4 ? getQualityColor('Moderate') :
-                      deviceSensorData.pm25 <= 75.4 ? getQualityColor('Unhealthy for Sensitive Groups') :
-                      deviceSensorData.pm25 <= 150.4 ? getQualityColor('Unhealthy') :
-                      deviceSensorData.pm25 <= 250.4 ? getQualityColor('Very Unhealthy') :
+                    style={{ color: deviceSensorData?.pm25 ? (
+                      deviceSensorData?.pm25 <= 50.4 ? getQualityColor('Good') :
+                      deviceSensorData?.pm25 <= 60.4 ? getQualityColor('Moderate') :
+                      deviceSensorData?.pm25 <= 75.4 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                      deviceSensorData?.pm25 <= 150.4 ? getQualityColor('Unhealthy') :
+                      deviceSensorData?.pm25 <= 250.4 ? getQualityColor('Very Unhealthy') :
                       getQualityColor('Hazardous')
                     ) : 'hsl(var(--muted-foreground))' }}
                   >
@@ -419,12 +419,12 @@ export function DeviceDetail() {
                 <div className="text-center">
                   <div 
                     className="text-lg font-bold" 
-                    style={{ color: deviceSensorData.pm10 ? (
-                      deviceSensorData.pm10 <= 75.0 ? getQualityColor('Good') :
-                      deviceSensorData.pm10 <= 150.0 ? getQualityColor('Moderate') :
-                      deviceSensorData.pm10 <= 250.0 ? getQualityColor('Unhealthy for Sensitive Groups') :
-                      deviceSensorData.pm10 <= 350.0 ? getQualityColor('Unhealthy') :
-                      deviceSensorData.pm10 <= 420.0 ? getQualityColor('Very Unhealthy') :
+                    style={{ color: deviceSensorData?.pm10 ? (
+                      deviceSensorData?.pm10 <= 75.0 ? getQualityColor('Good') :
+                      deviceSensorData?.pm10 <= 150.0 ? getQualityColor('Moderate') :
+                      deviceSensorData?.pm10 <= 250.0 ? getQualityColor('Unhealthy for Sensitive Groups') :
+                      deviceSensorData?.pm10 <= 350.0 ? getQualityColor('Unhealthy') :
+                      deviceSensorData?.pm10 <= 420.0 ? getQualityColor('Very Unhealthy') :
                       getQualityColor('Hazardous')
                     ) : 'hsl(var(--muted-foreground))' }}
                   >
@@ -444,37 +444,37 @@ export function DeviceDetail() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pc03 ? Math.round(deviceSensorData.pc03).toLocaleString() : '--'}
+                    {deviceSensorData?.pc03 ? Math.round(deviceSensorData?.pc03).toLocaleString() : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PC0.3</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pc05 ? Math.round(deviceSensorData.pc05).toLocaleString() : '--'}
+                    {deviceSensorData?.pc05 ? Math.round(deviceSensorData?.pc05).toLocaleString() : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PC0.5</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pc1 ? Math.round(deviceSensorData.pc1).toLocaleString() : '--'}
+                    {deviceSensorData?.pc1 ? Math.round(deviceSensorData?.pc1).toLocaleString() : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PC1</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pc25 ? Math.round(deviceSensorData.pc25).toLocaleString() : '--'}
+                    {deviceSensorData?.pc25 ? Math.round(deviceSensorData?.pc25).toLocaleString() : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PC2.5</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pc5 ? Math.round(deviceSensorData.pc5).toLocaleString() : '--'}
+                    {deviceSensorData?.pc5 ? Math.round(deviceSensorData?.pc5).toLocaleString() : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PC5</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pc10 ? Math.round(deviceSensorData.pc10).toLocaleString() : '--'}
+                    {deviceSensorData?.pc10 ? Math.round(deviceSensorData?.pc10).toLocaleString() : '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PC10</div>
                 </div>

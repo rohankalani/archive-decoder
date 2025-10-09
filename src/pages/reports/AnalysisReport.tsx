@@ -24,18 +24,40 @@ export default function AnalysisReport() {
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const { data, isLoading, error } = useEnhancedReportData(startDate, endDate, false);
+  const { data, isLoading, error, refetch } = useEnhancedReportData(startDate, endDate, false);
 
   if (isLoading) {
-    return <InlineLoader text="Loading analysis..." />;
+    return (
+      <div className="container mx-auto p-6">
+        <InlineLoader text="Loading analysis..." />
+      </div>
+    );
   }
 
   if (error) {
-    return <ErrorDisplay error={error} variant="inline" />;
+    return (
+      <div className="container mx-auto p-6">
+        <ErrorDisplay 
+          error={error} 
+          variant="inline"
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </div>
+    );
   }
 
   if (!data) {
-    return <ErrorDisplay error={new Error('No data available')} variant="inline" />;
+    return (
+      <div className="container mx-auto p-6">
+        <ErrorDisplay 
+          error={new Error('No data available')} 
+          variant="inline"
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </div>
+    );
   }
 
   const avgCO2 = data.co2Trends.length > 0

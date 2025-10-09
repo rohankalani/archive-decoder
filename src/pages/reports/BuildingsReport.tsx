@@ -21,18 +21,40 @@ export default function BuildingsReport() {
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const { data, isLoading, error } = useSimplifiedReportData(startDate, endDate);
+  const { data, isLoading, error, refetch } = useSimplifiedReportData(startDate, endDate);
 
   if (isLoading) {
-    return <InlineLoader text="Loading buildings data..." />;
+    return (
+      <Layout>
+        <InlineLoader text="Loading buildings data..." />
+      </Layout>
+    );
   }
 
   if (error) {
-    return <ErrorDisplay error={error} variant="inline" />;
+    return (
+      <Layout>
+        <ErrorDisplay 
+          error={error} 
+          variant="inline" 
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </Layout>
+    );
   }
 
   if (!data) {
-    return <ErrorDisplay error={new Error('No data available')} variant="inline" />;
+    return (
+      <Layout>
+        <ErrorDisplay 
+          error={new Error('No data available')} 
+          variant="inline"
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </Layout>
+    );
   }
 
   const goodBuildings = data.buildings.filter(b => b.status === 'good').length;

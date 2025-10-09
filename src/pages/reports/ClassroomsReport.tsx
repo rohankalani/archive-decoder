@@ -20,18 +20,40 @@ export default function ClassroomsReport() {
   });
   const [endDate, setEndDate] = useState(new Date());
 
-  const { data, isLoading, error } = useSimplifiedReportData(startDate, endDate);
+  const { data, isLoading, error, refetch } = useSimplifiedReportData(startDate, endDate);
 
   if (isLoading) {
-    return <InlineLoader text="Loading classrooms data..." />;
+    return (
+      <div className="container mx-auto p-6">
+        <InlineLoader text="Loading classrooms data..." />
+      </div>
+    );
   }
 
   if (error) {
-    return <ErrorDisplay error={error} variant="inline" />;
+    return (
+      <div className="container mx-auto p-6">
+        <ErrorDisplay 
+          error={error} 
+          variant="inline"
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </div>
+    );
   }
 
   if (!data) {
-    return <ErrorDisplay error={new Error('No data available')} variant="inline" />;
+    return (
+      <div className="container mx-auto p-6">
+        <ErrorDisplay 
+          error={new Error('No data available')} 
+          variant="inline"
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </div>
+    );
   }
 
   const goodClassrooms = data.classrooms.filter(c => c.aqi <= 50).length;

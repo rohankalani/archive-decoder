@@ -5,6 +5,7 @@ import { SettingsProvider } from '@/contexts/SettingsContext'
 import { Toaster } from '@/components/ui/sonner'
 import { ProtectedRoute } from '@/components/ProtectedRoute'
 import { InlineLoader } from '@/components/LoadingSpinner'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import Auth from '@/pages/Auth'
 import { BuildingView } from '@/pages/BuildingView'
 import { DeviceView } from '@/pages/DeviceView'
@@ -90,9 +91,11 @@ function App() {
               path="/reports/summary"
               element={
                 <ProtectedRoute>
-                  <Suspense fallback={<InlineLoader text="Loading summary report..." />}>
-                    <SummaryReport />
-                  </Suspense>
+                  <ErrorBoundary>
+                    <Suspense fallback={<InlineLoader text="Loading summary report..." />}>
+                      <SummaryReport />
+                    </Suspense>
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -100,9 +103,11 @@ function App() {
               path="/reports/buildings"
               element={
                 <ProtectedRoute>
-                  <Suspense fallback={<InlineLoader text="Loading buildings report..." />}>
-                    <BuildingsReport />
-                  </Suspense>
+                  <ErrorBoundary>
+                    <Suspense fallback={<InlineLoader text="Loading buildings report..." />}>
+                      <BuildingsReport />
+                    </Suspense>
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -110,9 +115,11 @@ function App() {
               path="/reports/classrooms"
               element={
                 <ProtectedRoute>
-                  <Suspense fallback={<InlineLoader text="Loading classrooms report..." />}>
-                    <ClassroomsReport />
-                  </Suspense>
+                  <ErrorBoundary>
+                    <Suspense fallback={<InlineLoader text="Loading classrooms report..." />}>
+                      <ClassroomsReport />
+                    </Suspense>
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />
@@ -120,9 +127,11 @@ function App() {
               path="/reports/analysis"
               element={
                 <ProtectedRoute>
-                  <Suspense fallback={<InlineLoader text="Loading analysis report..." />}>
-                    <AnalysisReport />
-                  </Suspense>
+                  <ErrorBoundary>
+                    <Suspense fallback={<InlineLoader text="Loading analysis report..." />}>
+                      <AnalysisReport />
+                    </Suspense>
+                  </ErrorBoundary>
                 </ProtectedRoute>
               }
             />

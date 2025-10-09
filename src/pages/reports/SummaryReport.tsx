@@ -33,7 +33,7 @@ export default function SummaryReport() {
     return date;
   });
 
-  const { data, isLoading, error } = useEnhancedReportData(startDate, endDate, false);
+  const { data, isLoading, error, refetch } = useEnhancedReportData(startDate, endDate, false);
 
   console.log('📊 SummaryReport state:', { isLoading, hasError: !!error, hasData: !!data });
 
@@ -49,15 +49,37 @@ export default function SummaryReport() {
   }
 
   if (isLoading) {
-    return <InlineLoader text="Loading summary..." />;
+    return (
+      <div className="container mx-auto p-6">
+        <InlineLoader text="Loading summary..." />
+      </div>
+    );
   }
 
   if (error) {
-    return <ErrorDisplay error={error} variant="inline" />;
+    return (
+      <div className="container mx-auto p-6">
+        <ErrorDisplay 
+          error={error} 
+          variant="inline"
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </div>
+    );
   }
 
   if (!data) {
-    return <ErrorDisplay error={new Error('No data available')} variant="inline" />;
+    return (
+      <div className="container mx-auto p-6">
+        <ErrorDisplay 
+          error={new Error('No data available')} 
+          variant="inline"
+          onRetry={refetch}
+          onGoHome={() => navigate('/reports')}
+        />
+      </div>
+    );
   }
 
   const performanceScore = Math.round(

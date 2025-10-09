@@ -98,6 +98,19 @@ export function DeviceDetail() {
     return getAqiColor(aqi);
   };
 
+  // Helper functions for Y-axis scaling
+  const formatCompact = (value: number) => {
+    if (value >= 1_000_000) return `${(value / 1_000_000).toFixed(1)}M`;
+    if (value >= 1_000) return `${(value / 1_000).toFixed(1)}K`;
+    return value.toString();
+  };
+
+  const snapTopValue = (max: number) => {
+    const padded = (max || 1) * 1.2;
+    const steps = [1e3, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9];
+    return steps.find(s => padded <= s) ?? 1e9;
+  };
+
   // Additional AQI calculation functions for missing parameters
   const calculatePMAqi = (value: number, type: string) => {
     // Simple AQI calculation for PM parameters not covered
@@ -622,11 +635,18 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={
-                          environmentalParam === 'temperature' ? [0, 50] :
-                          environmentalParam === 'humidity' ? [0, 100] :
-                          [0, 2000]
-                        }
+                        domain={[
+                          (dataMin: number) => {
+                            if (environmentalParam === 'co2') return Math.max(400, Math.floor((dataMin || 400) * 0.9));
+                            if (environmentalParam === 'humidity') return Math.max(0, Math.floor((dataMin ?? 0) * 0.9));
+                            return Math.floor((dataMin ?? 0) * 0.9);
+                          },
+                          (dataMax: number) => {
+                            if (environmentalParam === 'co2') return Math.max(600, Math.ceil((dataMax || 600) * 1.1));
+                            if (environmentalParam === 'humidity') return Math.min(100, Math.ceil((dataMax ?? 100) * 1.1));
+                            return Math.max(10, Math.ceil((dataMax ?? 10) * 1.1));
+                          }
+                        ]}
                         label={{ 
                           value: environmentalParam === 'temperature' ? '°C' :
                                  environmentalParam === 'humidity' ? '%' :
@@ -701,11 +721,14 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={
-                          pollutantParam === 'voc' ? [0, 10] :
-                          pollutantParam === 'hcho' ? [0, 500] :
-                          [0, 10]
-                        }
+                        domain={[
+                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.9)),
+                          (dataMax: number) => {
+                            const base = Math.ceil((dataMax ?? 1) * 1.2);
+                            if (pollutantParam === 'hcho') return Math.max(base, 50);
+                            return Math.max(base, 10);
+                          }
+                        ]}
                         label={{ 
                           value: pollutantParam === 'voc' ? 'index' :
                                  pollutantParam === 'hcho' ? 'ppb' :
@@ -794,7 +817,10 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[0, 500]}
+                        domain={[
+                          0,
+                          (dataMax: number) => Math.max(50, Math.ceil((dataMax ?? 1) * 1.2))
+                        ]}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
                       <Bar 
@@ -880,13 +906,11 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        scale="log"
-                        domain={[1, 1000000000]}
-                        tickFormatter={(value) => {
-                          if (value >= 1000000) return `${(value / 1000000).toFixed(0)}M`;
-                          if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
-                          return value.toString();
-                        }}
+                        domain={[
+                          0,
+                          (dataMax: number) => snapTopValue(dataMax)
+                        ]}
+                        tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}
                       />
                       <Bar 

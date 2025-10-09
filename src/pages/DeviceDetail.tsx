@@ -562,7 +562,12 @@ export function DeviceDetail() {
                       fontSize={10}
                       interval="preserveStartEnd"
                     />
-                    <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                    <YAxis 
+                      stroke="hsl(var(--muted-foreground))" 
+                      fontSize={12}
+                      domain={[0, 500]}
+                      label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
+                    />
                     <Legend />
                     <Line type="monotone" dataKey="overallAqi" stroke="hsl(var(--primary))" strokeWidth={2} name="Overall AQI" isAnimationActive={false} />
                     <Line type="monotone" dataKey="pm25Aqi" stroke="hsl(var(--destructive))" strokeWidth={1} name="PM2.5" isAnimationActive={false} />
@@ -614,7 +619,22 @@ export function DeviceDetail() {
                     <BarChart data={generateChartData.environmental}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))" 
+                        fontSize={12}
+                        domain={
+                          environmentalParam === 'temperature' ? [0, 50] :
+                          environmentalParam === 'humidity' ? [0, 100] :
+                          [0, 2000]
+                        }
+                        label={{ 
+                          value: environmentalParam === 'temperature' ? '°C' :
+                                 environmentalParam === 'humidity' ? '%' :
+                                 'ppm',
+                          angle: -90, 
+                          position: 'insideLeft' 
+                        }}
+                      />
                       <Bar 
                         dataKey={environmentalParam} 
                         radius={[4, 4, 0, 0]} 
@@ -678,7 +698,22 @@ export function DeviceDetail() {
                     <BarChart data={generateChartData.pollutants}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))" 
+                        fontSize={12}
+                        domain={
+                          pollutantParam === 'voc' ? [0, 10] :
+                          pollutantParam === 'hcho' ? [0, 500] :
+                          [0, 10]
+                        }
+                        label={{ 
+                          value: pollutantParam === 'voc' ? 'index' :
+                                 pollutantParam === 'hcho' ? 'ppb' :
+                                 'index',
+                          angle: -90, 
+                          position: 'insideLeft' 
+                        }}
+                      />
                       <Bar 
                         dataKey={pollutantParam} 
                         radius={[4, 4, 0, 0]} 
@@ -756,7 +791,12 @@ export function DeviceDetail() {
                     <BarChart data={generateChartData.particulateMass}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))" 
+                        fontSize={12}
+                        domain={[0, 500]}
+                        label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
+                      />
                       <Bar 
                         dataKey={pmMassParam} 
                         radius={[4, 4, 0, 0]} 
@@ -837,7 +877,18 @@ export function DeviceDetail() {
                     <BarChart data={generateChartData.particulateCount}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
-                      <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
+                      <YAxis 
+                        stroke="hsl(var(--muted-foreground))" 
+                        fontSize={12}
+                        scale="log"
+                        domain={[1, 1000000000]}
+                        tickFormatter={(value) => {
+                          if (value >= 1000000) return `${(value / 1000000).toFixed(0)}M`;
+                          if (value >= 1000) return `${(value / 1000).toFixed(0)}K`;
+                          return value.toString();
+                        }}
+                        label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}
+                      />
                       <Bar 
                         dataKey={pmCountParam} 
                         radius={[4, 4, 0, 0]} 

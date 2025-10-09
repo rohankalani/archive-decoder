@@ -84,104 +84,84 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
         .select('sensor_type, value, timestamp')
         .eq('device_id', deviceId)
         .gte('timestamp', startTime.toISOString())
+        .lte('timestamp', new Date().toISOString())
         .order('timestamp', { ascending: true });
 
       if (error) throw error;
 
-      // Group readings by time intervals and calculate averages
+      // Group readings by time intervals and calculate averages (O(N))
       const averagedData: AveragedSensorData[] = [];
-      
+
+      // Pre-initialize buckets
+      const buckets: { sums: Record<string, number>; counts: Record<string, number>; ts: number }[] = Array.from({ length: intervals }, (_, i) => ({
+        sums: {},
+        counts: {},
+        ts: startTime.getTime() + i * intervalDuration,
+      }));
+
+      const startMs = startTime.getTime();
+
+      (readings || []).forEach((reading) => {
+        const t = new Date(reading.timestamp).getTime();
+        const idx = Math.floor((t - startMs) / intervalDuration);
+        if (idx >= 0 && idx < intervals) {
+          const bucket = buckets[idx];
+          const key = reading.sensor_type;
+          bucket.sums[key] = (bucket.sums[key] || 0) + reading.value;
+          bucket.counts[key] = (bucket.counts[key] || 0) + 1;
+        }
+      });
+
+      // Build averaged data per bucket
       for (let i = 0; i < intervals; i++) {
-        const intervalStart = new Date(startTime.getTime() + i * intervalDuration);
-        const intervalEnd = new Date(intervalStart.getTime() + intervalDuration);
-        
-        // Filter readings within this interval
-        const intervalReadings = readings?.filter(reading => {
-          const readingTime = new Date(reading.timestamp);
-          return readingTime >= intervalStart && readingTime < intervalEnd;
-        }) || [];
-
-        // Group by sensor type and calculate averages
-        const sensorAverages: Record<string, number> = {};
-        const sensorCounts: Record<string, number> = {};
-        
-        intervalReadings.forEach(reading => {
-          if (!sensorAverages[reading.sensor_type]) {
-            sensorAverages[reading.sensor_type] = 0;
-            sensorCounts[reading.sensor_type] = 0;
-          }
-          sensorAverages[reading.sensor_type] += reading.value;
-          sensorCounts[reading.sensor_type]++;
-        });
-
-        // Calculate final averages
+        const b = buckets[i];
         const averaged: AveragedSensorData = {
-          timestamp: intervalStart.toISOString()
+          timestamp: new Date(b.ts).toISOString(),
         };
-
-        Object.keys(sensorAverages).forEach(sensorType => {
-          const avgValue = sensorAverages[sensorType] / sensorCounts[sensorType];
+        Object.keys(b.sums).forEach((sensorType) => {
+          const avgValue = b.sums[sensorType] / (b.counts[sensorType] || 1);
           switch (sensorType) {
             case 'pm03':
-              averaged.pm03 = avgValue;
-              break;
+              averaged.pm03 = avgValue; break;
             case 'pm1':
-              averaged.pm1 = avgValue;
-              break;
+              averaged.pm1 = avgValue; break;
             case 'pm25':
-              averaged.pm25 = avgValue;
-              break;
+              averaged.pm25 = avgValue; break;
             case 'pm5':
-              averaged.pm5 = avgValue;
-              break;
+              averaged.pm5 = avgValue; break;
             case 'pm10':
-              averaged.pm10 = avgValue;
-              break;
+              averaged.pm10 = avgValue; break;
             case 'co2':
-              averaged.co2 = avgValue;
-              break;
+              averaged.co2 = avgValue; break;
             case 'temperature':
-              averaged.temperature = avgValue;
-              break;
+              averaged.temperature = avgValue; break;
             case 'humidity':
-              averaged.humidity = avgValue;
-              break;
+              averaged.humidity = avgValue; break;
             case 'voc':
-              averaged.voc = avgValue;
-              break;
+              averaged.voc = avgValue; break;
             case 'hcho':
-              averaged.hcho = avgValue;
-              break;
+              averaged.hcho = avgValue; break;
             case 'nox':
-              averaged.nox = avgValue;
-              break;
+              averaged.nox = avgValue; break;
             case 'no2':
-              averaged.no2 = avgValue;
-              break;
+              averaged.no2 = avgValue; break;
             case 'pc03':
-              averaged.pc03 = avgValue;
-              break;
+              averaged.pc03 = avgValue; break;
             case 'pc05':
-              averaged.pc05 = avgValue;
-              break;
+              averaged.pc05 = avgValue; break;
             case 'pc1':
-              averaged.pc1 = avgValue;
-              break;
+              averaged.pc1 = avgValue; break;
             case 'pc25':
-              averaged.pc25 = avgValue;
-              break;
+              averaged.pc25 = avgValue; break;
             case 'pc5':
-              averaged.pc5 = avgValue;
-              break;
+              averaged.pc5 = avgValue; break;
             case 'pc10':
-              averaged.pc10 = avgValue;
-              break;
+              averaged.pc10 = avgValue; break;
           }
         });
-
         averagedData.push(averaged);
       }
-      
+
       setData(averagedData);
     } catch (error) {
       console.error('Error fetching historical sensor data:', error);

@@ -3,9 +3,9 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/Layout';
-import { useLiveSensorData } from '@/hooks/useLiveSensorData';
+import { useDeviceLiveSnapshot } from '@/hooks/useDeviceLiveSnapshot';
 import { useHistoricalSensorData, TimePeriod } from '@/hooks/useHistoricalSensorData';
-import { useLiveTimeseriesData } from '@/hooks/useLiveTimeseriesData';
+
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -41,7 +41,7 @@ export function DeviceDetail() {
   const [pmMassParam, setPmMassParam] = useState<'pm03' | 'pm1' | 'pm25' | 'pm5' | 'pm10'>('pm25');
   const [pmCountParam, setPmCountParam] = useState<'pc03' | 'pc05' | 'pc1' | 'pc25' | 'pc5' | 'pc10'>('pc25');
   
-  const { sensorData, loading: sensorLoading } = useLiveSensorData();
+  const { sensor, loading: sensorLoading } = useDeviceLiveSnapshot(deviceId || '');
   
   // Always use historical data, update in real-time via subscription
   const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(
@@ -61,7 +61,7 @@ export function DeviceDetail() {
   }, [historicalData]);
 
   const device = devices.find(d => d.id === deviceId);
-  const deviceSensorData = sensorData.find(s => s.device_id === deviceId);
+  const deviceSensorData = sensor;
   const floor = device ? floors.find(f => f.id === device.floor_id) : null;
   const floorLocation = floor ? getFloorLocation(floor) : null;
 
@@ -118,7 +118,7 @@ export function DeviceDetail() {
 
   // Generate chart data with AQI calculations and color coding
   const generateChartData = useMemo(() => {
-    if (!deviceSensorData) {
+    if (!historicalData || historicalData.length === 0) {
       return { 
         aqi: [],
         environmental: [],

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/Layout';
 import { useLiveSensorData } from '@/hooks/useLiveSensorData';
 import { useHistoricalSensorData, TimePeriod } from '@/hooks/useHistoricalSensorData';
+import { useLiveTimeseriesData } from '@/hooks/useLiveTimeseriesData';
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
 import { useSettings } from '@/contexts/SettingsContext';
@@ -41,17 +42,30 @@ export function DeviceDetail() {
   const [pmCountParam, setPmCountParam] = useState<'pc03' | 'pc05' | 'pc1' | 'pc25' | 'pc5' | 'pc10'>('pc25');
   
   const { sensorData, loading: sensorLoading } = useLiveSensorData();
-  const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(deviceId || '', timePeriod);
+  
+  // Use live timeseries for 10min, historical for others
+  const isLiveMode = timePeriod === '10min';
+  const { series: liveSeries, loading: liveLoading, lastUpdate: liveLastUpdate } = useLiveTimeseriesData(
+    deviceId || '',
+    { windowMs: 10 * 60 * 1000, bucketMs: 10 * 1000 }
+  );
+  const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(
+    deviceId || '',
+    timePeriod,
+  );
+  
   const { devices, loading: devicesLoading } = useDevices();
   const { floors, getFloorLocation } = useLocations();
   const { getQualityFromAqi, getQualityColor, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi } = useSettings();
 
-  // Update timestamp when historical data changes
+  // Update timestamp when data changes
   React.useEffect(() => {
-    if (historicalData.length > 0) {
+    if (isLiveMode && liveSeries.length > 0) {
+      setLastUpdate(liveLastUpdate);
+    } else if (historicalData.length > 0) {
       setLastUpdate(new Date());
     }
-  }, [historicalData]);
+  }, [isLiveMode, liveSeries, liveLastUpdate, historicalData]);
 
   const device = devices.find(d => d.id === deviceId);
   const deviceSensorData = sensorData.find(s => s.device_id === deviceId);
@@ -111,7 +125,7 @@ export function DeviceDetail() {
 
   // Generate chart data with AQI calculations and color coding
   const generateChartData = useMemo(() => {
-    if (!historicalData.length || !deviceSensorData) {
+    if (!deviceSensorData) {
       return { 
         aqi: [],
         environmental: [],
@@ -122,8 +136,21 @@ export function DeviceDetail() {
       };
     }
 
-    // Generate deterministic data using the new utility function
-    const processedData = generateDeterministicSensorData(historicalData, deviceSensorData, timePeriod);
+    // Use live series for 10min, historical processing for others
+    const processedData = isLiveMode 
+      ? liveSeries 
+      : generateDeterministicSensorData(historicalData, deviceSensorData, timePeriod);
+
+    if (!processedData.length) {
+      return { 
+        aqi: [],
+        environmental: [],
+        pollutants: [],
+        particulateMass: [],
+        particulateCount: [],
+        bar: [] 
+      };
+    }
 
     // Calculate average AQI data using the new utility function
     const avgAqiData = calculateAverageAqiData(processedData);
@@ -170,7 +197,7 @@ export function DeviceDetail() {
       particulateCount: processedData,
       bar: barData 
     };
-  }, [historicalData, deviceSensorData, timePeriod]);
+  }, [isLiveMode, liveSeries, historicalData, deviceSensorData, timePeriod]);
 
   // Debug particle count data
   console.log('Particle Count Debug:', {
@@ -504,18 +531,18 @@ export function DeviceDetail() {
             </div>
           </div>
 
-          {/* Loading overlay for charts */}
+          {/* Loading overlay for charts - only on initial load */}
           <div className="relative">
-            {historicalLoading && (
+            {((isLiveMode && liveLoading) || (!isLiveMode && historicalLoading)) && (
               <div className="absolute inset-0 flex items-center justify-center z-10 bg-background/50 backdrop-blur-sm rounded-lg">
                 <div className="flex items-center gap-2">
                   <Activity className="h-5 w-5 animate-spin" />
-                  <span className="text-sm">Updating charts...</span>
+                  <span className="text-sm">Loading charts...</span>
                 </div>
               </div>
             )}
 
-            <div className={cn(historicalLoading && "opacity-50 pointer-events-none")}>
+            <div className={cn(((isLiveMode && liveLoading) || (!isLiveMode && historicalLoading)) && "opacity-50 pointer-events-none")}>
               {/* Key Pollutants Bar Chart - Average AQI for selected time period */}
               <Card>
             <CardHeader>
@@ -556,7 +583,7 @@ export function DeviceDetail() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={generateChartData.aqi}>
+                    <LineChart data={generateChartData.aqi}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="time" 
@@ -566,12 +593,12 @@ export function DeviceDetail() {
                     />
                     <YAxis stroke="hsl(var(--muted-foreground))" fontSize={12} />
                     <Legend />
-                    <Line type="monotone" dataKey="overallAqi" stroke="hsl(var(--primary))" strokeWidth={2} name="Overall AQI" />
-                    <Line type="monotone" dataKey="pm25Aqi" stroke="hsl(var(--destructive))" strokeWidth={1} name="PM2.5" />
-                    <Line type="monotone" dataKey="pm10Aqi" stroke="hsl(var(--warning))" strokeWidth={1} name="PM10" />
-                    <Line type="monotone" dataKey="vocAqi" stroke="hsl(var(--success))" strokeWidth={1} name="VOC" />
-                    <Line type="monotone" dataKey="hchoAqi" stroke="hsl(var(--accent))" strokeWidth={1} name="HCHO" />
-                    <Line type="monotone" dataKey="noxAqi" stroke="hsl(var(--muted-foreground))" strokeWidth={1} name="NOx" />
+                    <Line type="monotone" dataKey="overallAqi" stroke="hsl(var(--primary))" strokeWidth={2} name="Overall AQI" isAnimationActive={false} />
+                    <Line type="monotone" dataKey="pm25Aqi" stroke="hsl(var(--destructive))" strokeWidth={1} name="PM2.5" isAnimationActive={false} />
+                    <Line type="monotone" dataKey="pm10Aqi" stroke="hsl(var(--warning))" strokeWidth={1} name="PM10" isAnimationActive={false} />
+                    <Line type="monotone" dataKey="vocAqi" stroke="hsl(var(--success))" strokeWidth={1} name="VOC" isAnimationActive={false} />
+                    <Line type="monotone" dataKey="hchoAqi" stroke="hsl(var(--accent))" strokeWidth={1} name="HCHO" isAnimationActive={false} />
+                    <Line type="monotone" dataKey="noxAqi" stroke="hsl(var(--muted-foreground))" strokeWidth={1} name="NOx" isAnimationActive={false} />
                   </LineChart>
                 </ResponsiveContainer>
               </div>

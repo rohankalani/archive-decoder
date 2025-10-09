@@ -188,31 +188,55 @@ export function generateDeterministicSensorData(
 ): ProcessedChartData[] {
   if (!historicalData.length) return [];
 
+  const UAE_TZ = 'Asia/Dubai';
+
   return historicalData.map((item) => {
     const time = new Date(item.timestamp);
     
-    // Format timestamp based on period - using ACTUAL database timestamp
+    // Format timestamp based on period using UAE timezone
     let timeLabel: string;
-    const hours = time.getHours();
-    const minutes = time.getMinutes();
     
     switch (timePeriod) {
       case '10min':
-        timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${time.getSeconds().toString().padStart(2, '0')}`;
+        timeLabel = time.toLocaleTimeString('en-GB', {
+          hour12: false,
+          timeZone: UAE_TZ,
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
         break;
       case '1hr':
-        timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        timeLabel = time.toLocaleTimeString('en-GB', {
+          hour12: false,
+          timeZone: UAE_TZ,
+          hour: '2-digit',
+          minute: '2-digit'
+        });
         break;
       case '8hr':
-        const month = time.toLocaleDateString('en-US', { month: 'short' });
-        const day = time.getDate();
-        timeLabel = `${month} ${day}, ${hours.toString().padStart(2, '0')}:00`;
+        timeLabel = time.toLocaleString('en-GB', {
+          timeZone: UAE_TZ,
+          month: 'short',
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
         break;
       case '24hr':
-        timeLabel = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+        timeLabel = time.toLocaleDateString('en-GB', {
+          timeZone: UAE_TZ,
+          month: 'short',
+          day: 'numeric'
+        });
         break;
       default:
-        timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+        timeLabel = time.toLocaleTimeString('en-GB', {
+          hour12: false,
+          timeZone: UAE_TZ,
+          hour: '2-digit',
+          minute: '2-digit'
+        });
     }
     
     // Use ACTUAL sensor values from database (no synthetic data)

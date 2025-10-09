@@ -216,23 +216,62 @@ export function useLiveTimeseriesData(
     };
 
     existing.count++;
-    existing.pm25 += reading.value || 0;
-    existing.pm10 += reading.pm10 || 0;
-    existing.pm03 += reading.pm03 || 0;
-    existing.pm1 += reading.pm1 || 0;
-    existing.pm5 += reading.pm5 || 0;
-    existing.temperature += reading.temperature || 0;
-    existing.humidity += reading.humidity || 0;
-    existing.co2 += reading.co2 || 400;
-    existing.voc += reading.voc || 0;
-    existing.hcho += reading.hcho || 0;
-    existing.nox += reading.nox || 0;
-    existing.pc03 += reading.pc03 || 0;
-    existing.pc05 += reading.pc05 || 0;
-    existing.pc1 += reading.pc1 || 0;
-    existing.pc25 += reading.pc25 || 0;
-    existing.pc5 += reading.pc5 || 0;
-    existing.pc10 += reading.pc10 || 0;
+
+    switch (reading.sensor_type) {
+      case 'pm25':
+        existing.pm25 += reading.value || 0;
+        break;
+      case 'pm10':
+        existing.pm10 += reading.value || 0;
+        break;
+      case 'pm03':
+        existing.pm03 += reading.value || 0;
+        break;
+      case 'pm1':
+        existing.pm1 += reading.value || 0;
+        break;
+      case 'pm5':
+        existing.pm5 += reading.value || 0;
+        break;
+      case 'temperature':
+        existing.temperature += reading.value || 0;
+        break;
+      case 'humidity':
+        existing.humidity += reading.value || 0;
+        break;
+      case 'co2':
+        existing.co2 += reading.value || 0;
+        break;
+      case 'voc':
+        existing.voc += reading.value || 0;
+        break;
+      case 'hcho':
+        existing.hcho += reading.value || 0;
+        break;
+      case 'nox':
+        existing.nox += reading.value || 0;
+        break;
+      case 'pc03':
+        existing.pc03 += reading.value || 0;
+        break;
+      case 'pc05':
+        existing.pc05 += reading.value || 0;
+        break;
+      case 'pc1':
+        existing.pc1 += reading.value || 0;
+        break;
+      case 'pc25':
+        existing.pc25 += reading.value || 0;
+        break;
+      case 'pc5':
+        existing.pc5 += reading.value || 0;
+        break;
+      case 'pc10':
+        existing.pc10 += reading.value || 0;
+        break;
+      default:
+        break;
+    }
 
     bucketsRef.current.set(bucketStart, existing);
   }, [bucketMs]);

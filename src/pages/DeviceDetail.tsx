@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Layout } from '@/components/Layout';
 import { useDeviceLiveSnapshot } from '@/hooks/useDeviceLiveSnapshot';
 import { useHistoricalSensorData, TimePeriod } from '@/hooks/useHistoricalSensorData';
+import { useLiveTimeseriesData } from '@/hooks/useLiveTimeseriesData';
 
 import { useLocations } from '@/hooks/useLocations';
 import { useDevices } from '@/hooks/useDevices';
@@ -43,11 +44,14 @@ export function DeviceDetail() {
   
   const { sensor, loading: sensorLoading } = useDeviceLiveSnapshot(deviceId || '');
   
-  // Always use historical data, update in real-time via subscription
+  // Historical data (1hr/8hr/24hr)
   const { data: historicalData, loading: historicalLoading } = useHistoricalSensorData(
     deviceId || '',
     timePeriod,
   );
+  
+  // Live 10-minute stream
+  const { series: liveSeries } = useLiveTimeseriesData(deviceId || '', { windowMs: 10 * 60 * 1000, bucketMs: 10 * 1000 });
   
   const { devices, loading: devicesLoading } = useDevices();
   const { floors, getFloorLocation } = useLocations();
@@ -118,77 +122,53 @@ export function DeviceDetail() {
 
   // Generate chart data with AQI calculations and color coding
   const generateChartData = useMemo(() => {
+    // Choose data source based on time period
+    if (timePeriod === '10min') {
+      if (!liveSeries || liveSeries.length === 0) {
+        return {
+          aqi: [], environmental: [], pollutants: [], particulateMass: [], particulateCount: [], bar: []
+        };
+      }
+      const processedData = liveSeries;
+      const avgAqiData = calculateAverageAqiData(processedData);
+      const dataCount = Math.max(avgAqiData.count, 1);
+      const barData = [
+        { name: 'PM2.5', value: Math.round(avgAqiData.pm25Aqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.pm25Aqi / dataCount) },
+        { name: 'PM10', value: Math.round(avgAqiData.pm10Aqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.pm10Aqi / dataCount) },
+        { name: 'HCHO', value: Math.round(avgAqiData.hchoAqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.hchoAqi / dataCount) },
+        { name: 'VOC', value: Math.round(avgAqiData.vocAqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.vocAqi / dataCount) },
+        { name: 'NOx', value: Math.round(avgAqiData.noxAqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.noxAqi / dataCount) }
+      ];
+      return { aqi: processedData, environmental: processedData, pollutants: processedData, particulateMass: processedData, particulateCount: processedData, bar: barData };
+    }
+
+    // Historical periods
     if (!historicalData || historicalData.length === 0) {
-      return { 
-        aqi: [],
-        environmental: [],
-        pollutants: [],
-        particulateMass: [],
-        particulateCount: [],
-        bar: [] 
+      return {
+        aqi: [], environmental: [], pollutants: [], particulateMass: [], particulateCount: [], bar: []
       };
     }
 
-    // Process historical data for all time periods
     const processedData = generateDeterministicSensorData(historicalData, deviceSensorData, timePeriod);
 
     if (!processedData.length) {
-      return { 
-        aqi: [],
-        environmental: [],
-        pollutants: [],
-        particulateMass: [],
-        particulateCount: [],
-        bar: [] 
+      return {
+        aqi: [], environmental: [], pollutants: [], particulateMass: [], particulateCount: [], bar: []
       };
     }
 
-    // Calculate average AQI data using the new utility function
     const avgAqiData = calculateAverageAqiData(processedData);
     const dataCount = Math.max(avgAqiData.count, 1);
-    
     const barData = [
-      {
-        name: 'PM2.5',
-        value: Math.round(avgAqiData.pm25Aqi / dataCount),
-        unit: 'AQI',
-        aqi: Math.round(avgAqiData.pm25Aqi / dataCount)
-      },
-      {
-        name: 'PM10',
-        value: Math.round(avgAqiData.pm10Aqi / dataCount),
-        unit: 'AQI',
-        aqi: Math.round(avgAqiData.pm10Aqi / dataCount)
-      },
-      {
-        name: 'HCHO',
-        value: Math.round(avgAqiData.hchoAqi / dataCount),
-        unit: 'AQI',
-        aqi: Math.round(avgAqiData.hchoAqi / dataCount)
-      },
-      {
-        name: 'VOC',
-        value: Math.round(avgAqiData.vocAqi / dataCount),
-        unit: 'AQI',
-        aqi: Math.round(avgAqiData.vocAqi / dataCount)
-      },
-      {
-        name: 'NOx',
-        value: Math.round(avgAqiData.noxAqi / dataCount),
-        unit: 'AQI',
-        aqi: Math.round(avgAqiData.noxAqi / dataCount)
-      }
+      { name: 'PM2.5', value: Math.round(avgAqiData.pm25Aqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.pm25Aqi / dataCount) },
+      { name: 'PM10', value: Math.round(avgAqiData.pm10Aqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.pm10Aqi / dataCount) },
+      { name: 'HCHO', value: Math.round(avgAqiData.hchoAqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.hchoAqi / dataCount) },
+      { name: 'VOC', value: Math.round(avgAqiData.vocAqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.vocAqi / dataCount) },
+      { name: 'NOx', value: Math.round(avgAqiData.noxAqi / dataCount), unit: 'AQI', aqi: Math.round(avgAqiData.noxAqi / dataCount) }
     ];
 
-    return { 
-      aqi: processedData,
-      environmental: processedData,
-      pollutants: processedData,
-      particulateMass: processedData,
-      particulateCount: processedData,
-      bar: barData 
-    };
-  }, [historicalData, deviceSensorData, timePeriod]);
+    return { aqi: processedData, environmental: processedData, pollutants: processedData, particulateMass: processedData, particulateCount: processedData, bar: barData };
+  }, [historicalData, deviceSensorData, timePeriod, liveSeries]);
 
   // Debug particle count data
   console.log('Particle Count Debug:', {
@@ -218,7 +198,7 @@ export function DeviceDetail() {
     );
   }
 
-  if (!device || !deviceSensorData) {
+  if (!device) {
     return (
       <Layout showBackButton>
         <div className="text-center py-12">
@@ -233,9 +213,9 @@ export function DeviceDetail() {
     );
   }
 
-  const status = getAqiStatus(deviceSensorData.aqi || 0);
-  const isSmokeDetected = deviceSensorData.pm25 && deviceSensorData.pm25 > 100;
-  const isVOCHigh = deviceSensorData.voc && deviceSensorData.voc > 500;
+  const status = getAqiStatus(deviceSensorData?.aqi || 0);
+  const isSmokeDetected = (deviceSensorData?.pm25 ?? 0) > 100;
+  const isVOCHigh = (deviceSensorData?.voc ?? 0) > 500;
 
   return (
     <Layout showBackButton>
@@ -245,10 +225,10 @@ export function DeviceDetail() {
           <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold">{device.name}</h1>
             <div className={`h-2 w-2 rounded-full ${
-              deviceSensorData.status === 'online' ? 'bg-success animate-pulse' : 'bg-muted'
+              deviceSensorData?.status === 'online' ? 'bg-success animate-pulse' : 'bg-muted'
             }`} />
             <span className="text-xs text-muted-foreground capitalize">
-              {deviceSensorData.status}
+              {deviceSensorData?.status || 'unknown'}
             </span>
             <div className="flex items-center gap-2 text-xs text-success ml-auto">
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />

@@ -112,15 +112,6 @@ export function DeviceDetail() {
     return steps.find(s => padded <= s) ?? 1e9;
   };
 
-  const niceMassTop = (max: number) => {
-    const padded = (max || 1) * 1.2;
-    const steps = [5, 10, 20, 50, 100, 200, 500, 1000];
-    for (const s of steps) {
-      if (padded <= s) return s;
-    }
-    return Math.ceil(padded);
-  };
-
   // Additional AQI calculation functions for missing parameters
   const calculatePMAqi = (value: number, type: string) => {
     // Simple AQI calculation for PM parameters not covered
@@ -192,96 +183,6 @@ export function DeviceDetail() {
 
     return { aqi: processedData, environmental: processedData, pollutants: processedData, particulateMass: processedData, particulateCount: processedData, bar: barData };
   }, [historicalData, deviceSensorData, timePeriod, liveSeries]);
-
-  const environmentalDisplayData = useMemo(() => {
-    const data = generateChartData.environmental || [];
-    const latest = [...data].reverse().find(d => {
-      const v = environmentalParam === 'temperature' ? d.temperature :
-                environmentalParam === 'humidity' ? d.humidity : d.co2;
-      return typeof v === 'number' && v > 0;
-    });
-    const current = environmentalParam === 'temperature' ? deviceSensorData?.temperature :
-                    environmentalParam === 'humidity' ? deviceSensorData?.humidity : deviceSensorData?.co2;
-
-    let factor = 1;
-    const latestVal = latest ? (environmentalParam === 'temperature' ? latest.temperature :
-                                environmentalParam === 'humidity' ? latest.humidity : latest.co2) : undefined;
-    if (latestVal && current && latestVal > 0 && current > 0) {
-      const ratio = current / latestVal;
-      if (ratio >= 5 && ratio <= 200) factor = ratio;
-    } else {
-      const maxVal = Math.max(...data.map(d => (environmentalParam === 'temperature' ? d.temperature : environmentalParam === 'humidity' ? d.humidity : d.co2) || 0));
-      if (environmentalParam === 'temperature' && maxVal > 0 && maxVal < 10) factor = 10;
-      if (environmentalParam === 'humidity' && maxVal > 0 && maxVal < 10) factor = 10;
-      if (environmentalParam === 'co2' && maxVal > 0 && maxVal < 200) factor = 10;
-    }
-
-    const result = data.map(d => ({
-      ...d,
-      temperatureDisplay: (d.temperature ?? 0) * (environmentalParam === 'temperature' ? factor : 1),
-      humidityDisplay: (d.humidity ?? 0) * (environmentalParam === 'humidity' ? factor : 1),
-      co2Display: (d.co2 ?? 0) * (environmentalParam === 'co2' ? factor : 1),
-    }));
-
-    console.log('[Env Scale]', { param: environmentalParam, factor, latestVal, current });
-    return result;
-  }, [generateChartData.environmental, environmentalParam, deviceSensorData]);
-
-  const pollutantDisplayData = useMemo(() => {
-    const data = generateChartData.pollutants || [];
-    const getVal = (d: any) => pollutantParam === 'voc' ? d.voc : pollutantParam === 'hcho' ? d.hcho : d.nox;
-    const latest = [...data].reverse().find(d => typeof getVal(d) === 'number' && getVal(d) > 0);
-    const current = pollutantParam === 'voc' ? deviceSensorData?.voc : pollutantParam === 'hcho' ? deviceSensorData?.hcho : deviceSensorData?.nox;
-
-    let factor = 1;
-    const latestVal = latest ? getVal(latest) : undefined;
-    if (latestVal && current && latestVal > 0 && current > 0) {
-      const ratio = current / latestVal;
-      if (ratio >= 5 && ratio <= 200) factor = ratio;
-    } else {
-      const maxVal = Math.max(...data.map((d: any) => getVal(d) || 0));
-      if (pollutantParam !== 'hcho' && maxVal > 0 && maxVal < 10) factor = 50; // indices usually up to 500
-      if (pollutantParam === 'hcho' && maxVal > 0 && maxVal < 5) factor = 10; // ppm -> ppb heuristic
-    }
-
-    const result = data.map((d: any) => ({
-      ...d,
-      vocDisplay: (d.voc ?? 0) * (pollutantParam === 'voc' ? factor : 1),
-      hchoDisplay: (d.hcho ?? 0) * (pollutantParam === 'hcho' ? factor : 1),
-      noxDisplay: (d.nox ?? 0) * (pollutantParam === 'nox' ? factor : 1),
-    }));
-
-    console.log('[Pollutant Scale]', { param: pollutantParam, factor, latestVal, current });
-    return result;
-  }, [generateChartData.pollutants, pollutantParam, deviceSensorData]);
-
-  const pmMassStats = useMemo(() => {
-    const series = generateChartData.particulateMass || [];
-    const vals = series.map((d: any) => Number(d[pmMassParam] ?? 0));
-    const min = vals.length ? Math.min(...vals) : 0;
-    const max = vals.length ? Math.max(...vals) : 0;
-    if (max <= 0) return { lower: 0, upper: 10 };
-    const span = Math.max(0.1, max - min);
-    const lower = Math.max(0, Math.floor((min - span * 0.1) * 10) / 10);
-    const upperRaw = max + span * 0.2;
-    const upperRounded = upperRaw <= 10 ? Math.ceil(upperRaw * 10) / 10 : Math.ceil(upperRaw);
-    return { lower, upper: Math.max(upperRounded, 5) };
-  }, [generateChartData.particulateMass, pmMassParam]);
-
-  const pmMassTick = (v: number) => (pmMassStats.upper <= 10 ? Number(v).toFixed(1) : Math.round(Number(v)).toString());
-  console.log('[PM Mass Domain]', pmMassStats, { param: pmMassParam });
-  console.log('Particle Count Debug:', {
-    deviceSensorData: {
-      pc03: deviceSensorData?.pc03,
-      pc05: deviceSensorData?.pc05,
-      pc1: deviceSensorData?.pc1,
-      pc25: deviceSensorData?.pc25,
-      pc5: deviceSensorData?.pc5,
-      pc10: deviceSensorData?.pc10
-    },
-    particulateCountData: generateChartData.particulateCount,
-    pmCountParam: pmCountParam
-  });
 
   // Only show loading spinner on initial device load
   if (devicesLoading && !device) {
@@ -715,22 +616,20 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={environmentalDisplayData}>
+                    <BarChart data={generateChartData.environmental}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => {
-                            if (environmentalParam === 'co2') return Math.max(400, Math.floor((dataMin || 400) * 0.9));
-                            if (environmentalParam === 'humidity') return Math.max(0, Math.floor((dataMin ?? 0) * 0.9));
-                            return Math.floor((dataMin ?? 0) * 0.9);
-                          },
+                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.95)),
                           (dataMax: number) => {
-                            if (environmentalParam === 'co2') return Math.max(600, Math.ceil((dataMax || 600) * 1.1));
-                            if (environmentalParam === 'humidity') return Math.min(100, Math.ceil((dataMax ?? 100) * 1.1));
-                            return Math.max(10, Math.ceil((dataMax ?? 10) * 1.1));
+                            const ceiling = Math.ceil((dataMax ?? 10) * 1.05);
+                            if (environmentalParam === 'temperature') return Math.max(30, ceiling);
+                            if (environmentalParam === 'humidity') return Math.max(50, Math.min(100, ceiling));
+                            if (environmentalParam === 'co2') return Math.max(600, ceiling);
+                            return ceiling;
                           }
                         ]}
                         label={{ 
@@ -742,11 +641,7 @@ export function DeviceDetail() {
                         }}
                       />
                       <Bar 
-                        dataKey={
-                          environmentalParam === 'temperature' ? 'temperatureDisplay' :
-                          environmentalParam === 'humidity' ? 'humidityDisplay' :
-                          'co2Display'
-                        } 
+                        dataKey={environmentalParam} 
                         radius={[4, 4, 0, 0]} 
                         name={
                           environmentalParam === 'temperature' ? 'Temperature (°C)' :
@@ -805,18 +700,18 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={pollutantDisplayData}>
+                    <BarChart data={generateChartData.pollutants}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.9)),
+                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.95)),
                           (dataMax: number) => {
-                            const base = Math.ceil((dataMax ?? 1) * 1.2);
-                            if (pollutantParam === 'hcho') return Math.max(base, 50);
-                            return Math.max(base, 10);
+                            const ceiling = Math.ceil((dataMax ?? 1) * 1.05);
+                            if (pollutantParam === 'hcho') return Math.max(50, ceiling);
+                            return Math.max(10, ceiling);
                           }
                         ]}
                         label={{ 
@@ -828,11 +723,7 @@ export function DeviceDetail() {
                         }}
                       />
                       <Bar 
-                        dataKey={
-                          pollutantParam === 'voc' ? 'vocDisplay' :
-                          pollutantParam === 'hcho' ? 'hchoDisplay' :
-                          'noxDisplay'
-                        } 
+                        dataKey={pollutantParam}
                         radius={[4, 4, 0, 0]} 
                         name={
                           pollutantParam === 'voc' ? 'VOC (index)' :
@@ -912,10 +803,9 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => Math.max(0, Math.floor(Math.min(dataMin ?? 0, Number(deviceSensorData?.[pmMassParam] ?? 0)) * 0.9)),
-                          (dataMax: number) => niceMassTop(Math.max(dataMax ?? 0, Number(deviceSensorData?.[pmMassParam] ?? 0)))
+                          0,
+                          (dataMax: number) => Math.max(50, Math.ceil((dataMax ?? 1) * 1.1))
                         ]}
-                        tickFormatter={pmMassTick}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
                       <Bar 
@@ -1002,8 +892,8 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => Math.max(0, Math.floor(Math.min(dataMin ?? 0, Number(deviceSensorData?.[pmCountParam] ?? 0)) * 0.9)),
-                          (dataMax: number) => snapTopValue(Math.max(dataMax, Number(deviceSensorData?.[pmCountParam] ?? 0)))
+                          0,
+                          (dataMax: number) => snapTopValue((dataMax ?? 1) * 1.1)
                         ]}
                         tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}

@@ -38,20 +38,17 @@ export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps)
       const hours = time.getHours();
       const minutes = time.getMinutes();
       
-      // Format timestamp based on time range
+      // Format ACTUAL timestamp from database based on time range
       let timestamp: string;
       if (timeRange === '24h') {
-        // Format: HH:MM (24-hour format)
         timestamp = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
       } else if (timeRange === '7d') {
-        // Format: MMM DD
         timestamp = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       } else {
-        // 30d - Format: MMM DD
         timestamp = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
       }
       
-      // Calculate AQI from PM2.5 (simplified)
+      // Use ACTUAL PM2.5 value from database
       const pm25 = reading.pm25 || 0;
       const aqi = pm25 <= 12 ? Math.round((50 / 12) * pm25) :
                   pm25 <= 35.4 ? Math.round(((100 - 51) / (35.4 - 12.1)) * (pm25 - 12.1) + 51) :

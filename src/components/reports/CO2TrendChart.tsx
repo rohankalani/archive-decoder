@@ -15,7 +15,7 @@ export default function CO2TrendChart({ co2Data }: CO2TrendChartProps) {
   }
 
   const chartData = co2Data.map(d => ({
-    hour: `${d.hour}:00`,
+    time: d.hour ? `${d.hour}:00` : 'N/A',
     average: d.avgValue,
     maximum: d.maxValue,
   }));
@@ -25,7 +25,7 @@ export default function CO2TrendChart({ co2Data }: CO2TrendChartProps) {
       <LineChart data={chartData}>
         <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
         <XAxis 
-          dataKey="hour" 
+          dataKey="time" 
           className="text-xs"
         />
         <YAxis 

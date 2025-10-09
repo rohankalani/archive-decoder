@@ -32,6 +32,7 @@ export function DeviceDetail() {
   const { deviceId } = useParams<{ deviceId: string }>();
   const navigate = useNavigate();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('1hr');
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
   
   // Toggle states for each chart type
   const [environmentalParam, setEnvironmentalParam] = useState<'temperature' | 'humidity' | 'co2'>('temperature');
@@ -44,6 +45,13 @@ export function DeviceDetail() {
   const { devices, loading: devicesLoading } = useDevices();
   const { floors, getFloorLocation } = useLocations();
   const { getQualityFromAqi, getQualityColor, calculatePM25Aqi, calculatePM10Aqi, calculateHCHOAqi, calculateVOCAqi, calculateNOxAqi } = useSettings();
+
+  // Update timestamp when historical data changes
+  React.useEffect(() => {
+    if (historicalData.length > 0) {
+      setLastUpdate(new Date());
+    }
+  }, [historicalData]);
 
   const device = devices.find(d => d.id === deviceId);
   const deviceSensorData = sensorData.find(s => s.device_id === deviceId);
@@ -216,7 +224,7 @@ export function DeviceDetail() {
       <div className="space-y-4">
         {/* Header */}
         <div className="space-y-1">
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-3 flex-wrap">
             <h1 className="text-2xl font-bold">{device.name}</h1>
             <div className={`h-2 w-2 rounded-full ${
               deviceSensorData.status === 'online' ? 'bg-success animate-pulse' : 'bg-muted'
@@ -224,6 +232,10 @@ export function DeviceDetail() {
             <span className="text-xs text-muted-foreground capitalize">
               {deviceSensorData.status}
             </span>
+            <div className="flex items-center gap-2 text-xs text-success ml-auto">
+              <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
+              <span>Live Data • Updated {lastUpdate.toLocaleTimeString()}</span>
+            </div>
           </div>
           {floorLocation && (
             <div className="flex items-center gap-1 text-muted-foreground text-sm">

@@ -623,11 +623,11 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          0,
+                          environmentalParam === 'co2' ? 300 : 0,
                           (dataMax: number) => {
-                            if (environmentalParam === 'temperature') return Math.max(35, Math.ceil((dataMax ?? 20) * 1.15));
-                            if (environmentalParam === 'humidity') return Math.min(100, Math.max(70, Math.ceil((dataMax ?? 40) * 1.1)));
-                            if (environmentalParam === 'co2') return Math.max(1200, Math.ceil((dataMax ?? 400) * 1.15));
+                            if (environmentalParam === 'temperature') return Math.max(40, Math.ceil((dataMax ?? 25) * 1.2));
+                            if (environmentalParam === 'humidity') return Math.min(100, Math.ceil((dataMax ?? 50) * 1.2));
+                            if (environmentalParam === 'co2') return Math.max(1500, Math.ceil((dataMax ?? 600) * 1.15));
                             return Math.ceil((dataMax ?? 10) * 1.1);
                           }
                         ]}
@@ -707,7 +707,12 @@ export function DeviceDetail() {
                         fontSize={12}
                         domain={[
                           0,
-                          (dataMax: number) => Math.ceil((dataMax ?? 1) * 1.3)
+                          (dataMax: number) => {
+                            if (pollutantParam === 'voc') return Math.max(500, Math.ceil((dataMax ?? 100) * 1.05));
+                            if (pollutantParam === 'hcho') return Math.max(20, Math.ceil((dataMax ?? 5) * 1.3));
+                            if (pollutantParam === 'nox') return Math.max(150, Math.ceil((dataMax ?? 50) * 1.2));
+                            return Math.ceil((dataMax ?? 10) * 1.3);
+                          }
                         ]}
                         label={{ 
                           value: pollutantParam === 'voc' ? 'index' :

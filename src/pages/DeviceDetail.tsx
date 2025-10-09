@@ -622,28 +622,11 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[
-                          environmentalParam === 'co2' ? 400 : 0,
-                          (dataMax: number) => {
-                            console.log(`[ENV CHART] param=${environmentalParam}, dataMax=${dataMax}`);
-                            if (environmentalParam === 'temperature') {
-                              const result = Math.ceil((dataMax ?? 25) * 1.3);
-                              console.log(`[ENV] Temperature domain: [0, ${result}]`);
-                              return result;
-                            }
-                            if (environmentalParam === 'humidity') {
-                              const result = Math.min(100, Math.ceil((dataMax ?? 50) * 1.1));
-                              console.log(`[ENV] Humidity domain: [0, ${result}]`);
-                              return result;
-                            }
-                            if (environmentalParam === 'co2') {
-                              const result = Math.ceil((dataMax ?? 800) * 1.15);
-                              console.log(`[ENV] CO2 domain: [400, ${result}]`);
-                              return result;
-                            }
-                            return Math.ceil((dataMax ?? 10) * 1.2);
-                          }
-                        ]}
+                        domain={
+                          environmentalParam === 'temperature' ? [0, 40] :
+                          environmentalParam === 'humidity' ? [0, 100] :
+                          [400, 2000]
+                        }
                         label={{ 
                           value: environmentalParam === 'temperature' ? '°C' :
                                  environmentalParam === 'humidity' ? '%' :
@@ -718,28 +701,11 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[
-                          0,
-                          (dataMax: number) => {
-                            console.log(`[POLLUTANT CHART] param=${pollutantParam}, dataMax=${dataMax}`);
-                            if (pollutantParam === 'voc') {
-                              const result = Math.ceil((dataMax ?? 100) * 1.25);
-                              console.log(`[POLL] VOC domain: [0, ${result}]`);
-                              return result;
-                            }
-                            if (pollutantParam === 'hcho') {
-                              const result = Math.ceil((dataMax ?? 5) * 2.5);
-                              console.log(`[POLL] HCHO domain: [0, ${result}]`);
-                              return result;
-                            }
-                            if (pollutantParam === 'nox') {
-                              const result = Math.max(50, Math.ceil((dataMax ?? 20) * 2.0));
-                              console.log(`[POLL] NOx domain: [0, ${result}]`);
-                              return result;
-                            }
-                            return Math.ceil((dataMax ?? 10) * 1.5);
-                          }
-                        ]}
+                        domain={
+                          pollutantParam === 'voc' ? [0, 500] :
+                          pollutantParam === 'hcho' ? [0, 100] :
+                          [0, 500]
+                        }
                         label={{ 
                           value: pollutantParam === 'voc' ? 'index' :
                                  pollutantParam === 'hcho' ? 'ppb' :

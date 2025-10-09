@@ -43,7 +43,7 @@ interface UseSimplifiedReportDataResult {
   data: SimplifiedReportData | null;
   isLoading: boolean;
   error: Error | null;
-  refetch: () => void;
+  refetch: () => Promise<void>;
 }
 
 const fetchReportData = async (startDate: Date, endDate: Date): Promise<SimplifiedReportData> => {
@@ -194,12 +194,16 @@ export function useSimplifiedReportData(
   startDate: Date,
   endDate: Date
 ): UseSimplifiedReportDataResult {
-  const { data, isLoading, error, refetch } = useQuery({
+  const { data, isLoading, error, refetch: queryRefetch } = useQuery({
     queryKey: ['report-data', startDate.getTime(), endDate.getTime()],
     queryFn: () => fetchReportData(startDate, endDate),
     staleTime: 2 * 60 * 1000, // 2 minutes
     gcTime: 5 * 60 * 1000, // 5 minutes
   });
+
+  const refetch = async () => {
+    await queryRefetch();
+  };
 
   return { 
     data: data || null, 

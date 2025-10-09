@@ -214,10 +214,17 @@ export function useEnhancedReportData(startDate: Date, endDate: Date, includePre
     };
   }, [currentPeriod.data, previousPeriod.data, includePreviousPeriod, startDate.getTime(), endDate.getTime()]);
 
+  const refetch = async () => {
+    await currentPeriod.refetch();
+    if (includePreviousPeriod) {
+      await previousPeriod.refetch();
+    }
+  };
+
   return {
     data: enhancedData,
     isLoading: currentPeriod.isLoading || previousPeriod.isLoading,
     error: currentPeriod.error || previousPeriod.error,
-    refetch: currentPeriod.refetch
+    refetch
   };
 }

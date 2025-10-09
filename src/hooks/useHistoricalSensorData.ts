@@ -202,39 +202,10 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
         schema: 'public',
         table: 'sensor_readings',
         filter: `device_id=eq.${deviceId}`
-      }, (payload) => {
-        console.log('New sensor reading received:', payload.new);
-        
-        // Update data with new reading
-        setData(prevData => {
-          const newReading = payload.new as any;
-          const { startTime } = getTimeRange();
-          
-          // Find or create the appropriate time bucket for this reading
-          const readingTime = new Date(newReading.timestamp);
-          
-          if (readingTime < startTime) {
-            return prevData; // Reading is too old
-          }
-          
-          // Update the data array
-          const updatedData = [...prevData];
-          
-          // Find the closest interval bucket
-          const intervalDuration = getIntervalDuration();
-          const bucketIndex = Math.floor((readingTime.getTime() - startTime.getTime()) / intervalDuration);
-          
-          if (bucketIndex >= 0 && bucketIndex < updatedData.length) {
-            // Update existing bucket
-            const bucket = updatedData[bucketIndex];
-            const sensorType = newReading.sensor_type;
-            
-            // Update the specific sensor value
-            (bucket as any)[sensorType] = newReading.value;
-          }
-          
-          return updatedData;
-        });
+      }, () => {
+        console.log('[Realtime] New sensor_readings INSERT for device', deviceId);
+        // Simple and reliable: refetch the entire window to keep buckets and x-axis correct
+        fetchHistoricalData();
       })
       .subscribe();
     

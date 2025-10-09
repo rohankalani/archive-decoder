@@ -294,7 +294,7 @@ export function DeviceDetail() {
               <div className="grid grid-cols-3 gap-4">
                 <div className="text-center">
                   <div className="text-3xl font-bold text-orange-500">
-                    {deviceSensorData.temperature?.toFixed(1) || '--'}°C
+                    {deviceSensorData?.temperature?.toFixed(1) || '--'}°C
                   </div>
                   <div className="text-sm text-muted-foreground">Temp</div>
                 </div>
@@ -384,13 +384,13 @@ export function DeviceDetail() {
               <div className="grid grid-cols-3 gap-3">
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pm03?.toFixed(1) || '--'}
+                    {deviceSensorData?.pm03?.toFixed(1) || '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PM0.3</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pm1?.toFixed(1) || '--'}
+                    {deviceSensorData?.pm1?.toFixed(1) || '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PM1</div>
                 </div>
@@ -406,13 +406,13 @@ export function DeviceDetail() {
                       getQualityColor('Hazardous')
                     ) : 'hsl(var(--muted-foreground))' }}
                   >
-                    {deviceSensorData.pm25?.toFixed(1) || '--'}
+                    {deviceSensorData?.pm25?.toFixed(1) || '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PM2.5</div>
                 </div>
                 <div className="text-center">
                   <div className="text-lg font-bold">
-                    {deviceSensorData.pm5?.toFixed(1) || '--'}
+                    {deviceSensorData?.pm5?.toFixed(1) || '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PM5</div>
                 </div>
@@ -428,7 +428,7 @@ export function DeviceDetail() {
                       getQualityColor('Hazardous')
                     ) : 'hsl(var(--muted-foreground))' }}
                   >
-                    {deviceSensorData.pm10?.toFixed(1) || '--'}
+                    {deviceSensorData?.pm10?.toFixed(1) || '--'}
                   </div>
                   <div className="text-sm text-muted-foreground">PM10</div>
                 </div>

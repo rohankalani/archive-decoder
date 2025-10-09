@@ -34,7 +34,22 @@ export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps)
     }
 
     const transformed = historicalData.map(reading => {
-      const timestamp = format(new Date(reading.timestamp), timeRange === '24h' ? 'HH:mm' : 'MMM dd');
+      const time = new Date(reading.timestamp);
+      const hours = time.getHours();
+      const minutes = time.getMinutes();
+      
+      // Format timestamp based on time range
+      let timestamp: string;
+      if (timeRange === '24h') {
+        // Format: HH:MM (24-hour format)
+        timestamp = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
+      } else if (timeRange === '7d') {
+        // Format: MMM DD
+        timestamp = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      } else {
+        // 30d - Format: MMM DD
+        timestamp = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
       
       // Calculate AQI from PM2.5 (simplified)
       const pm25 = reading.pm25 || 0;

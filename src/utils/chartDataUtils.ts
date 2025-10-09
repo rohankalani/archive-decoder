@@ -203,44 +203,30 @@ export function generateDeterministicSensorData(
     
     // Generate appropriate time labels based on period
     let timeLabel: string;
+    const hours = time.getHours();
+    const minutes = time.getMinutes();
+    
     switch (timePeriod) {
       case '10min':
-        timeLabel = time.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          second: '2-digit',
-          hour12: false 
-        });
+        // Format: HH:MM:SS
+        timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${time.getSeconds().toString().padStart(2, '0')}`;
         break;
       case '1hr':
-        timeLabel = time.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false 
-        });
+        // Format: HH:MM (24-hour format)
+        timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
         break;
       case '8hr':
-        timeLabel = time.toLocaleDateString('en-US', { 
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          hour12: false
-        });
+        // Format: MMM DD, HH:00
+        const month = time.toLocaleDateString('en-US', { month: 'short' });
+        const day = time.getDate();
+        timeLabel = `${month} ${day}, ${hours.toString().padStart(2, '0')}:00`;
         break;
       case '24hr':
-        timeLabel = time.toLocaleDateString('en-US', { 
-          month: 'short',
-          day: 'numeric',
-          hour: '2-digit',
-          hour12: false
-        });
+        // Format: MMM DD
+        timeLabel = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
         break;
       default:
-        timeLabel = time.toLocaleTimeString('en-US', { 
-          hour: '2-digit', 
-          minute: '2-digit',
-          hour12: false 
-        });
+        timeLabel = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
     }
     
     // Use actual data if available, otherwise generate deterministic variations

@@ -183,6 +183,68 @@ export function DeviceDetail() {
     return { aqi: processedData, environmental: processedData, pollutants: processedData, particulateMass: processedData, particulateCount: processedData, bar: barData };
   }, [historicalData, deviceSensorData, timePeriod, liveSeries]);
 
+  const environmentalDisplayData = useMemo(() => {
+    const data = generateChartData.environmental || [];
+    const latest = [...data].reverse().find(d => {
+      const v = environmentalParam === 'temperature' ? d.temperature :
+                environmentalParam === 'humidity' ? d.humidity : d.co2;
+      return typeof v === 'number' && v > 0;
+    });
+    const current = environmentalParam === 'temperature' ? deviceSensorData?.temperature :
+                    environmentalParam === 'humidity' ? deviceSensorData?.humidity : deviceSensorData?.co2;
+
+    let factor = 1;
+    const latestVal = latest ? (environmentalParam === 'temperature' ? latest.temperature :
+                                environmentalParam === 'humidity' ? latest.humidity : latest.co2) : undefined;
+    if (latestVal && current && latestVal > 0 && current > 0) {
+      const ratio = current / latestVal;
+      if (ratio >= 5 && ratio <= 200) factor = ratio;
+    } else {
+      const maxVal = Math.max(...data.map(d => (environmentalParam === 'temperature' ? d.temperature : environmentalParam === 'humidity' ? d.humidity : d.co2) || 0));
+      if (environmentalParam === 'temperature' && maxVal > 0 && maxVal < 10) factor = 10;
+      if (environmentalParam === 'humidity' && maxVal > 0 && maxVal < 10) factor = 10;
+      if (environmentalParam === 'co2' && maxVal > 0 && maxVal < 200) factor = 10;
+    }
+
+    const result = data.map(d => ({
+      ...d,
+      temperatureDisplay: (d.temperature ?? 0) * (environmentalParam === 'temperature' ? factor : 1),
+      humidityDisplay: (d.humidity ?? 0) * (environmentalParam === 'humidity' ? factor : 1),
+      co2Display: (d.co2 ?? 0) * (environmentalParam === 'co2' ? factor : 1),
+    }));
+
+    console.log('[Env Scale]', { param: environmentalParam, factor, latestVal, current });
+    return result;
+  }, [generateChartData.environmental, environmentalParam, deviceSensorData]);
+
+  const pollutantDisplayData = useMemo(() => {
+    const data = generateChartData.pollutants || [];
+    const getVal = (d: any) => pollutantParam === 'voc' ? d.voc : pollutantParam === 'hcho' ? d.hcho : d.nox;
+    const latest = [...data].reverse().find(d => typeof getVal(d) === 'number' && getVal(d) > 0);
+    const current = pollutantParam === 'voc' ? deviceSensorData?.voc : pollutantParam === 'hcho' ? deviceSensorData?.hcho : deviceSensorData?.nox;
+
+    let factor = 1;
+    const latestVal = latest ? getVal(latest) : undefined;
+    if (latestVal && current && latestVal > 0 && current > 0) {
+      const ratio = current / latestVal;
+      if (ratio >= 5 && ratio <= 200) factor = ratio;
+    } else {
+      const maxVal = Math.max(...data.map((d: any) => getVal(d) || 0));
+      if (pollutantParam !== 'hcho' && maxVal > 0 && maxVal < 10) factor = 50; // indices usually up to 500
+      if (pollutantParam === 'hcho' && maxVal > 0 && maxVal < 5) factor = 10; // ppm -> ppb heuristic
+    }
+
+    const result = data.map((d: any) => ({
+      ...d,
+      vocDisplay: (d.voc ?? 0) * (pollutantParam === 'voc' ? factor : 1),
+      hchoDisplay: (d.hcho ?? 0) * (pollutantParam === 'hcho' ? factor : 1),
+      noxDisplay: (d.nox ?? 0) * (pollutantParam === 'nox' ? factor : 1),
+    }));
+
+    console.log('[Pollutant Scale]', { param: pollutantParam, factor, latestVal, current });
+    return result;
+  }, [generateChartData.pollutants, pollutantParam, deviceSensorData]);
+
   // Debug particle count data
   console.log('Particle Count Debug:', {
     deviceSensorData: {
@@ -629,7 +691,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.environmental}>
+                    <BarChart data={environmentalDisplayData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
@@ -656,7 +718,11 @@ export function DeviceDetail() {
                         }}
                       />
                       <Bar 
-                        dataKey={environmentalParam} 
+                        dataKey={
+                          environmentalParam === 'temperature' ? 'temperatureDisplay' :
+                          environmentalParam === 'humidity' ? 'humidityDisplay' :
+                          'co2Display'
+                        } 
                         radius={[4, 4, 0, 0]} 
                         name={
                           environmentalParam === 'temperature' ? 'Temperature (°C)' :
@@ -715,7 +781,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.pollutants}>
+                    <BarChart data={pollutantDisplayData}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
@@ -738,7 +804,11 @@ export function DeviceDetail() {
                         }}
                       />
                       <Bar 
-                        dataKey={pollutantParam} 
+                        dataKey={
+                          pollutantParam === 'voc' ? 'vocDisplay' :
+                          pollutantParam === 'hcho' ? 'hchoDisplay' :
+                          'noxDisplay'
+                        } 
                         radius={[4, 4, 0, 0]} 
                         name={
                           pollutantParam === 'voc' ? 'VOC (index)' :

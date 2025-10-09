@@ -106,8 +106,9 @@ export function DeviceDetail() {
   };
 
   const snapTopValue = (max: number) => {
-    const padded = (max || 1) * 1.2;
-    const steps = [1e3, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9];
+    if (!max || max <= 0) return 10;
+    const padded = max * 1.2;
+    const steps = [10, 100, 1e3, 5e3, 1e4, 5e4, 1e5, 5e5, 1e6, 5e6, 1e7, 5e7, 1e8, 5e8, 1e9];
     return steps.find(s => padded <= s) ?? 1e9;
   };
 
@@ -245,7 +246,21 @@ export function DeviceDetail() {
     return result;
   }, [generateChartData.pollutants, pollutantParam, deviceSensorData]);
 
-  // Debug particle count data
+  const pmMassStats = useMemo(() => {
+    const series = generateChartData.particulateMass || [];
+    const vals = series.map((d: any) => Number(d[pmMassParam] ?? 0));
+    const min = vals.length ? Math.min(...vals) : 0;
+    const max = vals.length ? Math.max(...vals) : 0;
+    if (max <= 0) return { lower: 0, upper: 10 };
+    const span = Math.max(0.1, max - min);
+    const lower = Math.max(0, Math.floor((min - span * 0.1) * 10) / 10);
+    const upperRaw = max + span * 0.2;
+    const upperRounded = upperRaw <= 10 ? Math.ceil(upperRaw * 10) / 10 : Math.ceil(upperRaw);
+    return { lower, upper: Math.max(upperRounded, 5) };
+  }, [generateChartData.particulateMass, pmMassParam]);
+
+  const pmMassTick = (v: number) => (pmMassStats.upper <= 10 ? Number(v).toFixed(1) : Math.round(Number(v)).toString());
+  console.log('[PM Mass Domain]', pmMassStats, { param: pmMassParam });
   console.log('Particle Count Debug:', {
     deviceSensorData: {
       pc03: deviceSensorData?.pc03,
@@ -887,10 +902,8 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[
-                          0,
-                          (dataMax: number) => Math.max(50, Math.ceil((dataMax ?? 1) * 1.2))
-                        ]}
+                        domain={[pmMassStats.lower, pmMassStats.upper]}
+                        tickFormatter={pmMassTick}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
                       <Bar 
@@ -977,7 +990,7 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          0,
+                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.9)),
                           (dataMax: number) => snapTopValue(dataMax)
                         ]}
                         tickFormatter={formatCompact}

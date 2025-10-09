@@ -112,6 +112,15 @@ export function DeviceDetail() {
     return steps.find(s => padded <= s) ?? 1e9;
   };
 
+  const niceMassTop = (max: number) => {
+    const padded = (max || 1) * 1.2;
+    const steps = [5, 10, 20, 50, 100, 200, 500, 1000];
+    for (const s of steps) {
+      if (padded <= s) return s;
+    }
+    return Math.ceil(padded);
+  };
+
   // Additional AQI calculation functions for missing parameters
   const calculatePMAqi = (value: number, type: string) => {
     // Simple AQI calculation for PM parameters not covered
@@ -902,7 +911,10 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[pmMassStats.lower, pmMassStats.upper]}
+                        domain={[
+                          (dataMin: number) => Math.max(0, Math.floor(Math.min(dataMin ?? 0, Number(deviceSensorData?.[pmMassParam] ?? 0)) * 0.9)),
+                          (dataMax: number) => niceMassTop(Math.max(dataMax ?? 0, Number(deviceSensorData?.[pmMassParam] ?? 0)))
+                        ]}
                         tickFormatter={pmMassTick}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
@@ -990,8 +1002,8 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => Math.max(0, Math.floor((dataMin ?? 0) * 0.9)),
-                          (dataMax: number) => snapTopValue(dataMax)
+                          (dataMin: number) => Math.max(0, Math.floor(Math.min(dataMin ?? 0, Number(deviceSensorData?.[pmCountParam] ?? 0)) * 0.9)),
+                          (dataMax: number) => snapTopValue(Math.max(dataMax, Number(deviceSensorData?.[pmCountParam] ?? 0)))
                         ]}
                         tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}

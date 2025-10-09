@@ -623,12 +623,25 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          environmentalParam === 'co2' ? 300 : 0,
+                          environmentalParam === 'co2' ? 400 : 0,
                           (dataMax: number) => {
-                            if (environmentalParam === 'temperature') return Math.max(40, Math.ceil((dataMax ?? 25) * 1.2));
-                            if (environmentalParam === 'humidity') return Math.min(100, Math.ceil((dataMax ?? 50) * 1.2));
-                            if (environmentalParam === 'co2') return Math.max(1500, Math.ceil((dataMax ?? 600) * 1.15));
-                            return Math.ceil((dataMax ?? 10) * 1.1);
+                            console.log(`[ENV CHART] param=${environmentalParam}, dataMax=${dataMax}`);
+                            if (environmentalParam === 'temperature') {
+                              const result = Math.ceil((dataMax ?? 25) * 1.3);
+                              console.log(`[ENV] Temperature domain: [0, ${result}]`);
+                              return result;
+                            }
+                            if (environmentalParam === 'humidity') {
+                              const result = Math.min(100, Math.ceil((dataMax ?? 50) * 1.1));
+                              console.log(`[ENV] Humidity domain: [0, ${result}]`);
+                              return result;
+                            }
+                            if (environmentalParam === 'co2') {
+                              const result = Math.ceil((dataMax ?? 800) * 1.15);
+                              console.log(`[ENV] CO2 domain: [400, ${result}]`);
+                              return result;
+                            }
+                            return Math.ceil((dataMax ?? 10) * 1.2);
                           }
                         ]}
                         label={{ 
@@ -708,10 +721,23 @@ export function DeviceDetail() {
                         domain={[
                           0,
                           (dataMax: number) => {
-                            if (pollutantParam === 'voc') return Math.max(500, Math.ceil((dataMax ?? 100) * 1.05));
-                            if (pollutantParam === 'hcho') return Math.max(20, Math.ceil((dataMax ?? 5) * 1.3));
-                            if (pollutantParam === 'nox') return Math.max(150, Math.ceil((dataMax ?? 50) * 1.2));
-                            return Math.ceil((dataMax ?? 10) * 1.3);
+                            console.log(`[POLLUTANT CHART] param=${pollutantParam}, dataMax=${dataMax}`);
+                            if (pollutantParam === 'voc') {
+                              const result = Math.ceil((dataMax ?? 100) * 1.25);
+                              console.log(`[POLL] VOC domain: [0, ${result}]`);
+                              return result;
+                            }
+                            if (pollutantParam === 'hcho') {
+                              const result = Math.ceil((dataMax ?? 5) * 2.5);
+                              console.log(`[POLL] HCHO domain: [0, ${result}]`);
+                              return result;
+                            }
+                            if (pollutantParam === 'nox') {
+                              const result = Math.max(50, Math.ceil((dataMax ?? 20) * 2.0));
+                              console.log(`[POLL] NOx domain: [0, ${result}]`);
+                              return result;
+                            }
+                            return Math.ceil((dataMax ?? 10) * 1.5);
                           }
                         ]}
                         label={{ 

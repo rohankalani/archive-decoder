@@ -629,7 +629,7 @@ export function DeviceDetail() {
               </div>
             )}
 
-            <div className={cn(historicalLoading && "opacity-50 pointer-events-none")}>
+            <div className={cn("space-y-4", historicalLoading && "opacity-50 pointer-events-none")}>
               {/* Key Pollutants Bar Chart - Average AQI for selected time period */}
               <Card>
             <CardHeader>

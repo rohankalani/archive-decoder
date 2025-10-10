@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { readonlySupabase } from '@/integrations/supabase/readonlyClient'
 import { toast } from 'sonner'
 
 export interface Site {
@@ -63,45 +64,37 @@ export function useLocations() {
     try {
       setLoading(true)
       
-      // Fetch sites
-      const { data: sitesData, error: sitesError } = await supabase
-        .from('sites')
-        .select('*')
-        .order('name')
+      // Fetch all location data in parallel using readonly client for speed
+      const [sitesRes, buildingsRes, floorsRes, roomsRes] = await Promise.all([
+        readonlySupabase
+          .from('sites')
+          .select('id, name, address, description, latitude, longitude, created_at, updated_at'),
+        readonlySupabase
+          .from('buildings')
+          .select('id, name, site_id, description, floor_count, created_at, updated_at'),
+        readonlySupabase
+          .from('floors')
+          .select('id, name, floor_number, building_id, area_sqm, created_at, updated_at'),
+        readonlySupabase
+          .from('rooms')
+          .select('id, name, room_number, room_type, floor_id, capacity, area_sqm, description, operating_hours_start, operating_hours_end, created_at, updated_at')
+      ])
 
-      if (sitesError) throw sitesError
+      if (sitesRes.error) throw sitesRes.error
+      if (buildingsRes.error) throw buildingsRes.error
+      if (floorsRes.error) throw floorsRes.error
+      if (roomsRes.error) throw roomsRes.error
 
-      // Fetch buildings with site info
-      const { data: buildingsData, error: buildingsError } = await supabase
-        .from('buildings')
-        .select(`
-          *,
-          site:sites(*)
-        `)
-        .order('name')
+      // Sort client-side to reduce DB load
+      const sortedSites = (sitesRes.data || []).sort((a, b) => a.name.localeCompare(b.name))
+      const sortedBuildings = (buildingsRes.data || []).sort((a, b) => a.name.localeCompare(b.name))
+      const sortedFloors = (floorsRes.data || []).sort((a, b) => a.floor_number - b.floor_number)
+      const sortedRooms = (roomsRes.data || []).sort((a, b) => (a.name || '').localeCompare(b.name || ''))
 
-      if (buildingsError) throw buildingsError
-
-      // Fetch floors with building info (optional - may not always need the relation)
-      const { data: floorsData, error: floorsError } = await supabase
-        .from('floors')
-        .select('*')
-        .order('floor_number')
-
-      if (floorsError) throw floorsError
-
-      // Fetch rooms with floor info (simplified for now until relations are fixed)
-      const { data: roomsData, error: roomsError } = await supabase
-        .from('rooms')
-        .select('*')
-        .order('name')
-
-      if (roomsError) throw roomsError
-
-      setSites(sitesData || [])
-      setBuildings(buildingsData || [])
-      setFloors(floorsData || [])
-      setRooms(roomsData || [])
+      setSites(sortedSites)
+      setBuildings(sortedBuildings)
+      setFloors(sortedFloors)
+      setRooms(sortedRooms)
     } catch (error) {
       console.error('Error fetching locations:', error)
       toast.error('Failed to load locations')

@@ -1,5 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/integrations/supabase/client'
+import { readonlySupabase } from '@/integrations/supabase/readonlyClient'
 import { toast } from 'sonner'
 
 export interface Device {
@@ -23,19 +24,17 @@ export interface Device {
 export function useDevices() {
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
+  const updateTimeoutRef = useRef<number | null>(null)
 
   // Fetch all devices
   const fetchDevices = async () => {
     try {
-      // Force fresh data by adding timestamp to prevent any caching
-      const { data, error } = await supabase
+      // Use readonly client for fast, non-blocking reads
+      const { data, error } = await readonlySupabase
         .from('devices')
-        .select('*')
-        .order('name')
+        .select('id, name, device_type, mac_address, serial_number, firmware_version, status, battery_level, signal_strength, floor_id, room_id, installation_date, calibration_due_date, created_at, updated_at')
 
       if (error) throw error
-      
-      console.log('Fetched devices from database:', data?.map(d => ({ id: d.id, name: d.name })))
       
       // Filter out maintenance status and convert to correct types
       const validDevices = (data || []).map(device => ({
@@ -43,8 +42,10 @@ export function useDevices() {
         status: device.status === 'maintenance' ? 'offline' : device.status
       })).filter(device => ['online', 'offline', 'error', 'pending'].includes(device.status)) as Device[]
       
+      // Sort client-side to avoid DB overhead
+      validDevices.sort((a, b) => a.name.localeCompare(b.name))
+      
       setDevices(validDevices)
-      console.log('Set devices state:', validDevices.map(d => ({ id: d.id, name: d.name })))
     } catch (error) {
       console.error('Error fetching devices:', error)
       toast.error('Failed to fetch devices')
@@ -138,24 +139,48 @@ export function useDevices() {
   useEffect(() => {
     fetchDevices()
 
-    // Set up real-time subscription for device updates
+    // Set up real-time subscription for device updates (debounced)
     const channel = supabase
       .channel('devices-changes')
       .on(
         'postgres_changes',
         {
-          event: '*',
+          event: 'INSERT',
           schema: 'public',
           table: 'devices'
         },
         () => {
-          // Refetch devices when any change occurs
-          fetchDevices()
+          // Debounce refetch to avoid storm during ingestion
+          if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current)
+          }
+          updateTimeoutRef.current = window.setTimeout(() => {
+            fetchDevices()
+          }, 2000)
+        }
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'devices'
+        },
+        () => {
+          if (updateTimeoutRef.current) {
+            clearTimeout(updateTimeoutRef.current)
+          }
+          updateTimeoutRef.current = window.setTimeout(() => {
+            fetchDevices()
+          }, 2000)
         }
       )
       .subscribe()
 
     return () => {
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current)
+      }
       supabase.removeChannel(channel)
     }
   }, [])

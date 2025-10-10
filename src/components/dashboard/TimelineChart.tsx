@@ -15,11 +15,15 @@ interface TimelineChartProps {
 
 export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps) {
   const [selectedDeviceIds, setSelectedDeviceIds] = useState<string[]>([]);
-  const [timeRange, setTimeRange] = useState<'24h' | '7d' | '30d'>('24h');
+  const [timeRange, setTimeRange] = useState<'10min' | '24h' | '7d' | '30d'>('24h');
   const [chartData, setChartData] = useState<any[]>([]);
 
   // Determine period for hook
-  const period: TimePeriod = timeRange === '24h' ? '1hr' : timeRange === '7d' ? '8hr' : '24hr';
+  const period: TimePeriod =
+    timeRange === '10min' ? '10min' :
+    timeRange === '24h' ? '1hr' :
+    timeRange === '7d' ? '8hr' :
+    '24hr';
   
   // Get first selected device or first device
   const primaryDeviceId = selectedDeviceIds.length > 0 ? selectedDeviceIds[0] : (devices[0]?.id || '');
@@ -40,7 +44,10 @@ export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps)
       
       // Format ACTUAL timestamp from database based on time range
       let timestamp: string;
-      if (timeRange === '24h') {
+      if (timeRange === '10min') {
+        const seconds = time.getSeconds();
+        timestamp = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+      } else if (timeRange === '24h') {
         timestamp = `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}`;
       } else if (timeRange === '7d') {
         timestamp = time.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
@@ -119,11 +126,12 @@ export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps)
             <Calendar className="h-5 w-5 text-primary" />
             <CardTitle>Air Quality Timeline</CardTitle>
           </div>
-          <Select value={timeRange} onValueChange={(value) => setTimeRange(value as '24h' | '7d' | '30d')}>
-            <SelectTrigger className="w-[140px]">
+          <Select value={timeRange} onValueChange={(value) => setTimeRange(value as '10min' | '24h' | '7d' | '30d')}>
+            <SelectTrigger className="w-[160px]">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
+              <SelectItem value="10min">Last 10 Minutes</SelectItem>
               <SelectItem value="24h">Last 24 Hours</SelectItem>
               <SelectItem value="7d">Last 7 Days</SelectItem>
               <SelectItem value="30d">Last 30 Days</SelectItem>

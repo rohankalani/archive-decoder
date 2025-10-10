@@ -732,7 +732,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.environmental} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <BarChart data={generateChartData.environmental} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
@@ -807,7 +807,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.pollutants} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <BarChart data={generateChartData.pollutants} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
@@ -896,7 +896,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.particulateMass} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <BarChart data={generateChartData.particulateMass} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
@@ -982,7 +982,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.particulateCount} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                    <BarChart data={generateChartData.particulateCount} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 

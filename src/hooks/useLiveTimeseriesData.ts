@@ -1,7 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { useDebounce } from './useDebounce';
 import {
   calculatePM25Aqi,
   calculatePM10Aqi,
@@ -92,10 +91,6 @@ export function useLiveTimeseriesData(
   
   const bucketsRef = useRef<Map<number, SensorAccumulator>>(new Map());
   const pendingUpdatesRef = useRef<any[]>([]);
-  const flushTrigger = useRef(0);
-  
-  // Debounced flush trigger to reduce re-renders
-  const debouncedFlushTrigger = useDebounce(flushTrigger.current, 1000);
 
   const formatUaeTime = useCallback((timestamp: number): string => {
     const date = new Date(timestamp);
@@ -262,13 +257,6 @@ export function useLiveTimeseriesData(
     }
   }, [deviceId, windowMs, addReadingToBucket, flushBucketsToSeries]);
 
-  // Effect to flush pending updates
-  useEffect(() => {
-    if (debouncedFlushTrigger > 0) {
-      flushBucketsToSeries();
-    }
-  }, [debouncedFlushTrigger, flushBucketsToSeries]);
-
   useEffect(() => {
     if (!deviceId) return;
 
@@ -288,16 +276,17 @@ export function useLiveTimeseriesData(
         (payload) => {
           console.log('[Live Timeseries] New reading:', payload.new);
           addReadingToBucket(payload.new);
-          // Trigger debounced flush
-          flushTrigger.current++;
+          flushBucketsToSeries(); // Immediate flush
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Live Timeseries] Subscription status:', status);
+      });
 
-    // Advance window timer every 10 seconds
+    // Advance window timer every 5 seconds for more responsive updates
     const advanceTimer = setInterval(() => {
       flushBucketsToSeries();
-    }, bucketMs);
+    }, 5000);
 
     return () => {
       supabase.removeChannel(channel);

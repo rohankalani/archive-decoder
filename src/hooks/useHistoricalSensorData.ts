@@ -223,17 +223,19 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
         schema: 'public',
         table: 'sensor_readings',
         filter: `device_id=eq.${deviceId}`
-      }, () => {
-        console.log('[Realtime] New sensor_readings INSERT for device', deviceId);
+      }, (payload) => {
+        console.log('[Historical] New sensor_readings INSERT', deviceId, payload.new);
         // Simple and reliable: refetch the entire window to keep buckets and x-axis correct
         fetchHistoricalData({ silent: true, suppressToast: true });
       })
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[Historical] Subscription status:', status);
+      });
     
-    // Polling fallback for real-time updates every 10 seconds
+    // Polling fallback for real-time updates every 5 seconds
     const pollInterval = setInterval(() => {
       fetchHistoricalData({ silent: true, suppressToast: true });
-    }, 10000);
+    }, 5000);
 
     return () => {
       supabase.removeChannel(channel);

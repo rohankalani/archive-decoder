@@ -36,6 +36,7 @@ export function DeviceDetail() {
   const navigate = useNavigate();
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('1hr');
   const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [dataVersion, setDataVersion] = useState(0);
   
   // Toggle states for each chart type
   const [environmentalParam, setEnvironmentalParam] = useState<'temperature' | 'humidity' | 'co2'>('temperature');
@@ -60,10 +61,11 @@ export function DeviceDetail() {
 
   // Update timestamp when data changes
   React.useEffect(() => {
-    if (historicalData.length > 0) {
+    if (historicalData.length > 0 || liveSeries.length > 0) {
       setLastUpdate(new Date());
+      setDataVersion(v => v + 1); // Force re-render
     }
-  }, [historicalData]);
+  }, [historicalData, liveSeries]);
 
   const device = devices.find(d => d.id === deviceId);
   const deviceSensorData = sensor;
@@ -183,7 +185,7 @@ export function DeviceDetail() {
     ];
 
     return { aqi: processedData, environmental: processedData, pollutants: processedData, particulateMass: processedData, particulateCount: processedData, bar: barData };
-  }, [historicalData, deviceSensorData, timePeriod, liveSeries]);
+  }, [historicalData, deviceSensorData, timePeriod, liveSeries, dataVersion]);
 
   // Calculate dynamic Y-axis maximums for each parameter
   const yAxisMaxValues = useMemo(() => {
@@ -616,6 +618,17 @@ export function DeviceDetail() {
                   {period}
                 </Button>
               ))}
+              <Button 
+                variant="outline" 
+                size="sm"
+                onClick={() => {
+                  setDataVersion(v => v + 1);
+                  setLastUpdate(new Date());
+                }}
+                title="Refresh Charts"
+              >
+                🔄 Refresh
+              </Button>
             </div>
           </div>
 

@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -187,10 +187,10 @@ export function DeviceDetail() {
   // Calculate dynamic Y-axis maximums for each parameter
   const yAxisMaxValues = useMemo(() => {
     const data = generateChartData.environmental;
-    if (!data || data.length === 0) return {};
+    if (!data || data.length === 0) return {} as Record<string, number>;
 
     const getMax = (key: string) => {
-      const values = data.map(d => d[key]).filter(v => v !== undefined && v !== null && !isNaN(v));
+      const values = data.map((d: any) => Number(d[key])).filter((v: any) => Number.isFinite(v));
       return values.length > 0 ? Math.max(...values) : 0;
     };
 
@@ -212,8 +212,93 @@ export function DeviceDetail() {
       pc25: snapTopValue(Math.max(getMax('pc25') * 1.15, 1000)),
       pc5: snapTopValue(Math.max(getMax('pc5') * 1.15, 1000)),
       pc10: snapTopValue(Math.max(getMax('pc10') * 1.15, 1000)),
+    } as Record<string, number>;
+  }, [generateChartData.environmental]);
+
+  // Robust domains for each chart group derived from actual data
+  const envDomains: Record<'temperature' | 'humidity' | 'co2', [number, number]> = useMemo(() => {
+    const data = generateChartData.environmental || [];
+    const make = (key: 'temperature' | 'humidity' | 'co2'): [number, number] => {
+      const vals = data.map((d: any) => Number(d[key])).filter((v: any) => Number.isFinite(v));
+      if (vals.length === 0) return key === 'co2' ? [350, 600] : [0, 100];
+      const min = Math.min(...vals);
+      const max = Math.max(...vals);
+      if (key === 'temperature') return [0, Math.max(35, Math.ceil(max * 1.15))];
+      if (key === 'humidity') return [0, Math.min(100, Math.max(60, Math.ceil(max * 1.1)))];
+      // co2
+      return [Math.max(350, Math.floor(min * 0.9)), Math.max(600, Math.ceil(max * 1.15))];
+    };
+    return {
+      temperature: make('temperature'),
+      humidity: make('humidity'),
+      co2: make('co2'),
     };
   }, [generateChartData.environmental]);
+
+  const pollutantDomains: Record<'voc' | 'hcho' | 'nox', [number, number]> = useMemo(() => {
+    const data = generateChartData.pollutants || [];
+    const make = (key: 'voc' | 'hcho' | 'nox'): [number, number] => {
+      const vals = data.map((d: any) => Number(d[key])).filter((v: any) => Number.isFinite(v));
+      if (vals.length === 0) return [0, 100];
+      const max = Math.max(...vals);
+      const base = key === 'hcho' ? 10 : 100;
+      const factor = key === 'hcho' ? 1.5 : 1.2;
+      return [0, Math.max(base, Math.ceil(max * factor))];
+    };
+    return {
+      voc: make('voc'),
+      hcho: make('hcho'),
+      nox: make('nox'),
+    };
+  }, [generateChartData.pollutants]);
+
+  const pmMassDomains: Record<'pm03' | 'pm1' | 'pm25' | 'pm5' | 'pm10', [number, number]> = useMemo(() => {
+    const data = generateChartData.particulateMass || [];
+    const make = (key: 'pm03' | 'pm1' | 'pm25' | 'pm5' | 'pm10'): [number, number] => {
+      const vals = data.map((d: any) => Number(d[key])).filter((v: any) => Number.isFinite(v));
+      if (vals.length === 0) return [0, 20];
+      const max = Math.max(...vals);
+      const floors: Record<string, number> = { pm03: 10, pm1: 10, pm25: 15, pm5: 15, pm10: 20 };
+      return [0, Math.max(floors[key], Math.ceil(max * 1.2))];
+    };
+    return {
+      pm03: make('pm03'),
+      pm1: make('pm1'),
+      pm25: make('pm25'),
+      pm5: make('pm5'),
+      pm10: make('pm10'),
+    };
+  }, [generateChartData.particulateMass]);
+
+  const pmCountDomains: Record<'pc03' | 'pc05' | 'pc1' | 'pc25' | 'pc5' | 'pc10', [number, number]> = useMemo(() => {
+    const data = generateChartData.particulateCount || [];
+    const make = (key: 'pc03' | 'pc05' | 'pc1' | 'pc25' | 'pc5' | 'pc10'): [number, number] => {
+      const vals = data.map((d: any) => Number(d[key])).filter((v: any) => Number.isFinite(v));
+      if (vals.length === 0) return [0, 10000];
+      const max = Math.max(...vals);
+      return [0, snapTopValue(Math.max(max * 1.15, 1000))];
+    };
+    return {
+      pc03: make('pc03'),
+      pc05: make('pc05'),
+      pc1: make('pc1'),
+      pc25: make('pc25'),
+      pc5: make('pc5'),
+      pc10: make('pc10'),
+    };
+  }, [generateChartData.particulateCount]);
+
+  useEffect(() => {
+    if (timePeriod === '10min') {
+      console.debug('[Domains] 10min', {
+        env: envDomains,
+        pollutant: pollutantDomains,
+        pmMass: pmMassDomains,
+        pmCount: pmCountDomains,
+      });
+    }
+  }, [timePeriod, envDomains, pollutantDomains, pmMassDomains, pmCountDomains]);
+
 
   // Only show loading spinner on initial device load
   if (devicesLoading && !device) {
@@ -731,7 +816,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[0, yAxisMaxValues[pollutantParam] || 100]}
+                        domain={pollutantDomains[pollutantParam] || [0, 100]}
                         label={{ 
                           value: pollutantParam === 'voc' ? 'index' :
                                  pollutantParam === 'hcho' ? 'ppb' :
@@ -820,7 +905,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[0, yAxisMaxValues[pmMassParam] || 20]}
+                        domain={pmMassDomains[pmMassParam] || [0, 20]}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
                       <Bar 
@@ -906,7 +991,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[0, yAxisMaxValues[pmCountParam] || 10000]}
+                        domain={pmCountDomains[pmCountParam] || [0, 10000]}
                         tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}
                       />

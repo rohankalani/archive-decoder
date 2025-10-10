@@ -94,19 +94,30 @@ const DeviceViewContent = memo(() => {
 
   // Optimized device filtering and grouping with floor names
   const filteredAndGroupedDevices = useMemo(() => {
-    if (!sensorData.length || !devices.length) return {};
+    if (!devices.length) return {};
     
-    let filtered = sensorData.filter(device => {
+    // Start with devices and join sensor data if available
+    let filtered = devices.map(deviceInfo => {
+      const sensor = sensorData.find(s => s.device_id === deviceInfo.id);
+      return {
+        device_id: deviceInfo.id,
+        device_name: deviceInfo.name,
+        aqi: sensor?.aqi || 0,
+        pm25: sensor?.pm25,
+        pm10: sensor?.pm10,
+        co2: sensor?.co2,
+        voc: sensor?.voc,
+        status: sensor?.status || deviceInfo.status,
+        deviceInfo
+      };
+    }).filter(device => {
       // Search filter with debounced query
       if (debouncedSearchQuery && !device.device_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) {
         return false;
       }
 
       // Get device location info
-      const deviceInfo = devices.find(d => d.id === device.device_id);
-      if (!deviceInfo) return false;
-
-      const floor = floors.find(f => f.id === deviceInfo.floor_id);
+      const floor = floors.find(f => f.id === device.deviceInfo.floor_id);
       if (!floor) return false;
       const floorLocation = getFloorLocation(floor);
       if (!floorLocation) return false;
@@ -149,10 +160,7 @@ const DeviceViewContent = memo(() => {
     }> = {};
 
     filtered.forEach(device => {
-      const deviceInfo = devices.find(d => d.id === device.device_id);
-      if (!deviceInfo) return;
-
-      const floor = floors.find(f => f.id === deviceInfo.floor_id);
+      const floor = floors.find(f => f.id === device.deviceInfo.floor_id);
       if (!floor) return;
       const floorLocation = getFloorLocation(floor);
       if (!floorLocation) return;
@@ -177,7 +185,7 @@ const DeviceViewContent = memo(() => {
       grouped[siteKey].buildings[buildingKey].devices.push({
         device_id: device.device_id,
         device_name: device.device_name,
-        aqi: device.aqi || 0,
+        aqi: device.aqi,
         pm25: device.pm25,
         pm10: device.pm10,
         co2: device.co2,
@@ -188,15 +196,15 @@ const DeviceViewContent = memo(() => {
     });
 
     return grouped;
-  }, [sensorData, devices, debouncedSearchQuery, selectedSite, selectedBuilding, selectedFloor, floors, getFloorLocation]);
+  }, [devices, sensorData, debouncedSearchQuery, selectedSite, selectedBuilding, selectedFloor, floors, getFloorLocation]);
 
   // Get flat list of devices with full data for glance view
   const devicesWithFullData = useMemo(() => {
-    if (!sensorData.length || !devices.length) return [];
+    if (!devices.length) return [];
     
-    return sensorData.map(sensor => {
-      const deviceInfo = devices.find(d => d.id === sensor.device_id);
-      if (!deviceInfo) return null;
+    // Start with devices and join sensor data if available
+    return devices.map(deviceInfo => {
+      const sensor = sensorData.find(s => s.device_id === deviceInfo.id);
 
       const floor = floors.find(f => f.id === deviceInfo.floor_id);
       if (!floor) return null;
@@ -208,16 +216,16 @@ const DeviceViewContent = memo(() => {
       if (selectedSite !== 'all' && floorLocation.site.id !== selectedSite) return null;
       if (selectedBuilding !== 'all' && floorLocation.building.id !== selectedBuilding) return null;
       if (selectedFloor !== 'all' && floorLocation.floor.id !== selectedFloor) return null;
-      if (debouncedSearchQuery && !sensor.device_name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return null;
+      if (debouncedSearchQuery && !deviceInfo.name.toLowerCase().includes(debouncedSearchQuery.toLowerCase())) return null;
 
       return {
-        id: sensor.device_id,
-        name: sensor.device_name,
-        status: sensor.status,
+        id: deviceInfo.id,
+        name: deviceInfo.name,
+        status: sensor?.status || deviceInfo.status,
         locationString: `${floorLocation.site.name} > ${floorLocation.building.name} > ${floorLocation.floor.name || `Floor ${floorLocation.floor.floor_number}`}`,
         building: floorLocation.building,
         floor: floorLocation.floor,
-        sensor: {
+        sensor: sensor ? {
           aqi: sensor.aqi,
           temperature: sensor.temperature,
           humidity: sensor.humidity,
@@ -238,11 +246,11 @@ const DeviceViewContent = memo(() => {
           pc5: sensor.pc5,
           pc10: sensor.pc10,
           last_updated: sensor.last_updated
-        },
+        } : undefined,
         ...deviceInfo
       };
     }).filter(Boolean);
-  }, [sensorData, devices, floors, getFloorLocation, selectedSite, selectedBuilding, selectedFloor, debouncedSearchQuery]);
+  }, [devices, sensorData, floors, getFloorLocation, selectedSite, selectedBuilding, selectedFloor, debouncedSearchQuery]);
 
   // Group devices by building for glance view
   const devicesByBuilding = useMemo(() => {

@@ -272,10 +272,19 @@ const DeviceViewContent = memo(() => {
         <div className="space-y-6">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold tracking-tight">Detailed Device View</h1>
+              <h1 className="text-3xl font-bold tracking-tight">Device View</h1>
+              <p className="text-muted-foreground mt-2">
+                Loading device data... This may take a moment.
+              </p>
             </div>
           </div>
           <DeviceGridSkeleton count={8} />
+          <div className="text-center text-sm text-muted-foreground pt-4">
+            If loading takes longer than expected, try{' '}
+            <Button variant="link" className="px-1" onClick={() => window.location.reload()}>
+              refreshing the page
+            </Button>
+          </div>
         </div>
       </Layout>
     );

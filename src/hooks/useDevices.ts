@@ -24,15 +24,25 @@ export function useDevices() {
   const [devices, setDevices] = useState<Device[]>([])
   const [loading, setLoading] = useState(true)
 
-  // Fetch all devices
-  const fetchDevices = async () => {
+  // Fetch all devices with timeout handling and retry logic
+  const fetchDevices = async (retryCount = 0) => {
+    const MAX_RETRIES = 3
+    const TIMEOUT_MS = 8000 // 8 second timeout
+    
     try {
-      // Force fresh data by adding timestamp to prevent any caching
+      // Create abort controller for timeout
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), TIMEOUT_MS)
+      
       const { data, error } = await supabase
         .from('devices')
         .select('*')
         .order('name')
-
+        .limit(100) // Add safety limit
+        .abortSignal(controller.signal)
+      
+      clearTimeout(timeoutId)
+      
       if (error) throw error
       
       console.log('Fetched devices from database:', data?.map(d => ({ id: d.id, name: d.name })))
@@ -45,11 +55,33 @@ export function useDevices() {
       
       setDevices(validDevices)
       console.log('Set devices state:', validDevices.map(d => ({ id: d.id, name: d.name })))
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error fetching devices:', error)
-      toast.error('Failed to fetch devices')
+      
+      // Handle timeout errors specifically
+      if (error?.message?.includes('timeout') || 
+          error?.message?.includes('upstream') ||
+          error?.code === 'PGRST116' ||
+          error?.name === 'AbortError') {
+        
+        // Retry with exponential backoff
+        if (retryCount < MAX_RETRIES) {
+          const delay = Math.min(1000 * Math.pow(2, retryCount), 5000)
+          console.log(`Retrying device fetch in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES})`)
+          
+          setTimeout(() => {
+            fetchDevices(retryCount + 1)
+          }, delay)
+          return // Don't show error toast yet
+        }
+      }
+      
+      // Only show error toast after all retries exhausted
+      toast.error('Failed to fetch devices. Please refresh the page.')
     } finally {
-      setLoading(false)
+      if (retryCount === 0) {
+        setLoading(false)
+      }
     }
   }
 
@@ -138,25 +170,43 @@ export function useDevices() {
   useEffect(() => {
     fetchDevices()
 
-    // Set up real-time subscription for device updates
-    const channel = supabase
-      .channel('devices-changes')
-      .on(
-        'postgres_changes',
-        {
-          event: '*',
-          schema: 'public',
-          table: 'devices'
-        },
-        () => {
-          // Refetch devices when any change occurs
-          fetchDevices()
-        }
-      )
-      .subscribe()
+    let refetchTimer: NodeJS.Timeout
+
+    // Delay real-time subscription setup to reduce initial load
+    const subscriptionTimer = setTimeout(() => {
+      const channel = supabase
+        .channel('devices-changes')
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'devices'
+          },
+          () => {
+            // Debounce refetch to prevent rapid successive calls
+            clearTimeout(refetchTimer)
+            refetchTimer = setTimeout(() => {
+              fetchDevices()
+            }, 2000)
+          }
+        )
+        .subscribe((status) => {
+          if (status === 'SUBSCRIBED') {
+            console.log('Device subscription active')
+          } else if (status === 'CHANNEL_ERROR') {
+            console.warn('Device subscription error, will retry')
+          }
+        })
+
+      return () => {
+        clearTimeout(refetchTimer)
+        supabase.removeChannel(channel)
+      }
+    }, 3000) // Wait 3 seconds before setting up subscription
 
     return () => {
-      supabase.removeChannel(channel)
+      clearTimeout(subscriptionTimer)
     }
   }, [])
 

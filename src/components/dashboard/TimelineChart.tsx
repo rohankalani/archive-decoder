@@ -89,6 +89,12 @@ export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps)
     // Add 15% padding and round up to nearest 10
     return Math.max(100, Math.ceil((maxValue * 1.15) / 10) * 10);
   }, [chartData]);
+  
+  useEffect(() => {
+    if (chartData.length > 0) {
+      console.debug('[TimelineChart] yAxisMax', yAxisMax, 'range', timeRange);
+    }
+  }, [yAxisMax, timeRange, chartData]);
 
   // Get colors for devices
   const deviceColors = useMemo(() => {

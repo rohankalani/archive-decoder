@@ -553,7 +553,7 @@ export function DeviceDetail() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={generateChartData.bar}>
+                  <BarChart data={generateChartData.bar} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis 
                         dataKey="name" 
@@ -563,7 +563,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.2))]}
+                        domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.15))]}
                         label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
                       />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -585,7 +585,7 @@ export function DeviceDetail() {
             <CardContent>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={generateChartData.aqi}>
+                    <LineChart data={generateChartData.aqi} margin={{ top: 8, right: 12, bottom: 0, left: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis 
                       dataKey="time" 
@@ -596,7 +596,7 @@ export function DeviceDetail() {
                     <YAxis 
                       stroke="hsl(var(--muted-foreground))" 
                       fontSize={12}
-                      domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.2))]}
+                      domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.15))]}
                       label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
                     />
                     <Legend />

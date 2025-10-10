@@ -37,8 +37,8 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
     
     switch (period) {
       case '10min':
-        startTime = new Date(now.getTime() - 2 * 60 * 60 * 1000); // Last 2 hours
-        intervals = 12; // 12 ten-minute intervals
+        startTime = new Date(now.getTime() - 10 * 60 * 1000); // Last 10 minutes
+        intervals = 10; // 10 one-minute intervals
         break;
       case '1hr':
         startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000); // Last 24 hours
@@ -62,7 +62,7 @@ export function useHistoricalSensorData(deviceId: string, period: TimePeriod = '
 
   const getIntervalDuration = () => {
     switch (period) {
-      case '10min': return 10 * 60 * 1000;
+      case '10min': return 60 * 1000;
       case '1hr': return 60 * 60 * 1000;
       case '8hr': return 8 * 60 * 60 * 1000;
       case '24hr': return 24 * 60 * 60 * 1000;

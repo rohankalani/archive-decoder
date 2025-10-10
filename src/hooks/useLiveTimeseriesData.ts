@@ -12,6 +12,37 @@ import {
 
 const UAE_TZ = 'Asia/Dubai';
 
+// Metrics to track for forward-filling
+const METRICS = [
+  'temperature', 'humidity', 'co2', 'voc', 'hcho', 'nox',
+  'pm25', 'pm10', 'pm03', 'pm1', 'pm5',
+  'pc03', 'pc05', 'pc1', 'pc25', 'pc5', 'pc10'
+] as const;
+
+// Default values when no data exists and no value to carry forward
+const DEFAULTS: Record<string, number> = {
+  temperature: 0,
+  humidity: 0,
+  co2: 400,
+  voc: 0,
+  hcho: 0,
+  nox: 0,
+  pm25: 0,
+  pm10: 0,
+  pm03: 0,
+  pm1: 0,
+  pm5: 0,
+  pc03: 0,
+  pc05: 0,
+  pc1: 0,
+  pc25: 0,
+  pc5: 0,
+  pc10: 0
+};
+
+// How long to carry forward a value before falling back to defaults (5 minutes)
+const CARRY_FORWARD_MS = 5 * 60 * 1000;
+
 interface LiveBucketData {
   timestamp: number;
   time: string;
@@ -82,6 +113,10 @@ export function useLiveTimeseriesData(
     const oldestBucket = now - windowMs;
     const numBuckets = Math.ceil(windowMs / bucketMs);
 
+    // Track last seen values for forward-filling
+    const lastSeenVal: Record<string, number> = {};
+    const lastSeenTs: Record<string, number> = {};
+
     // Create a sorted array of bucket data
     const bucketArray: LiveBucketData[] = [];
     
@@ -89,115 +124,81 @@ export function useLiveTimeseriesData(
       const bucketStart = Math.floor((now - (numBuckets - i - 1) * bucketMs) / bucketMs) * bucketMs;
       const acc = bucketsRef.current.get(bucketStart);
       
-      if (acc) {
-        const totalCount = Object.values(acc.counts || {}).reduce((a, b) => a + b, 0);
-        if (totalCount > 0) {
-          const avg = (key: string, def = 0) => {
-            const c = acc.counts?.[key] || 0;
-            const s = acc.sums?.[key] || 0;
-            return c > 0 ? s / c : def;
-          };
-
-          const pm25 = avg('pm25', 0);
-          const pm10 = avg('pm10', 0);
-          const voc = avg('voc', 0);
-          const hcho = avg('hcho', 0);
-          const nox = avg('nox', 0);
-
-          const pm25Aqi = calculatePM25Aqi(pm25);
-          const pm10Aqi = calculatePM10Aqi(pm10);
-          const vocAqi = calculateVOCAqi(voc);
-          const hchoAqi = calculateHCHOAqi(hcho);
-          const noxAqi = calculateNOxAqi(nox);
-          const overallAqi = Math.max(pm25Aqi, pm10Aqi, vocAqi, hchoAqi, noxAqi);
-
-          bucketArray.push({
-            timestamp: bucketStart,
-            time: formatUaeTime(bucketStart),
-            overallAqi,
-            pm25Aqi,
-            pm10Aqi,
-            hchoAqi,
-            vocAqi,
-            noxAqi,
-            temperature: avg('temperature', 0),
-            humidity: avg('humidity', 0),
-            co2: avg('co2', 400),
-            voc,
-            hcho,
-            nox,
-            pm25,
-            pm10,
-            pm03: avg('pm03', 0),
-            pm1: avg('pm1', 0),
-            pm5: avg('pm5', 0),
-            pc03: avg('pc03', 0),
-            pc05: avg('pc05', 0),
-            pc1: avg('pc1', 0),
-            pc25: avg('pc25', 0),
-            pc5: avg('pc5', 0),
-            pc10: avg('pc10', 0)
-          });
+      // Get values for this bucket with forward-filling
+      const getValue = (key: string): number => {
+        const c = acc?.counts?.[key] || 0;
+        const s = acc?.sums?.[key] || 0;
+        
+        if (c > 0) {
+          // We have actual data for this bucket
+          const value = s / c;
+          lastSeenVal[key] = value;
+          lastSeenTs[key] = bucketStart;
+          return value;
         } else {
-          // Empty bucket with defaults
-          bucketArray.push({
-            timestamp: bucketStart,
-            time: formatUaeTime(bucketStart),
-            overallAqi: 0,
-            pm25Aqi: 0,
-            pm10Aqi: 0,
-            hchoAqi: 0,
-            vocAqi: 0,
-            noxAqi: 0,
-            temperature: 0,
-            humidity: 0,
-            co2: 400,
-            voc: 0,
-            hcho: 0,
-            nox: 0,
-            pm25: 0,
-            pm10: 0,
-            pm03: 0,
-            pm1: 0,
-            pm5: 0,
-            pc03: 0,
-            pc05: 0,
-            pc1: 0,
-            pc25: 0,
-            pc5: 0,
-            pc10: 0
-          });
+          // No data in this bucket - try to carry forward
+          if (lastSeenTs[key] !== undefined && bucketStart - lastSeenTs[key] <= CARRY_FORWARD_MS) {
+            return lastSeenVal[key];
+          } else {
+            // Too old or never seen - use default
+            return DEFAULTS[key] || 0;
+          }
         }
-      } else {
-        // Empty bucket when no data exists
-        bucketArray.push({
-          timestamp: bucketStart,
-          time: formatUaeTime(bucketStart),
-          overallAqi: 0,
-          pm25Aqi: 0,
-          pm10Aqi: 0,
-          hchoAqi: 0,
-          vocAqi: 0,
-          noxAqi: 0,
-          temperature: 0,
-          humidity: 0,
-          co2: 400,
-          voc: 0,
-          hcho: 0,
-          nox: 0,
-          pm25: 0,
-          pm10: 0,
-          pm03: 0,
-          pm1: 0,
-          pm5: 0,
-          pc03: 0,
-          pc05: 0,
-          pc1: 0,
-          pc25: 0,
-          pc5: 0,
-          pc10: 0
-        });
-      }
+      };
+
+      const temperature = getValue('temperature');
+      const humidity = getValue('humidity');
+      const co2 = getValue('co2');
+      const voc = getValue('voc');
+      const hcho = getValue('hcho');
+      const nox = getValue('nox');
+      const pm25 = getValue('pm25');
+      const pm10 = getValue('pm10');
+      const pm03 = getValue('pm03');
+      const pm1 = getValue('pm1');
+      const pm5 = getValue('pm5');
+      const pc03 = getValue('pc03');
+      const pc05 = getValue('pc05');
+      const pc1 = getValue('pc1');
+      const pc25 = getValue('pc25');
+      const pc5 = getValue('pc5');
+      const pc10 = getValue('pc10');
+
+      // Calculate AQI based on the values (actual or carried forward)
+      const pm25Aqi = calculatePM25Aqi(pm25);
+      const pm10Aqi = calculatePM10Aqi(pm10);
+      const vocAqi = calculateVOCAqi(voc);
+      const hchoAqi = calculateHCHOAqi(hcho);
+      const noxAqi = calculateNOxAqi(nox);
+      const overallAqi = Math.max(pm25Aqi, pm10Aqi, vocAqi, hchoAqi, noxAqi);
+
+      bucketArray.push({
+        timestamp: bucketStart,
+        time: formatUaeTime(bucketStart),
+        overallAqi,
+        pm25Aqi,
+        pm10Aqi,
+        hchoAqi,
+        vocAqi,
+        noxAqi,
+        temperature,
+        humidity,
+        co2,
+        voc,
+        hcho,
+        nox,
+        pm25,
+        pm10,
+        pm03,
+        pm1,
+        pm5,
+        pc03,
+        pc05,
+        pc1,
+        pc25,
+        pc5,
+        pc10
+      });
     }
 
     // Clean up old buckets

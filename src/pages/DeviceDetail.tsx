@@ -21,6 +21,7 @@ import {
   calculateNOxAqi,
   getAqiColor
 } from '@/utils/chartDataUtils';
+import { formatUaeTime } from '@/lib/formatUaeTime';
 import { 
   ArrowLeft,
   Activity,
@@ -348,7 +349,7 @@ export function DeviceDetail() {
             </span>
             <div className="flex items-center gap-2 text-xs text-success ml-auto">
               <div className="h-2 w-2 rounded-full bg-success animate-pulse" />
-              <span>Live Data • Updated {lastUpdate.toLocaleTimeString()}</span>
+              <span>Live Data • Updated {formatUaeTime(lastUpdate, '10min')}</span>
             </div>
           </div>
           {floorLocation && (
@@ -382,7 +383,7 @@ export function DeviceDetail() {
               <CardTitle className="text-base">Air Quality Index</CardTitle>
               <div className="flex items-center gap-1 text-xs text-muted-foreground">
                 <Clock className="h-3 w-3" />
-                Last updated: {new Date().toLocaleTimeString()}
+                Last updated: {formatUaeTime(new Date(), '10min')}
               </div>
             </CardHeader>
             <CardContent className="text-center space-y-2">

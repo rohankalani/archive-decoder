@@ -135,8 +135,12 @@ export function useDevices() {
       if (updates.serial_number !== undefined) updatePayload.serial_number = updates.serial_number
       if (updates.mac_address !== undefined) updatePayload.mac_address = updates.mac_address
       if (updates.status !== undefined) updatePayload.status = updates.status
-      if (updates.floor_id !== undefined) updatePayload.floor_id = updates.floor_id
-      if (updates.room_id !== undefined) updatePayload.room_id = updates.room_id
+      
+      // CRITICAL: Only include location fields if explicitly provided
+      // This prevents accidental clearing of location assignments
+      if ('floor_id' in updates) updatePayload.floor_id = updates.floor_id
+      if ('room_id' in updates) updatePayload.room_id = updates.room_id
+      
       if (updates.firmware_version !== undefined) updatePayload.firmware_version = updates.firmware_version
       if (updates.installation_date !== undefined) updatePayload.installation_date = updates.installation_date
       if (updates.calibration_due_date !== undefined) updatePayload.calibration_due_date = updates.calibration_due_date

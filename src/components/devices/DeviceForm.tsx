@@ -194,67 +194,62 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
   }, [selectedSite, selectedBuilding, selectedFloor, selectedRoom, sites, buildings, allFloors, rooms])
 
   const handleSubmit = async (data: DeviceFormData) => {
-    console.log('=== DeviceForm handleSubmit CALLED ===')
-    console.log('Raw form data:', JSON.stringify(data, null, 2))
-    console.log('Name field value:', data.name)
-    console.log('All form values:', form.getValues())
-    console.log('Form state dirty:', form.formState.isDirty)
-    console.log('Form state dirtyFields:', form.formState.dirtyFields)
-    console.log('Location changed:', locationChanged, 'Is new device:', !device)
-    
     setIsSubmitting(true)
     
     try {
-    
-    // Only update location fields if location selectors were used OR if it's a new device
-    if (locationChanged || !device) {
-      // Auto-fill floor_id from selected room if room is selected
-      if (selectedRoom) {
-        const room = rooms.find(r => r.id === selectedRoom)
-        if (room) {
-          data.floor_id = room.floor_id
-          data.room_id = selectedRoom
-          // If room is assigned and this is a new device, set status to offline
-          if (!device) {
-            data.status = 'offline'
+      // If editing an existing device
+      if (device) {
+        // Build a partial update object - only include fields that should be updated
+        const updates: any = {
+          name: data.name,
+          device_type: data.device_type,
+          serial_number: data.serial_number,
+          mac_address: data.mac_address,
+          firmware_version: data.firmware_version,
+          installation_date: data.installation_date,
+          calibration_due_date: data.calibration_due_date,
+        }
+        
+        // ONLY include location fields if the user explicitly changed them
+        if (locationChanged) {
+          if (selectedRoom) {
+            const room = rooms.find(r => r.id === selectedRoom)
+            if (room) {
+              updates.floor_id = room.floor_id
+              updates.room_id = selectedRoom
+            }
+          } else {
+            updates.floor_id = null
+            updates.room_id = null
           }
         }
+        // Otherwise, preserve existing location by not including those fields
+        
+        await onSubmit({ id: device.id, ...updates } as any)
       } else {
-        // If no room selected and this is a new device, set status to pending
-        if (!device) {
+        // For new devices, include everything
+        if (selectedRoom) {
+          const room = rooms.find(r => r.id === selectedRoom)
+          if (room) {
+            data.floor_id = room.floor_id
+            data.room_id = selectedRoom
+            data.status = 'offline'
+          }
+        } else {
           data.status = 'pending'
+          data.floor_id = null
+          data.room_id = null
         }
-        data.floor_id = null
-        data.room_id = null
+        
+        if (!data.calibration_due_date && data.installation_date) {
+          const installDate = new Date(data.installation_date)
+          const calibrationDate = new Date(installDate)
+          calibrationDate.setFullYear(calibrationDate.getFullYear() + 1)
+          data.calibration_due_date = calibrationDate.toISOString().split('T')[0]
+        }
+        
+        await onSubmit(data as any)
       }
-    }
-    // For updates where location wasn't changed, preserve existing location values
-    else if (device) {
-      data.floor_id = device.floor_id || null
-      data.room_id = device.room_id || null
-    }
-
-    // If calibration_due_date is not provided and installation_date is available,
-    // set calibration_due_date to 1 year from installation_date
-    if (!data.calibration_due_date && data.installation_date) {
-      const installDate = new Date(data.installation_date)
-      const calibrationDate = new Date(installDate)
-      calibrationDate.setFullYear(calibrationDate.getFullYear() + 1)
-      data.calibration_due_date = calibrationDate.toISOString().split('T')[0]
-    }
-
-      console.log('=== Calling onSubmit with final data ===')
-      console.log('Final data being submitted:', JSON.stringify(data, null, 2))
-      console.log('Final name value:', data.name)
-      
-      // Ensure floor_id is always present (even if null) to match Device type
-      const deviceData = {
-        ...data,
-        floor_id: data.floor_id ?? null,
-        room_id: data.room_id ?? null,
-      }
-      
-      await onSubmit(deviceData as any)
     } catch (error) {
       console.error('Form submission error:', error)
     } finally {

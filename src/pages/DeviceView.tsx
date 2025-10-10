@@ -106,24 +106,33 @@ const DeviceViewContent = memo(() => {
       const deviceInfo = devices.find(d => d.id === device.device_id);
       if (!deviceInfo) return false;
 
-      const floor = floors.find(f => f.id === deviceInfo.floor_id);
-      if (!floor) return false;
-      const floorLocation = getFloorLocation(floor);
-      if (!floorLocation) return false;
+      // Handle devices with location assignment
+      if (deviceInfo.floor_id) {
+        const floor = floors.find(f => f.id === deviceInfo.floor_id);
+        
+        // If device has floor_id but floor not found, skip it (data integrity issue)
+        if (!floor) return false;
+        
+        const floorLocation = getFloorLocation(floor);
+        if (!floorLocation) return false;
 
-      // Site filter
-      if (selectedSite !== 'all' && floorLocation.site.id !== selectedSite) {
-        return false;
-      }
+        // Apply location filters
+        if (selectedSite !== 'all' && floorLocation.site.id !== selectedSite) {
+          return false;
+        }
 
-      // Building filter
-      if (selectedBuilding !== 'all' && floorLocation.building.id !== selectedBuilding) {
-        return false;
-      }
+        if (selectedBuilding !== 'all' && floorLocation.building.id !== selectedBuilding) {
+          return false;
+        }
 
-      // Floor filter
-      if (selectedFloor !== 'all' && floorLocation.floor.id !== selectedFloor) {
-        return false;
+        if (selectedFloor !== 'all' && floorLocation.floor.id !== selectedFloor) {
+          return false;
+        }
+      } else {
+        // Device has no location assignment - only show when "All" filters are selected
+        if (selectedSite !== 'all' || selectedBuilding !== 'all' || selectedFloor !== 'all') {
+          return false;
+        }
       }
 
       return true;

@@ -83,7 +83,10 @@ export class OptimizedSensorApi {
       if (devicesError) throw devicesError;
       if (!devices || devices.length === 0) return [];
 
-      // Step 2: Get latest readings using a more optimized query with DISTINCT ON
+      // Step 2: Get latest readings using a more optimized query with time filter
+      // Only fetch recent data (last 5 minutes) to prevent massive table scans
+      const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+      
       const { data: readings, error: readingsError } = await supabase
         .from('sensor_readings')
         .select(`
@@ -94,7 +97,9 @@ export class OptimizedSensorApi {
           timestamp
         `)
         .in('device_id', devices.map(d => d.id))
-        .order('device_id, sensor_type, timestamp', { ascending: false });
+        .gte('timestamp', fiveMinutesAgo)
+        .order('timestamp', { ascending: false })
+        .limit(1000);
 
       if (readingsError) throw readingsError;
 

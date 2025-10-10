@@ -30,9 +30,19 @@ export function useOptimizedLiveSensorData() {
       setLastFetch(new Date());
     } catch (error) {
       const err = error as Error;
-      logger.error('Error fetching optimized sensor data', err);
-      setError(err);
-      toast.error('Failed to fetch sensor data');
+      
+      // Handle transient PostgREST schema cache errors gracefully
+      if (err.message?.includes('PGRST002') || 
+          err.message?.includes('schema cache') ||
+          err.message?.includes('timeout')) {
+        logger.error('Temporary database connection issue, retrying...', err);
+        setError(null); // Don't propagate transient errors
+        // Don't show error toast for transient issues
+      } else {
+        logger.error('Error fetching optimized sensor data', err);
+        setError(err);
+        toast.error('Failed to fetch sensor data');
+      }
     } finally {
       setLoading(false);
     }

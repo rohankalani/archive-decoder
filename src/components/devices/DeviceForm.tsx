@@ -30,7 +30,7 @@ import {
 } from '@/components/ui/select'
 import { Device } from '@/hooks/useDevices'
 import { Floor, useLocations } from '@/hooks/useLocations'
-import { MapPin, Settings } from 'lucide-react'
+import { MapPin, Settings, Loader2 } from 'lucide-react'
 
 const deviceSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(100, "Name must be less than 100 characters"),
@@ -66,6 +66,7 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
   const [selectedFloor, setSelectedFloor] = React.useState<string>('')
   const [selectedRoom, setSelectedRoom] = React.useState<string>('')
   const [locationChanged, setLocationChanged] = React.useState(false)
+  const [isSubmitting, setIsSubmitting] = React.useState(false)
 
   const form = useForm<DeviceFormData>({
     resolver: zodResolver(deviceSchema),
@@ -85,13 +86,38 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
 
   // Initialize location selectors from device data
   React.useEffect(() => {
+    console.log('=== DeviceForm Location Init ===')
+    console.log('Device:', device?.id, device?.name)
+    console.log('Has room_id:', device?.room_id)
+    console.log('Has floor_id:', device?.floor_id)
+    console.log('Data loaded - Rooms:', rooms.length, 'Floors:', allFloors.length, 'Buildings:', buildings.length)
+    
+    // Wait for location data to load before initializing
+    if (rooms.length === 0 || allFloors.length === 0 || buildings.length === 0) {
+      console.log('Location data not loaded yet, waiting...')
+      return
+    }
+    
     if (device && device.room_id) {
       const room = rooms.find(r => r.id === device.room_id)
+      console.log('Found room:', room?.name)
+      
       if (room) {
         const floor = allFloors.find(f => f.id === room.floor_id)
+        console.log('Found floor:', floor?.name || `Floor ${floor?.floor_number}`)
+        
         if (floor) {
           const building = buildings.find(b => b.id === floor.building_id)
+          console.log('Found building:', building?.name)
+          
           if (building) {
+            console.log('Setting location selectors:', {
+              site: building.site_id,
+              building: building.id,
+              floor: floor.id,
+              room: room.id
+            })
+            
             setSelectedSite(building.site_id)
             setSelectedBuilding(building.id)
             setSelectedFloor(floor.id)
@@ -101,9 +127,19 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
       }
     } else if (device && device.floor_id) {
       const floor = allFloors.find(f => f.id === device.floor_id)
+      console.log('Found floor (no room):', floor?.name || `Floor ${floor?.floor_number}`)
+      
       if (floor) {
         const building = buildings.find(b => b.id === floor.building_id)
+        console.log('Found building (no room):', building?.name)
+        
         if (building) {
+          console.log('Setting location selectors (no room):', {
+            site: building.site_id,
+            building: building.id,
+            floor: floor.id
+          })
+          
           setSelectedSite(building.site_id)
           setSelectedBuilding(building.id)
           setSelectedFloor(floor.id)
@@ -147,9 +183,13 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
     return parts.filter(Boolean).join(' → ')
   }, [selectedSite, selectedBuilding, selectedFloor, selectedRoom, sites, buildings, allFloors, rooms])
 
-  const handleSubmit = (data: DeviceFormData) => {
+  const handleSubmit = async (data: DeviceFormData) => {
     console.log('Form submitted with data:', data)
     console.log('Location changed:', locationChanged, 'Is new device:', !device)
+    
+    setIsSubmitting(true)
+    
+    try {
     
     // Only update location fields if location selectors were used OR if it's a new device
     if (locationChanged || !device) {
@@ -188,8 +228,13 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
       data.calibration_due_date = calibrationDate.toISOString().split('T')[0]
     }
 
-    console.log('Submitting device data:', data)
-    onSubmit(data as any)
+      console.log('Submitting device data:', data)
+      await onSubmit(data as any)
+    } catch (error) {
+      console.error('Form submission error:', error)
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   return (
@@ -436,10 +481,11 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={onCancel}>
+              <Button type="button" variant="outline" onClick={onCancel} disabled={isSubmitting}>
                 Cancel
               </Button>
-              <Button type="submit">
+              <Button type="submit" disabled={isSubmitting}>
+                {isSubmitting && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
                 {device ? 'Update Device' : 'Add Device'}
               </Button>
             </DialogFooter>

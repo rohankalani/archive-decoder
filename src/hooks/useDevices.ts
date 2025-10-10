@@ -118,6 +118,10 @@ export function useDevices() {
   // Update device
   const updateDevice = async (id: string, updates: Partial<Device>) => {
     try {
+      console.log('=== Updating Device ===')
+      console.log('Device ID:', id)
+      console.log('Updates:', updates)
+      
       const { data, error } = await supabase
         .from('devices')
         .update(updates)
@@ -125,7 +129,12 @@ export function useDevices() {
         .select()
         .single()
 
-      if (error) throw error
+      if (error) {
+        console.error('Supabase update error:', error)
+        throw error
+      }
+
+      console.log('Update successful:', data)
 
       const validDevice = {
         ...data,
@@ -136,9 +145,18 @@ export function useDevices() {
       ))
       toast.success('Device updated successfully')
       return data
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating device:', error)
-      toast.error('Failed to update device')
+      
+      // More specific error messages
+      if (error?.code === 'PGRST116') {
+        toast.error('Database timeout - please try again')
+      } else if (error?.message) {
+        toast.error(`Failed to update device: ${error.message}`)
+      } else {
+        toast.error('Failed to update device')
+      }
+      
       throw error
     }
   }

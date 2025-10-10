@@ -184,6 +184,37 @@ export function DeviceDetail() {
     return { aqi: processedData, environmental: processedData, pollutants: processedData, particulateMass: processedData, particulateCount: processedData, bar: barData };
   }, [historicalData, deviceSensorData, timePeriod, liveSeries]);
 
+  // Calculate dynamic Y-axis maximums for each parameter
+  const yAxisMaxValues = useMemo(() => {
+    const data = generateChartData.environmental;
+    if (!data || data.length === 0) return {};
+
+    const getMax = (key: string) => {
+      const values = data.map(d => d[key]).filter(v => v !== undefined && v !== null && !isNaN(v));
+      return values.length > 0 ? Math.max(...values) : 0;
+    };
+
+    return {
+      temperature: Math.max(35, Math.ceil(getMax('temperature') * 1.15)),
+      humidity: Math.min(100, Math.max(50, Math.ceil(getMax('humidity') * 1.1))),
+      co2: Math.max(1000, Math.ceil(getMax('co2') * 1.1)),
+      voc: Math.max(100, Math.ceil(getMax('voc') * 1.2)),
+      hcho: Math.max(10, Math.ceil(getMax('hcho') * 1.5)),
+      nox: Math.max(10, Math.ceil(getMax('nox') * 1.5)),
+      pm03: Math.max(10, Math.ceil(getMax('pm03') * 1.2)),
+      pm1: Math.max(10, Math.ceil(getMax('pm1') * 1.2)),
+      pm25: Math.max(15, Math.ceil(getMax('pm25') * 1.2)),
+      pm5: Math.max(15, Math.ceil(getMax('pm5') * 1.2)),
+      pm10: Math.max(20, Math.ceil(getMax('pm10') * 1.2)),
+      pc03: snapTopValue(Math.max(getMax('pc03') * 1.15, 1000)),
+      pc05: snapTopValue(Math.max(getMax('pc05') * 1.15, 1000)),
+      pc1: snapTopValue(Math.max(getMax('pc1') * 1.15, 1000)),
+      pc25: snapTopValue(Math.max(getMax('pc25') * 1.15, 1000)),
+      pc5: snapTopValue(Math.max(getMax('pc5') * 1.15, 1000)),
+      pc10: snapTopValue(Math.max(getMax('pc10') * 1.15, 1000)),
+    };
+  }, [generateChartData.environmental]);
+
   // Only show loading spinner on initial device load
   if (devicesLoading && !device) {
     return (
@@ -623,19 +654,8 @@ export function DeviceDetail() {
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
                         domain={[
-                          (dataMin: number) => (environmentalParam === 'co2' ? 400 : 0),
-                          (dataMax: number) => {
-                            if (environmentalParam === 'temperature') {
-                              return Math.max(10, Math.ceil((dataMax ?? 0) * 1.2));
-                            }
-                            if (environmentalParam === 'humidity') {
-                              return Math.min(100, Math.max(10, Math.ceil((dataMax ?? 0) * 1.1)));
-                            }
-                            if (environmentalParam === 'co2') {
-                              return Math.max(600, Math.ceil((dataMax ?? 500) * 1.15));
-                            }
-                            return Math.max(10, Math.ceil((dataMax ?? 10) * 1.2));
-                          }
+                          environmentalParam === 'co2' ? 400 : 0,
+                          yAxisMaxValues[environmentalParam] || 100
                         ]}
                         label={{ 
                           value: environmentalParam === 'temperature' ? '°C' :
@@ -711,21 +731,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[
-                          0,
-                          (dataMax: number) => {
-                            if (pollutantParam === 'voc') {
-                              return Math.max(50, Math.ceil((dataMax ?? 0) * 1.2));
-                            }
-                            if (pollutantParam === 'hcho') {
-                              return Math.max(10, Math.ceil((dataMax ?? 0) * 2.0));
-                            }
-                            if (pollutantParam === 'nox') {
-                              return Math.max(50, Math.ceil((dataMax ?? 0) * 1.5));
-                            }
-                            return Math.max(10, Math.ceil((dataMax ?? 10) * 1.2));
-                          }
-                        ]}
+                        domain={[0, yAxisMaxValues[pollutantParam] || 100]}
                         label={{ 
                           value: pollutantParam === 'voc' ? 'index' :
                                  pollutantParam === 'hcho' ? 'ppb' :
@@ -814,10 +820,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[
-                          0,
-                          (dataMax: number) => Math.max(5, Math.ceil((dataMax ?? 1) * 1.2))
-                        ]}
+                        domain={[0, yAxisMaxValues[pmMassParam] || 20]}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
                       <Bar 
@@ -903,10 +906,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[
-                          0,
-                          (dataMax: number) => snapTopValue(Math.max((dataMax ?? 1000) * 1.15, 1000))
-                        ]}
+                        domain={[0, yAxisMaxValues[pmCountParam] || 10000]}
                         tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}
                       />

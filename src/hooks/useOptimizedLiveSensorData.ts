@@ -105,8 +105,8 @@ export function useOptimizedLiveSensorData() {
       )
       .subscribe();
 
-    // Reduced frequency polling (60 seconds instead of 30)
-    const interval = setInterval(fetchLatestSensorData, 60000);
+    // Reduced frequency polling (2 minutes for less database load)
+    const interval = setInterval(fetchLatestSensorData, 120000);
 
     return () => {
       supabase.removeChannel(channel);

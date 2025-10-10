@@ -66,6 +66,23 @@ export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps)
     setChartData(transformed);
   }, [historicalData, devices, primaryDeviceId, timeRange]);
 
+  // Calculate dynamic Y-axis max based on actual data
+  const yAxisMax = useMemo(() => {
+    if (chartData.length === 0) return 200;
+    
+    let maxValue = 0;
+    chartData.forEach(point => {
+      Object.keys(point).forEach(key => {
+        if (key !== 'timestamp' && typeof point[key] === 'number') {
+          maxValue = Math.max(maxValue, point[key]);
+        }
+      });
+    });
+    
+    // Add 15% padding and round up to nearest 10
+    return Math.max(100, Math.ceil((maxValue * 1.15) / 10) * 10);
+  }, [chartData]);
+
   // Get colors for devices
   const deviceColors = useMemo(() => {
     const colors = [
@@ -144,6 +161,7 @@ export function TimelineChart({ devices, selectedDeviceId }: TimelineChartProps)
                 stroke="hsl(var(--muted-foreground))"
                 fontSize={12}
                 label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
+                domain={[0, yAxisMax]}
               />
               <Tooltip
                 contentStyle={{

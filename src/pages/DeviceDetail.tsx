@@ -28,7 +28,7 @@ import {
   Clock,
   MapPin
 } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, BarChart, Bar, Cell } from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Legend, BarChart, Bar, Cell, Tooltip } from 'recharts';
 
 export function DeviceDetail() {
   const { deviceId } = useParams<{ deviceId: string }>();
@@ -651,6 +651,14 @@ export function DeviceDetail() {
                         domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.15))]}
                         label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
                       />
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px'
+                        }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      />
                     <Bar dataKey="value" radius={[4, 4, 0, 0]}>
                       {generateChartData.bar.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={getBarColor(entry.aqi)} />
@@ -683,6 +691,14 @@ export function DeviceDetail() {
                       fontSize={12}
                       domain={[0, (dataMax: number) => Math.max(100, Math.ceil((dataMax ?? 50) * 1.15))]}
                       label={{ value: 'AQI', angle: -90, position: 'insideLeft' }}
+                    />
+                    <Tooltip 
+                      contentStyle={{ 
+                        backgroundColor: 'hsl(var(--background))',
+                        border: '1px solid hsl(var(--border))',
+                        borderRadius: '6px'
+                      }}
+                      labelStyle={{ color: 'hsl(var(--foreground))' }}
                     />
                     <Legend />
                     <Line type="monotone" dataKey="overallAqi" stroke="hsl(var(--primary))" strokeWidth={2} name="Overall AQI" isAnimationActive={false} />
@@ -747,7 +763,15 @@ export function DeviceDetail() {
                           position: 'insideLeft' 
                         }}
                       />
-                      <Bar 
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px'
+                        }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      />
+                      <Bar
                         dataKey={environmentalParam} 
                         radius={[4, 4, 0, 0]} 
                         name={
@@ -822,7 +846,15 @@ export function DeviceDetail() {
                           position: 'insideLeft' 
                         }}
                       />
-                      <Bar 
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px'
+                        }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      />
+                      <Bar
                         dataKey={pollutantParam}
                         radius={[4, 4, 0, 0]} 
                         name={
@@ -905,7 +937,15 @@ export function DeviceDetail() {
                         domain={pmMassDomains[pmMassParam] || [0, 20]}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
-                      <Bar 
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px'
+                        }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      />
+                      <Bar
                         dataKey={pmMassParam} 
                         radius={[4, 4, 0, 0]} 
                         name={`${pmMassParam.toUpperCase()} (μg/m³)`}
@@ -992,7 +1032,15 @@ export function DeviceDetail() {
                         tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}
                       />
-                      <Bar 
+                      <Tooltip 
+                        contentStyle={{ 
+                          backgroundColor: 'hsl(var(--background))',
+                          border: '1px solid hsl(var(--border))',
+                          borderRadius: '6px'
+                        }}
+                        labelStyle={{ color: 'hsl(var(--foreground))' }}
+                      />
+                      <Bar
                         dataKey={pmCountParam} 
                         radius={[4, 4, 0, 0]} 
                         name={`${pmCountParam.toUpperCase()} (#/m³)`}

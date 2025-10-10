@@ -1,4 +1,4 @@
-import { readonlySupabase as supabase } from '@/integrations/supabase/readonlyClient';
+import { supabase } from '@/integrations/supabase/client';
 import { logger } from './errors';
 
 export interface OptimizedSensorReading {
@@ -52,12 +52,23 @@ export class OptimizedSensorApi {
   // Single query to get all latest sensor readings for all devices
   static async getAllLatestSensorReadings(): Promise<LiveSensorData[]> {
     try {
-      // Skip the slow RPC call and use optimized fallback with time filter
-      // The RPC function scans all historical data without time filters, causing timeouts
-      return this.getAllLatestSensorReadingsFallback();
+      // Try to use the optimized RPC function first
+      const { data: readings, error } = await supabase.rpc('get_latest_sensor_readings_optimized');
+      
+      if (error) {
+        logger.error('RPC function failed, using fallback', error);
+        return this.getAllLatestSensorReadingsFallback();
+      }
+
+      if (!readings || readings.length === 0) {
+        return [];
+      }
+
+      return this.processReadingsToLiveData(readings);
     } catch (error) {
       logger.error('Error fetching optimized sensor readings', error as Error);
-      return [];
+      // Fallback to manual query
+      return this.getAllLatestSensorReadingsFallback();
     }
   }
 
@@ -72,8 +83,7 @@ export class OptimizedSensorApi {
       if (devicesError) throw devicesError;
       if (!devices || devices.length === 0) return [];
 
-      // Step 2: Get latest readings with time filter (last 10 minutes only for faster queries)
-      const tenMinutesAgo = new Date(Date.now() - 10 * 60 * 1000).toISOString();
+      // Step 2: Get latest readings using a more optimized query with DISTINCT ON
       const { data: readings, error: readingsError } = await supabase
         .from('sensor_readings')
         .select(`
@@ -84,9 +94,7 @@ export class OptimizedSensorApi {
           timestamp
         `)
         .in('device_id', devices.map(d => d.id))
-        .gte('timestamp', tenMinutesAgo)
-        .order('timestamp', { ascending: false })
-        .limit(500); // Limit total rows to prevent slowdowns
+        .order('device_id, sensor_type, timestamp', { ascending: false });
 
       if (readingsError) throw readingsError;
 

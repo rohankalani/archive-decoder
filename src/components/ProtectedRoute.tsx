@@ -11,23 +11,7 @@ interface ProtectedRouteProps {
 export function ProtectedRoute({ children, requireAdmin = false }: ProtectedRouteProps) {
   const { user, profile, loading, isAdmin } = useAuth()
 
-  // If user exists but profile still loading, allow non-admin routes to render
   if (loading) {
-    if (!user) {
-      return (
-        <div className="min-h-screen flex items-center justify-center bg-background">
-          <div className="text-center space-y-4">
-            <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
-            <p className="text-muted-foreground">Loading...</p>
-          </div>
-        </div>
-      )
-    }
-    // User exists, profile loading, but no admin required → allow render
-    if (!requireAdmin) {
-      return <>{children}</>
-    }
-    // Admin required but profile not loaded yet → show spinner
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-center space-y-4">

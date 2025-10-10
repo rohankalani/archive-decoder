@@ -224,10 +224,11 @@ export function generateDeterministicSensorData(
         });
         break;
       case '24hr':
-        timeLabel = time.toLocaleDateString('en-GB', {
+        timeLabel = time.toLocaleString('en-GB', {
           timeZone: UAE_TZ,
-          month: 'short',
-          day: 'numeric'
+          day: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
         });
         break;
       default:

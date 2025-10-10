@@ -30,10 +30,11 @@ export function formatUaeTime(date: Date | string | number, period: TimePeriod):
         minute: '2-digit'
       });
     case '24hr':
-      return d.toLocaleDateString('en-GB', {
+      return d.toLocaleString('en-GB', {
         timeZone: UAE_TZ,
-        month: 'short',
-        day: 'numeric'
+        day: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
       });
     default:
       return d.toLocaleTimeString('en-GB', {

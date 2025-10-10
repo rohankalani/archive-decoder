@@ -84,6 +84,16 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
     },
   })
 
+  // Watch form changes for debugging
+  React.useEffect(() => {
+    const subscription = form.watch((value, { name, type }) => {
+      if (name) {
+        console.log(`Form field "${name}" changed:`, value[name], `(${type})`)
+      }
+    })
+    return () => subscription.unsubscribe()
+  }, [form])
+
   // Initialize location selectors from device data
   React.useEffect(() => {
     console.log('=== DeviceForm Location Init ===')
@@ -184,7 +194,12 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
   }, [selectedSite, selectedBuilding, selectedFloor, selectedRoom, sites, buildings, allFloors, rooms])
 
   const handleSubmit = async (data: DeviceFormData) => {
-    console.log('Form submitted with data:', data)
+    console.log('=== DeviceForm handleSubmit CALLED ===')
+    console.log('Raw form data:', JSON.stringify(data, null, 2))
+    console.log('Name field value:', data.name)
+    console.log('All form values:', form.getValues())
+    console.log('Form state dirty:', form.formState.isDirty)
+    console.log('Form state dirtyFields:', form.formState.dirtyFields)
     console.log('Location changed:', locationChanged, 'Is new device:', !device)
     
     setIsSubmitting(true)
@@ -228,7 +243,9 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
       data.calibration_due_date = calibrationDate.toISOString().split('T')[0]
     }
 
-      console.log('Submitting device data:', data)
+      console.log('=== Calling onSubmit with final data ===')
+      console.log('Final data being submitted:', JSON.stringify(data, null, 2))
+      console.log('Final name value:', data.name)
       await onSubmit(data as any)
     } catch (error) {
       console.error('Form submission error:', error)

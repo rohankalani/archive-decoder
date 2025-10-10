@@ -93,6 +93,12 @@ export function DeviceManagement() {
   }
 
   const handleUpdateDevice = async (id: string, updates: Partial<Device>) => {
+    console.log('=== DeviceManagement handleUpdateDevice CALLED ===')
+    console.log('Device ID:', id)
+    console.log('Updates object received:', JSON.stringify(updates, null, 2))
+    console.log('Updates.name:', updates.name)
+    console.log('All keys in updates:', Object.keys(updates))
+    
     try {
       await updateDevice(id, updates)
       setEditDevice(null)

@@ -52,23 +52,12 @@ export class OptimizedSensorApi {
   // Single query to get all latest sensor readings for all devices
   static async getAllLatestSensorReadings(): Promise<LiveSensorData[]> {
     try {
-      // Try to use the optimized RPC function first
-      const { data: readings, error } = await supabase.rpc('get_latest_sensor_readings_optimized');
-      
-      if (error) {
-        logger.error('RPC function failed, using fallback', error);
-        return this.getAllLatestSensorReadingsFallback();
-      }
-
-      if (!readings || readings.length === 0) {
-        return [];
-      }
-
-      return this.processReadingsToLiveData(readings);
+      // Skip the slow RPC call and use optimized fallback with time filter
+      // The RPC function scans all historical data without time filters, causing timeouts
+      return this.getAllLatestSensorReadingsFallback();
     } catch (error) {
       logger.error('Error fetching optimized sensor readings', error as Error);
-      // Fallback to manual query
-      return this.getAllLatestSensorReadingsFallback();
+      return [];
     }
   }
 
@@ -83,7 +72,8 @@ export class OptimizedSensorApi {
       if (devicesError) throw devicesError;
       if (!devices || devices.length === 0) return [];
 
-      // Step 2: Get latest readings using a more optimized query with DISTINCT ON
+      // Step 2: Get latest readings with time filter (last 30 minutes only)
+      const thirtyMinutesAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
       const { data: readings, error: readingsError } = await supabase
         .from('sensor_readings')
         .select(`
@@ -94,7 +84,8 @@ export class OptimizedSensorApi {
           timestamp
         `)
         .in('device_id', devices.map(d => d.id))
-        .order('device_id, sensor_type, timestamp', { ascending: false });
+        .gte('timestamp', thirtyMinutesAgo)
+        .order('timestamp', { ascending: false });
 
       if (readingsError) throw readingsError;
 

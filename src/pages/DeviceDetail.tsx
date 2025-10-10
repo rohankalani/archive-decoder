@@ -738,10 +738,7 @@ export function DeviceDetail() {
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={[
-                          environmentalParam === 'co2' ? 400 : 0,
-                          yAxisMaxValues[environmentalParam] || 100
-                        ]}
+                        domain={envDomains[environmentalParam] || [0, 100]}
                         label={{ 
                           value: environmentalParam === 'temperature' ? '°C' :
                                  environmentalParam === 'humidity' ? '%' :

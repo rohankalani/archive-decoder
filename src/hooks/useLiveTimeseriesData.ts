@@ -41,24 +41,8 @@ interface LiveBucketData {
 }
 
 interface SensorAccumulator {
-  count: number;
-  pm25: number;
-  pm10: number;
-  pm03: number;
-  pm1: number;
-  pm5: number;
-  temperature: number;
-  humidity: number;
-  co2: number;
-  voc: number;
-  hcho: number;
-  nox: number;
-  pc03: number;
-  pc05: number;
-  pc1: number;
-  pc25: number;
-  pc5: number;
-  pc10: number;
+  sums: Record<string, number>;
+  counts: Record<string, number>;
 }
 
 interface UseLiveTimeseriesOptions {
@@ -105,50 +89,87 @@ export function useLiveTimeseriesData(
       const bucketStart = Math.floor((now - (numBuckets - i - 1) * bucketMs) / bucketMs) * bucketMs;
       const acc = bucketsRef.current.get(bucketStart);
       
-      if (acc && acc.count > 0) {
-        const count = acc.count;
-        const pm25 = acc.pm25 / count;
-        const pm10 = acc.pm10 / count;
-        const voc = acc.voc / count;
-        const hcho = acc.hcho / count;
-        const nox = acc.nox / count;
+      if (acc) {
+        const totalCount = Object.values(acc.counts || {}).reduce((a, b) => a + b, 0);
+        if (totalCount > 0) {
+          const avg = (key: string, def = 0) => {
+            const c = acc.counts?.[key] || 0;
+            const s = acc.sums?.[key] || 0;
+            return c > 0 ? s / c : def;
+          };
 
-        const pm25Aqi = calculatePM25Aqi(pm25);
-        const pm10Aqi = calculatePM10Aqi(pm10);
-        const vocAqi = calculateVOCAqi(voc);
-        const hchoAqi = calculateHCHOAqi(hcho);
-        const noxAqi = calculateNOxAqi(nox);
-        const overallAqi = Math.max(pm25Aqi, pm10Aqi, vocAqi, hchoAqi, noxAqi);
+          const pm25 = avg('pm25', 0);
+          const pm10 = avg('pm10', 0);
+          const voc = avg('voc', 0);
+          const hcho = avg('hcho', 0);
+          const nox = avg('nox', 0);
 
-        bucketArray.push({
-          timestamp: bucketStart,
-          time: formatUaeTime(bucketStart),
-          overallAqi,
-          pm25Aqi,
-          pm10Aqi,
-          hchoAqi,
-          vocAqi,
-          noxAqi,
-          temperature: acc.temperature / count,
-          humidity: acc.humidity / count,
-          co2: acc.co2 / count,
-          voc,
-          hcho,
-          nox,
-          pm25,
-          pm10,
-          pm03: acc.pm03 / count,
-          pm1: acc.pm1 / count,
-          pm5: acc.pm5 / count,
-          pc03: acc.pc03 / count,
-          pc05: acc.pc05 / count,
-          pc1: acc.pc1 / count,
-          pc25: acc.pc25 / count,
-          pc5: acc.pc5 / count,
-          pc10: acc.pc10 / count
-        });
+          const pm25Aqi = calculatePM25Aqi(pm25);
+          const pm10Aqi = calculatePM10Aqi(pm10);
+          const vocAqi = calculateVOCAqi(voc);
+          const hchoAqi = calculateHCHOAqi(hcho);
+          const noxAqi = calculateNOxAqi(nox);
+          const overallAqi = Math.max(pm25Aqi, pm10Aqi, vocAqi, hchoAqi, noxAqi);
+
+          bucketArray.push({
+            timestamp: bucketStart,
+            time: formatUaeTime(bucketStart),
+            overallAqi,
+            pm25Aqi,
+            pm10Aqi,
+            hchoAqi,
+            vocAqi,
+            noxAqi,
+            temperature: avg('temperature', 0),
+            humidity: avg('humidity', 0),
+            co2: avg('co2', 400),
+            voc,
+            hcho,
+            nox,
+            pm25,
+            pm10,
+            pm03: avg('pm03', 0),
+            pm1: avg('pm1', 0),
+            pm5: avg('pm5', 0),
+            pc03: avg('pc03', 0),
+            pc05: avg('pc05', 0),
+            pc1: avg('pc1', 0),
+            pc25: avg('pc25', 0),
+            pc5: avg('pc5', 0),
+            pc10: avg('pc10', 0)
+          });
+        } else {
+          // Empty bucket with defaults
+          bucketArray.push({
+            timestamp: bucketStart,
+            time: formatUaeTime(bucketStart),
+            overallAqi: 0,
+            pm25Aqi: 0,
+            pm10Aqi: 0,
+            hchoAqi: 0,
+            vocAqi: 0,
+            noxAqi: 0,
+            temperature: 0,
+            humidity: 0,
+            co2: 400,
+            voc: 0,
+            hcho: 0,
+            nox: 0,
+            pm25: 0,
+            pm10: 0,
+            pm03: 0,
+            pm1: 0,
+            pm5: 0,
+            pc03: 0,
+            pc05: 0,
+            pc1: 0,
+            pc25: 0,
+            pc5: 0,
+            pc10: 0
+          });
+        }
       } else {
-        // Empty bucket with zeros
+        // Empty bucket when no data exists
         bucketArray.push({
           timestamp: bucketStart,
           time: formatUaeTime(bucketStart),
@@ -195,83 +216,14 @@ export function useLiveTimeseriesData(
     const bucketStart = Math.floor(timestamp / bucketMs) * bucketMs;
     
     const existing = bucketsRef.current.get(bucketStart) || {
-      count: 0,
-      pm25: 0,
-      pm10: 0,
-      pm03: 0,
-      pm1: 0,
-      pm5: 0,
-      temperature: 0,
-      humidity: 0,
-      co2: 0,
-      voc: 0,
-      hcho: 0,
-      nox: 0,
-      pc03: 0,
-      pc05: 0,
-      pc1: 0,
-      pc25: 0,
-      pc5: 0,
-      pc10: 0
-    };
+      sums: {},
+      counts: {}
+    } as SensorAccumulator;
 
-    existing.count++;
-
-    switch (reading.sensor_type) {
-      case 'pm25':
-        existing.pm25 += reading.value || 0;
-        break;
-      case 'pm10':
-        existing.pm10 += reading.value || 0;
-        break;
-      case 'pm03':
-        existing.pm03 += reading.value || 0;
-        break;
-      case 'pm1':
-        existing.pm1 += reading.value || 0;
-        break;
-      case 'pm5':
-        existing.pm5 += reading.value || 0;
-        break;
-      case 'temperature':
-        existing.temperature += reading.value || 0;
-        break;
-      case 'humidity':
-        existing.humidity += reading.value || 0;
-        break;
-      case 'co2':
-        existing.co2 += reading.value || 0;
-        break;
-      case 'voc':
-        existing.voc += reading.value || 0;
-        break;
-      case 'hcho':
-        existing.hcho += reading.value || 0;
-        break;
-      case 'nox':
-        existing.nox += reading.value || 0;
-        break;
-      case 'pc03':
-        existing.pc03 += reading.value || 0;
-        break;
-      case 'pc05':
-        existing.pc05 += reading.value || 0;
-        break;
-      case 'pc1':
-        existing.pc1 += reading.value || 0;
-        break;
-      case 'pc25':
-        existing.pc25 += reading.value || 0;
-        break;
-      case 'pc5':
-        existing.pc5 += reading.value || 0;
-        break;
-      case 'pc10':
-        existing.pc10 += reading.value || 0;
-        break;
-      default:
-        break;
-    }
+    const key = String(reading.sensor_type);
+    const value = Number(reading.value) || 0;
+    existing.sums[key] = (existing.sums[key] ?? 0) + value;
+    existing.counts[key] = (existing.counts[key] ?? 0) + 1;
 
     bucketsRef.current.set(bucketStart, existing);
   }, [bucketMs]);

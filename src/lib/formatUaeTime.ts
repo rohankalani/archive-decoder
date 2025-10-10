@@ -7,14 +7,15 @@ export function formatUaeTime(date: Date | string | number, period: TimePeriod):
   
   switch (period) {
     case '10min':
+      // Every 1 minute - show HH:MM only
       return d.toLocaleTimeString('en-GB', {
         hour12: false,
         timeZone: UAE_TZ,
         hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit'
+        minute: '2-digit'
       });
     case '1hr':
+      // Every 5 minutes - show HH:MM only
       return d.toLocaleTimeString('en-GB', {
         hour12: false,
         timeZone: UAE_TZ,
@@ -22,17 +23,19 @@ export function formatUaeTime(date: Date | string | number, period: TimePeriod):
         minute: '2-digit'
       });
     case '8hr':
+      // Every 1 hour - show date + time
       return d.toLocaleString('en-GB', {
         timeZone: UAE_TZ,
+        day: '2-digit',
         month: 'short',
-        day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
-      });
+      }).replace(',', '');
     case '24hr':
-      return d.toLocaleString('en-GB', {
+      // Every 1 hour - show HH:MM only
+      return d.toLocaleTimeString('en-GB', {
+        hour12: false,
         timeZone: UAE_TZ,
-        day: 'numeric',
         hour: '2-digit',
         minute: '2-digit'
       });

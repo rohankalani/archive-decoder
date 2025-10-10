@@ -198,15 +198,16 @@ export function generateDeterministicSensorData(
     
     switch (timePeriod) {
       case '10min':
+        // Every 1 minute - show HH:MM only
         timeLabel = time.toLocaleTimeString('en-GB', {
           hour12: false,
           timeZone: UAE_TZ,
           hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
+          minute: '2-digit'
         });
         break;
       case '1hr':
+        // Every 5 minutes - show HH:MM only
         timeLabel = time.toLocaleTimeString('en-GB', {
           hour12: false,
           timeZone: UAE_TZ,
@@ -215,18 +216,20 @@ export function generateDeterministicSensorData(
         });
         break;
       case '8hr':
+        // Every 1 hour - show date + time
         timeLabel = time.toLocaleString('en-GB', {
           timeZone: UAE_TZ,
+          day: '2-digit',
           month: 'short',
-          day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
-        });
+        }).replace(',', '');
         break;
       case '24hr':
-        timeLabel = time.toLocaleString('en-GB', {
+        // Every 1 hour - show HH:MM only
+        timeLabel = time.toLocaleTimeString('en-GB', {
+          hour12: false,
           timeZone: UAE_TZ,
-          day: 'numeric',
           hour: '2-digit',
           minute: '2-digit'
         });

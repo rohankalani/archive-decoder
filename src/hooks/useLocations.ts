@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { readonlySupabase } from '@/integrations/supabase/readonlyClient'
+
 import { toast } from 'sonner'
 
 export interface Site {
@@ -66,16 +66,16 @@ export function useLocations() {
       
       // Fetch all location data in parallel using readonly client for speed
       const [sitesRes, buildingsRes, floorsRes, roomsRes] = await Promise.all([
-        readonlySupabase
+        supabase
           .from('sites')
           .select('id, name, address, description, latitude, longitude, created_at, updated_at'),
-        readonlySupabase
+        supabase
           .from('buildings')
           .select('id, name, site_id, description, floor_count, created_at, updated_at'),
-        readonlySupabase
+        supabase
           .from('floors')
           .select('id, name, floor_number, building_id, area_sqm, created_at, updated_at'),
-        readonlySupabase
+        supabase
           .from('rooms')
           .select('id, name, room_number, room_type, floor_id, capacity, area_sqm, description, operating_hours_start, operating_hours_end, created_at, updated_at')
       ])

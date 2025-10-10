@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/integrations/supabase/client'
-import { readonlySupabase } from '@/integrations/supabase/readonlyClient'
+
 import { toast } from 'sonner'
 
 export interface Device {
@@ -30,7 +30,7 @@ export function useDevices() {
   const fetchDevices = async () => {
     try {
       // Use readonly client for fast, non-blocking reads
-      const { data, error } = await readonlySupabase
+      const { data, error } = await supabase
         .from('devices')
         .select('id, name, device_type, mac_address, serial_number, firmware_version, status, battery_level, signal_strength, floor_id, room_id, installation_date, calibration_due_date, created_at, updated_at')
 

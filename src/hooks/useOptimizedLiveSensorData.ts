@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
 import { OptimizedSensorApi, type LiveSensorData } from '@/lib/optimizedSensorApi';
@@ -20,6 +20,7 @@ export function useOptimizedLiveSensorData() {
   const [loading, setLoading] = useState(true);
   const [lastFetch, setLastFetch] = useState<Date | null>(null);
   const [error, setError] = useState<Error | null>(null);
+  const updateTimeoutRef = useRef<number | null>(null);
 
   // Fetch sensor data with optimized query
   const fetchLatestSensorData = useCallback(async () => {
@@ -39,14 +40,16 @@ export function useOptimizedLiveSensorData() {
   }, []);
 
   // Incremental update for real-time changes
-  const handleIncrementalUpdate = useCallback(async (payload: any) => {
+  const handleIncrementalUpdate = useCallback(async (_payload: any) => {
     try {
-      // Only update if we have existing data to avoid race conditions
       if (sensorData.length === 0) return;
-
-      // For now, do a full refresh but we can optimize this later
-      // to only update the specific device that changed
-      await fetchLatestSensorData();
+      // Debounce bursty realtime inserts to at most once per 5s
+      if (updateTimeoutRef.current) {
+        clearTimeout(updateTimeoutRef.current);
+      }
+      updateTimeoutRef.current = window.setTimeout(() => {
+        fetchLatestSensorData();
+      }, 5000);
     } catch (error) {
       logger.error('Error handling incremental update', error as Error);
     }

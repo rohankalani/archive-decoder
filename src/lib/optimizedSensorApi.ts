@@ -1,4 +1,4 @@
-import { supabase } from '@/integrations/supabase/client';
+import { readonlySupabase as supabase } from '@/integrations/supabase/readonlyClient';
 import { logger } from './errors';
 
 export interface OptimizedSensorReading {

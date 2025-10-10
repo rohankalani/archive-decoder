@@ -54,11 +54,12 @@ type DeviceFormData = z.infer<typeof deviceSchema>
 interface DeviceFormProps {
   device?: Device | null
   floors: Floor[]
+  mode?: 'create' | 'edit-details'
   onSubmit: (data: Omit<Device, 'id' | 'created_at' | 'updated_at'>) => void
   onCancel: () => void
 }
 
-export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormProps) {
+export function DeviceForm({ device, floors, mode = 'create', onSubmit, onCancel }: DeviceFormProps) {
   const { sites, buildings, floors: allFloors, rooms } = useLocations()
   
   const [selectedSite, setSelectedSite] = React.useState<string>('')
@@ -269,9 +270,16 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
     <Dialog open onOpenChange={onCancel}>
       <DialogContent className="max-w-3xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>{device ? 'Edit Device' : 'Add New Device'}</DialogTitle>
+          <DialogTitle>
+            {mode === 'edit-details' ? 'Edit Technical Details' : device ? 'Edit Device' : 'Add New Device'}
+          </DialogTitle>
           <DialogDescription>
-            Enter device hardware identifiers and optionally assign to a room
+            {mode === 'edit-details' 
+              ? 'Update device serial number, firmware, and calibration dates. To change location, use "Re-assign Location".' 
+              : device 
+                ? 'Update device information and location assignment' 
+                : 'Add a new ULTRADETEKT 03M device to your monitoring network'
+            }
           </DialogDescription>
         </DialogHeader>
 
@@ -365,144 +373,158 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
               </div>
             </div>
 
-            {/* Location Hierarchy Selection */}
-            <div className="space-y-4 p-4 bg-muted/30 rounded-lg border border-border/50">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-sm font-medium">
-                  <MapPin className="h-4 w-4" />
-                  Location Assignment (Optional)
+            {/* Location Hierarchy Selection - Hidden in edit-details mode */}
+            {mode !== 'edit-details' && (
+              <div className="space-y-4 p-4 bg-muted/30 rounded-lg border border-border/50">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-sm font-medium">
+                    <MapPin className="h-4 w-4" />
+                    Location Assignment (Optional)
+                  </div>
+                  {device && device.floor_id && !showLocationEditor && (
+                    <Button 
+                      type="button" 
+                      variant="outline" 
+                      size="sm"
+                      onClick={() => {
+                        setShowLocationEditor(true)
+                        setLocationChanged(true)
+                      }}
+                    >
+                      Change Location
+                    </Button>
+                  )}
                 </div>
-                {device && device.floor_id && !showLocationEditor && (
-                  <Button 
-                    type="button" 
-                    variant="outline" 
-                    size="sm"
-                    onClick={() => {
-                      setShowLocationEditor(true)
-                      setLocationChanged(true)
-                    }}
-                  >
-                    Change Location
-                  </Button>
+
+                {/* Show current location as read-only if device has location and editor is hidden */}
+                {device && device.floor_id && !showLocationEditor ? (
+                  <div className="p-3 bg-background rounded border">
+                    <p className="text-sm font-medium mb-2">Current Location:</p>
+                    <p className="text-sm font-mono text-muted-foreground">{locationPath}</p>
+                  </div>
+                ) : (
+                  <>
+                    <p className="text-xs text-muted-foreground">
+                      Select the room where this device will be installed. Leave empty for manual assignment later.
+                    </p>
+
+                    {/* Location Preview */}
+                    <div className="p-2 bg-background rounded border text-sm font-mono">
+                      {locationPath}
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      {/* Site Selection */}
+                      <div>
+                        <label className="text-sm font-medium">Site</label>
+                        <Select 
+                          value={selectedSite} 
+                          onValueChange={(value) => {
+                            setSelectedSite(value)
+                            setLocationChanged(true)
+                          }}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select a site" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {sites.map((site) => (
+                              <SelectItem key={site.id} value={site.id}>
+                                {site.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Building Selection */}
+                      <div>
+                        <label className="text-sm font-medium">Building</label>
+                        <Select 
+                          value={selectedBuilding} 
+                          onValueChange={(value) => {
+                            setSelectedBuilding(value)
+                            setLocationChanged(true)
+                          }}
+                          disabled={!selectedSite}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select a building" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredBuildings.map((building) => (
+                              <SelectItem key={building.id} value={building.id}>
+                                {building.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Floor Selection */}
+                      <div>
+                        <label className="text-sm font-medium">Floor</label>
+                        <Select 
+                          value={selectedFloor} 
+                          onValueChange={(value) => {
+                            setSelectedFloor(value)
+                            setLocationChanged(true)
+                          }}
+                          disabled={!selectedBuilding}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select a floor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredFloors.map((floor) => (
+                              <SelectItem key={floor.id} value={floor.id}>
+                                {floor.name || `Floor ${floor.floor_number}`}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+
+                      {/* Room Selection */}
+                      <div>
+                        <label className="text-sm font-medium">Room</label>
+                        <Select 
+                          value={selectedRoom} 
+                          onValueChange={(value) => {
+                            setSelectedRoom(value)
+                            setLocationChanged(true)
+                          }}
+                          disabled={!selectedFloor}
+                        >
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select a room" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {filteredRooms.map((room) => (
+                              <SelectItem key={room.id} value={room.id}>
+                                {room.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                  </>
                 )}
               </div>
+            )}
 
-              {/* Show current location as read-only if device has location and editor is hidden */}
-              {device && device.floor_id && !showLocationEditor ? (
-                <div className="p-3 bg-background rounded border">
-                  <p className="text-sm font-medium mb-2">Current Location:</p>
-                  <p className="text-sm font-mono text-muted-foreground">{locationPath}</p>
+            {/* Message for edit-details mode */}
+            {mode === 'edit-details' && device?.floor_id && (
+              <div className="p-3 bg-muted/30 rounded border border-border/50">
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <MapPin className="h-4 w-4" />
+                  <span>
+                    To change device location, use the <strong>"Re-assign Location"</strong> option from the device menu.
+                  </span>
                 </div>
-              ) : (
-                <>
-                  <p className="text-xs text-muted-foreground">
-                    Select the room where this device will be installed. Leave empty for manual assignment later.
-                  </p>
-
-                  {/* Location Preview */}
-                  <div className="p-2 bg-background rounded border text-sm font-mono">
-                    {locationPath}
-                  </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    {/* Site Selection */}
-                    <div>
-                      <label className="text-sm font-medium">Site</label>
-                      <Select 
-                        value={selectedSite} 
-                        onValueChange={(value) => {
-                          setSelectedSite(value)
-                          setLocationChanged(true)
-                        }}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select a site" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {sites.map((site) => (
-                            <SelectItem key={site.id} value={site.id}>
-                              {site.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Building Selection */}
-                    <div>
-                      <label className="text-sm font-medium">Building</label>
-                      <Select 
-                        value={selectedBuilding} 
-                        onValueChange={(value) => {
-                          setSelectedBuilding(value)
-                          setLocationChanged(true)
-                        }}
-                        disabled={!selectedSite}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select a building" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredBuildings.map((building) => (
-                            <SelectItem key={building.id} value={building.id}>
-                              {building.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Floor Selection */}
-                    <div>
-                      <label className="text-sm font-medium">Floor</label>
-                      <Select 
-                        value={selectedFloor} 
-                        onValueChange={(value) => {
-                          setSelectedFloor(value)
-                          setLocationChanged(true)
-                        }}
-                        disabled={!selectedBuilding}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select a floor" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredFloors.map((floor) => (
-                            <SelectItem key={floor.id} value={floor.id}>
-                              {floor.name || `Floor ${floor.floor_number}`}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-
-                    {/* Room Selection */}
-                    <div>
-                      <label className="text-sm font-medium">Room</label>
-                      <Select 
-                        value={selectedRoom} 
-                        onValueChange={(value) => {
-                          setSelectedRoom(value)
-                          setLocationChanged(true)
-                        }}
-                        disabled={!selectedFloor}
-                      >
-                        <SelectTrigger className="mt-1">
-                          <SelectValue placeholder="Select a room" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {filteredRooms.map((room) => (
-                            <SelectItem key={room.id} value={room.id}>
-                              {room.name}
-                            </SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
-                    </div>
-                  </div>
-                </>
-              )}
-            </div>
+              </div>
+            )}
 
             <div className="grid grid-cols-2 gap-4">
               <FormField

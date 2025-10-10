@@ -20,24 +20,27 @@ import {
 } from '@/components/ui/dropdown-menu'
 import { 
   MoreHorizontal,
-  Edit,
+  Edit2,
   Trash2,
   Wifi,
   WifiOff,
   Settings,
   Battery,
   MapPin,
-  Calendar
+  Calendar,
+  FileEdit
 } from 'lucide-react'
 
 interface DeviceListProps {
   devices: Device[]
-  onEdit: (device: Device) => void
+  onRename: (device: Device) => void
+  onReassign: (device: Device) => void
+  onEditDetails: (device: Device) => void
   onDelete: (id: string) => void
   onUpdateStatus: (id: string, updates: Partial<Device>) => void
 }
 
-export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: DeviceListProps) {
+export function DeviceList({ devices, onRename, onReassign, onEditDetails, onDelete, onUpdateStatus }: DeviceListProps) {
   const { floors, buildings, sites, rooms } = useLocations()
 
   const getStatusIcon = (status: Device['status']) => {
@@ -162,9 +165,17 @@ export function DeviceList({ devices, onEdit, onDelete, onUpdateStatus }: Device
                     </Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => onEdit(device)}>
-                      <Edit className="h-4 w-4 mr-2" />
-                      Edit Device
+                    <DropdownMenuItem onClick={() => onRename(device)}>
+                      <Edit2 className="h-4 w-4 mr-2" />
+                      Rename Device
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onReassign(device)}>
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Re-assign Location
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => onEditDetails(device)}>
+                      <FileEdit className="h-4 w-4 mr-2" />
+                      Edit Technical Details
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem

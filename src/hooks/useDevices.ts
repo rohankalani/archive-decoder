@@ -27,7 +27,7 @@ export function useDevices() {
   // Fetch all devices with timeout handling and retry logic
   const fetchDevices = async (retryCount = 0) => {
     const MAX_RETRIES = 3
-    const TIMEOUT_MS = 8000 // 8 second timeout
+    const TIMEOUT_MS = 15000 // 15 second timeout for production stability
     
     try {
       // Create abort controller for timeout

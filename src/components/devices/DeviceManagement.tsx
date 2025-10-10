@@ -10,6 +10,7 @@ import { DeviceList } from './DeviceList'
 import { DeviceForm } from './DeviceForm'
 import { PendingDeviceList } from './PendingDeviceList'
 import { DeviceAllocationModal } from './DeviceAllocationModal'
+import { QuickRenameDialog } from './QuickRenameDialog'
 import { toast } from 'sonner'
 import { supabase } from '@/integrations/supabase/client'
 import { 
@@ -28,8 +29,11 @@ export function DeviceManagement() {
   const { floors } = useLocations()
   const [showForm, setShowForm] = useState(false)
   const [editDevice, setEditDevice] = useState<Device | null>(null)
+  const [formMode, setFormMode] = useState<'create' | 'edit-details'>('create')
   const [allocationDevice, setAllocationDevice] = useState<Device | null>(null)
   const [showAllocationModal, setShowAllocationModal] = useState(false)
+  const [renameDevice, setRenameDevice] = useState<Device | null>(null)
+  const [showRenameDialog, setShowRenameDialog] = useState(false)
   const [previousPendingCount, setPreviousPendingCount] = useState(0)
 
   // Real-time device detection
@@ -108,14 +112,26 @@ export function DeviceManagement() {
     }
   }
 
-  const handleEditDevice = (device: Device) => {
+  const handleQuickRename = (device: Device) => {
+    setRenameDevice(device)
+    setShowRenameDialog(true)
+  }
+
+  const handleReassignLocation = (device: Device) => {
+    setAllocationDevice(device)
+    setShowAllocationModal(true)
+  }
+
+  const handleEditDetails = (device: Device) => {
     setEditDevice(device)
+    setFormMode('edit-details')
     setShowForm(true)
   }
 
   const handleCloseForm = () => {
     setShowForm(false)
     setEditDevice(null)
+    setFormMode('create')
   }
 
   const handleAssignDevice = (device: Device) => {
@@ -312,7 +328,9 @@ export function DeviceManagement() {
             <TabsContent value="all">
               <DeviceList 
                 devices={devices}
-                onEdit={handleEditDevice}
+                onRename={handleQuickRename}
+                onReassign={handleReassignLocation}
+                onEditDetails={handleEditDetails}
                 onDelete={deleteDevice}
                 onUpdateStatus={updateDevice}
               />
@@ -321,7 +339,9 @@ export function DeviceManagement() {
             <TabsContent value="online">
               <DeviceList 
                 devices={devices.filter(d => d.status === 'online')}
-                onEdit={handleEditDevice}
+                onRename={handleQuickRename}
+                onReassign={handleReassignLocation}
+                onEditDetails={handleEditDetails}
                 onDelete={deleteDevice}
                 onUpdateStatus={updateDevice}
               />
@@ -330,7 +350,9 @@ export function DeviceManagement() {
             <TabsContent value="offline">
               <DeviceList 
                 devices={devices.filter(d => d.status === 'offline')}
-                onEdit={handleEditDevice}
+                onRename={handleQuickRename}
+                onReassign={handleReassignLocation}
+                onEditDetails={handleEditDetails}
                 onDelete={deleteDevice}
                 onUpdateStatus={updateDevice}
               />
@@ -339,7 +361,9 @@ export function DeviceManagement() {
             <TabsContent value="error">
               <DeviceList 
                 devices={devices.filter(d => d.status === 'error')}
-                onEdit={handleEditDevice}
+                onRename={handleQuickRename}
+                onReassign={handleReassignLocation}
+                onEditDetails={handleEditDetails}
                 onDelete={deleteDevice}
                 onUpdateStatus={updateDevice}
               />
@@ -353,6 +377,7 @@ export function DeviceManagement() {
         <DeviceForm
           device={editDevice}
           floors={floors}
+          mode={formMode}
           onSubmit={editDevice ? 
             (updates) => handleUpdateDevice(editDevice.id, updates) : 
             handleCreateDevice
@@ -360,6 +385,17 @@ export function DeviceManagement() {
           onCancel={handleCloseForm}
         />
       )}
+
+      {/* Quick Rename Dialog */}
+      <QuickRenameDialog
+        device={renameDevice}
+        open={showRenameDialog}
+        onClose={() => {
+          setShowRenameDialog(false)
+          setRenameDevice(null)
+        }}
+        onRename={handleRenameDevice}
+      />
 
       {/* Device Allocation Modal */}
       <DeviceAllocationModal

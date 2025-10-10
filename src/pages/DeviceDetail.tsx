@@ -616,17 +616,27 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.environmental}>
+                    <BarChart data={generateChartData.environmental} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={
-                          environmentalParam === 'temperature' ? [0, 40] :
-                          environmentalParam === 'humidity' ? [0, 100] :
-                          [400, 2000]
-                        }
+                        domain={[
+                          (dataMin: number) => (environmentalParam === 'co2' ? 400 : 0),
+                          (dataMax: number) => {
+                            if (environmentalParam === 'temperature') {
+                              return Math.max(10, Math.ceil((dataMax ?? 0) * 1.2));
+                            }
+                            if (environmentalParam === 'humidity') {
+                              return Math.min(100, Math.max(10, Math.ceil((dataMax ?? 0) * 1.1)));
+                            }
+                            if (environmentalParam === 'co2') {
+                              return Math.max(600, Math.ceil((dataMax ?? 500) * 1.15));
+                            }
+                            return Math.max(10, Math.ceil((dataMax ?? 10) * 1.2));
+                          }
+                        ]}
                         label={{ 
                           value: environmentalParam === 'temperature' ? '°C' :
                                  environmentalParam === 'humidity' ? '%' :
@@ -695,17 +705,27 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.pollutants}>
+                    <BarChart data={generateChartData.pollutants} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
                         stroke="hsl(var(--muted-foreground))" 
                         fontSize={12}
-                        domain={
-                          pollutantParam === 'voc' ? [0, 500] :
-                          pollutantParam === 'hcho' ? [0, 100] :
-                          [0, 500]
-                        }
+                        domain={[
+                          0,
+                          (dataMax: number) => {
+                            if (pollutantParam === 'voc') {
+                              return Math.max(50, Math.ceil((dataMax ?? 0) * 1.2));
+                            }
+                            if (pollutantParam === 'hcho') {
+                              return Math.max(10, Math.ceil((dataMax ?? 0) * 2.0));
+                            }
+                            if (pollutantParam === 'nox') {
+                              return Math.max(50, Math.ceil((dataMax ?? 0) * 1.5));
+                            }
+                            return Math.max(10, Math.ceil((dataMax ?? 10) * 1.2));
+                          }
+                        ]}
                         label={{ 
                           value: pollutantParam === 'voc' ? 'index' :
                                  pollutantParam === 'hcho' ? 'ppb' :
@@ -788,7 +808,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.particulateMass}>
+                    <BarChart data={generateChartData.particulateMass} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
@@ -796,7 +816,7 @@ export function DeviceDetail() {
                         fontSize={12}
                         domain={[
                           0,
-                          (dataMax: number) => Math.ceil((dataMax ?? 1) * 1.2)
+                          (dataMax: number) => Math.max(5, Math.ceil((dataMax ?? 1) * 1.2))
                         ]}
                         label={{ value: 'μg/m³', angle: -90, position: 'insideLeft' }}
                       />
@@ -877,7 +897,7 @@ export function DeviceDetail() {
               <CardContent>
                 <div className="h-64">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={generateChartData.particulateCount}>
+                    <BarChart data={generateChartData.particulateCount} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                       <XAxis dataKey="time" stroke="hsl(var(--muted-foreground))" fontSize={10} />
                       <YAxis 
@@ -885,7 +905,7 @@ export function DeviceDetail() {
                         fontSize={12}
                         domain={[
                           0,
-                          (dataMax: number) => snapTopValue(Math.max((dataMax ?? 1000) * 1.1, 1000))
+                          (dataMax: number) => snapTopValue(Math.max((dataMax ?? 1000) * 1.15, 1000))
                         ]}
                         tickFormatter={formatCompact}
                         label={{ value: '#/m³', angle: -90, position: 'insideLeft' }}

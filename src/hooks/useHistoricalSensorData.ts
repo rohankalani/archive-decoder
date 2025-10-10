@@ -29,10 +29,10 @@ const DEFAULTS: Record<string, number> = {
 
 // Carry forward for different periods
 const CARRY_FORWARD_CONFIG: Record<TimePeriod, number> = {
-  '10min': 2 * 60 * 1000,    // 2 minutes
-  '1hr': 20 * 60 * 1000,     // 20 minutes - extended for better data retention
-  '8hr': 4 * 60 * 60 * 1000, // 4 hours - extended for better data retention
-  '24hr': 4 * 60 * 60 * 1000 // 4 hours - extended for better data retention
+  '10min': 2 * 60 * 1000,     // 2 minutes
+  '1hr': 15 * 60 * 1000,      // 15 minutes (3 intervals)
+  '8hr': 90 * 60 * 1000,      // 1.5 hours (1-2 intervals)
+  '24hr': 2 * 60 * 60 * 1000  // 2 hours (2 intervals)
 };
 
 export interface AveragedSensorData {

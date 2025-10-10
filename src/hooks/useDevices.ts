@@ -122,9 +122,32 @@ export function useDevices() {
       console.log('Device ID:', id)
       console.log('Updates:', updates)
       
+      // Validate name if it's being updated
+      if (updates.name !== undefined && (!updates.name || updates.name.trim() === '')) {
+        toast.error('Device name cannot be empty')
+        throw new Error('Device name is required')
+      }
+      
+      // Explicitly construct the update object with only the fields that are provided
+      const updatePayload: any = {}
+      if (updates.name !== undefined) updatePayload.name = updates.name
+      if (updates.device_type !== undefined) updatePayload.device_type = updates.device_type
+      if (updates.serial_number !== undefined) updatePayload.serial_number = updates.serial_number
+      if (updates.mac_address !== undefined) updatePayload.mac_address = updates.mac_address
+      if (updates.status !== undefined) updatePayload.status = updates.status
+      if (updates.floor_id !== undefined) updatePayload.floor_id = updates.floor_id
+      if (updates.room_id !== undefined) updatePayload.room_id = updates.room_id
+      if (updates.firmware_version !== undefined) updatePayload.firmware_version = updates.firmware_version
+      if (updates.installation_date !== undefined) updatePayload.installation_date = updates.installation_date
+      if (updates.calibration_due_date !== undefined) updatePayload.calibration_due_date = updates.calibration_due_date
+      if (updates.battery_level !== undefined) updatePayload.battery_level = updates.battery_level
+      if (updates.signal_strength !== undefined) updatePayload.signal_strength = updates.signal_strength
+      
+      console.log('Constructed update payload:', updatePayload)
+      
       const { data, error } = await supabase
         .from('devices')
-        .update(updates)
+        .update(updatePayload)
         .eq('id', id)
         .select()
         .single()
@@ -144,7 +167,7 @@ export function useDevices() {
         device.id === id ? { ...device, ...validDevice } : device
       ))
       toast.success('Device updated successfully')
-      return data
+      return validDevice
     } catch (error: any) {
       console.error('Error updating device:', error)
       

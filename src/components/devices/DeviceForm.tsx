@@ -246,7 +246,15 @@ export function DeviceForm({ device, floors, onSubmit, onCancel }: DeviceFormPro
       console.log('=== Calling onSubmit with final data ===')
       console.log('Final data being submitted:', JSON.stringify(data, null, 2))
       console.log('Final name value:', data.name)
-      await onSubmit(data as any)
+      
+      // Ensure floor_id is always present (even if null) to match Device type
+      const deviceData = {
+        ...data,
+        floor_id: data.floor_id ?? null,
+        room_id: data.room_id ?? null,
+      }
+      
+      await onSubmit(deviceData as any)
     } catch (error) {
       console.error('Form submission error:', error)
     } finally {
